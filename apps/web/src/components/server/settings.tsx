@@ -57,7 +57,7 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
       client.invalidateQueries({ queryKey: keys.servers })
       setMemory(updated.memory)
       setVariables(updated.variables)
-      toast.success(t('settings.saved'))
+      toast.success(server.status === 'offline' ? t('settings.saved') : t('settings.savedRestart'))
     },
   })
   const [code, rejectedKey] = save.error instanceof ApiError ? save.error.message.split(':') : []

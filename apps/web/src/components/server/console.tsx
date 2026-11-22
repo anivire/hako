@@ -58,6 +58,8 @@ function Metrics({ server, stats, compact }: { server: Server; stats: ServerStat
   const usage = useQuery({ queryKey: ['usage', server.id], queryFn: () => api.usage(server.id), refetchInterval: 30_000 })
   const idle = server.status === 'offline' ? t('console.noData') : t('console.waiting')
   const percent = (v: number) => `${v.toFixed(v < 10 ? 2 : 1)}%`
+  const planned = server.memory * 1024 * 1024
+  const memoryPending = Boolean(live && Math.abs(memoryLimit - planned) > 1024 * 1024)
   const memoryPoints = stats.map((s) => (s.memory / memoryLimit) * 100)
   const inColor = 'var(--color-accent)'
   const outColor = 'var(--color-muted-foreground)'
@@ -84,7 +86,7 @@ function Metrics({ server, stats, compact }: { server: Server; stats: ServerStat
         icon={<RiDatabase2Fill />}
         value={live ? (compact ? formatBytes(last.memory) : percent((last.memory / memoryLimit) * 100)) : '—'}
         total={live && compact ? formatBytes(memoryLimit) : undefined}
-        detail={live ? `${formatBytes(last.memory)} / ${formatBytes(memoryLimit)}` : idle}
+        detail={live ? `${formatBytes(last.memory)} / ${formatBytes(memoryLimit)}${memoryPending ? ` · ${t('console.memoryAfterRestart', { size: formatBytes(planned) })}` : ''}` : idle}
         series={live ? [{ label: t('console.memory'), color: 'var(--color-accent)', points: memoryPoints }] : undefined}
         max={100}
         format={percent}

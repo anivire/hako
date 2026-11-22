@@ -381,6 +381,7 @@ export const ru = {
     send: 'Отправить',
   },
   console: {
+    memoryAfterRestart: 'после перезапуска {{size}}',
     resize: 'Изменить высоту консоли',
     resizeHint: 'Потяните, чтобы изменить высоту. Двойной клик — вернуть как было',
     cpuCores: '{{used}} из {{limit}}',
@@ -563,6 +564,7 @@ export const ru = {
     other: 'Другое',
     unsaved: 'Есть несохранённые изменения',
     saved: 'Сохранено',
+    savedRestart: 'Сохранено, изменения применятся после перезапуска',
     dangerTitle: 'Удаление',
     deleteHint: 'Сервер и все его файлы удалятся без возможности восстановления',
     deleteTitle: 'Удалить {{name}}?',

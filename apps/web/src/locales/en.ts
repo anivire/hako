@@ -383,6 +383,7 @@ export const en: Messages = {
     send: 'Send',
   },
   console: {
+    memoryAfterRestart: '{{size}} after restart',
     resize: 'Resize the console',
     resizeHint: 'Drag to change the height. Double-click to reset',
     cpuCores: '{{used}} of {{limit}}',
@@ -565,6 +566,7 @@ export const en: Messages = {
     other: 'Other',
     unsaved: 'You have unsaved changes',
     saved: 'Saved',
+    savedRestart: 'Saved, the changes apply after a restart',
     dangerTitle: 'Delete',
     deleteHint: 'The server and all its files are deleted for good',
     deleteTitle: 'Delete {{name}}?',
