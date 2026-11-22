@@ -654,8 +654,8 @@
         {
           "value": "auto",
           "label": {
-            "ru": "По версии",
-            "en": "By version"
+            "ru": "Автоматически",
+            "en": "Automatic"
           }
         },
         {

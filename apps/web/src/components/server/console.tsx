@@ -38,7 +38,7 @@ import type { LogFilter } from '../../lib/log-highlight'
 const FONT_KEY = 'hako:console-font'
 const SHUT_KEY = 'hako:console-collapsed'
 const HEIGHT_KEY = 'hako:console-height'
-const MIN_HEIGHT = 320
+const MIN_HEIGHT = 160
 const FILTERS: LogFilter[] = ['all', 'error', 'warn', 'info']
 const FONT_SIZES = [11, 12, 13, 14, 16, 18]
 
@@ -218,7 +218,7 @@ export function ServerConsole({ server, socket, playerList, playersLink, compact
     setShut(next)
     writeStorage(SHUT_KEY, String(next))
   }
-  const card = useRef<HTMLDivElement>(null)
+  const logBox = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(() => {
     const stored = Number(readStorage(HEIGHT_KEY))
     return Number.isFinite(stored) && stored >= MIN_HEIGHT ? stored : 0
@@ -228,7 +228,7 @@ export function ServerConsole({ server, socket, playerList, playersLink, compact
     writeStorage(HEIGHT_KEY, String(next))
   }
   const startResize = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const box = card.current
+    const box = logBox.current
     if (!box) return
     e.preventDefault()
     const handle = e.currentTarget
@@ -302,7 +302,7 @@ export function ServerConsole({ server, socket, playerList, playersLink, compact
     <div className={cn('flex flex-1 flex-col', compact ? 'gap-2' : 'gap-3')}>
       <Metrics server={server} stats={socket.stats} compact={compact} />
       {playerList && server.status !== 'offline' ? <Players server={server} players={socket.players} avatar={playerList.avatar} link={playersLink} compact={compact} /> : null}
-      <Card ref={card} style={!shut && !fullscreen && height ? { height } : undefined} className={cn('flex flex-col overflow-hidden', !shut && !height && 'min-h-[52rem] flex-1', !shut && height && 'shrink-0', fullscreen && 'fixed inset-0 z-50 rounded-none')}>
+      <Card className={cn('flex flex-col overflow-hidden', !shut && !height && 'min-h-[52rem] flex-1', !shut && height && 'shrink-0', fullscreen && 'fixed inset-0 z-50 rounded-none')}>
         <button type="button" aria-expanded={!shut} onClick={() => toggleShut(!shut)} className={cn('flex w-full shrink-0 cursor-pointer items-center gap-2 px-4 pt-3 text-left text-sm text-muted-foreground [&_svg]:size-4', shut && 'pb-3')}>
           <RiTerminalBoxFill />
           <span className="font-medium text-foreground">{t('console.title')}</span>
@@ -387,7 +387,7 @@ export function ServerConsole({ server, socket, playerList, playersLink, compact
             </div>
           </div>
         </div>
-        <div className="relative min-h-32 flex-1 overflow-hidden" style={{ background: CONSOLE_BACKGROUND }} onClick={() => input.current?.focus({ preventScroll: true })}>
+        <div ref={logBox} className={cn('relative min-h-32 overflow-hidden', height && !fullscreen ? 'shrink-0' : 'flex-1')} style={{ background: CONSOLE_BACKGROUND, height: height && !fullscreen ? height : undefined }} onClick={() => input.current?.focus({ preventScroll: true })}>
           <ConsoleTerminal ref={terminal} socket={socket} fontSize={fontSize} filter={filter} onScrolledUp={setScrolledUp} onEmptyChange={setFilteredEmpty} />
           {socket.loaded ? null : (
             <div role="status" className="pointer-events-none absolute inset-0 z-10 grid place-items-center">
