@@ -18,6 +18,16 @@
       "name": "direct",
       "container": 16262,
       "protocol": "udp"
+    },
+    {
+      "name": "steam1",
+      "container": 8766,
+      "protocol": "udp"
+    },
+    {
+      "name": "steam2",
+      "container": 8767,
+      "protocol": "udp"
     }
   ],
   "memory": {
@@ -29,12 +39,14 @@
     "DISPLAYNAME": "{{SERVER_NAME}}",
     "ADMINUSERNAME": "{{ADMIN_USER}}",
     "ADMINPASSWORD": "{{ADMIN_PASSWORD}}",
-    "PASSWORD": "{{PASSWORD}}",
+    "PASSWORD": "{{#PASSWORD}}{{PASSWORD}}{{/PASSWORD}}",
     "PUBLIC": "{{PUBLIC}}",
     "MEMORY": "{{SERVER_HEAP}}m",
     "SERVERPRESET": "{{PRESET}}",
-    "WORKSHOP_IDS": "{{WORKSHOP_IDS}}",
-    "MOD_IDS": "{{MOD_IDS}}"
+    "WORKSHOP_IDS": "{{#WORKSHOP_IDS}}{{WORKSHOP_IDS}}{{/WORKSHOP_IDS}}",
+    "MOD_IDS": "{{#MOD_IDS}}{{MOD_IDS}}{{/MOD_IDS}}",
+    "STEAMPORT1": "8766",
+    "STEAMPORT2": "8767"
   },
   "console": {
     "ready": "SERVER STARTED|LuaNet: Initialization \\[DONE\\]",
@@ -98,10 +110,6 @@
       "name": {
         "ru": "Моды",
         "en": "Mods"
-      },
-      "description": {
-        "ru": "ID из Steam Workshop и ID модов через точку с запятой. В Build 42 перед ID мода ставится \\",
-        "en": "Steam Workshop ids and mod ids separated by semicolons. Build 42 needs a \\ before each mod id"
       }
     }
   ],
@@ -113,8 +121,8 @@
         "en": "Save name"
       },
       "description": {
-        "ru": "Имя файлов сервера и мира. Без пробелов, при смене создаётся новый мир",
-        "en": "Name of the server and world files. No spaces, changing it starts a new world"
+        "ru": "Имя файлов сервера и мира, без пробелов. Другие миры — на вкладке «Миры»",
+        "en": "Name of the server and world files, no spaces. Other worlds are on the Worlds tab"
       },
       "default": "servertest",
       "pattern": "^[A-Za-z0-9_-]{1,32}$",
@@ -166,7 +174,11 @@
       },
       "type": "boolean",
       "default": "false",
-      "group": "server"
+      "group": "server",
+      "description": {
+        "ru": "Иначе подключаются только по адресу",
+        "en": "Otherwise players join by address only"
+      }
     },
     {
       "key": "ADMIN_USER",
@@ -185,8 +197,8 @@
         "en": "Admin password"
       },
       "description": {
-        "ru": "Нужен при первом запуске, сервер пишет его в лог",
-        "en": "Needed on the first start, the server prints it to the log"
+        "ru": "Для входа в игре под именем администратора. Задаётся при первом запуске, потом меняется командой setpassword",
+        "en": "To log in as the admin in game. Set on the first start, later change it with the setpassword command"
       },
       "required": true,
       "pattern": "^[^\\s\"']{4,64}$",
@@ -210,7 +222,11 @@
       "name": "Workshop IDs",
       "default": "",
       "pattern": "^[0-9;]*$",
-      "group": "mods"
+      "group": "mods",
+      "description": {
+        "ru": "Числа из ссылки на мод в Steam Workshop, через точку с запятой",
+        "en": "Numbers from the Steam Workshop mod link, separated by semicolons"
+      }
     },
     {
       "key": "MOD_IDS",
@@ -220,7 +236,11 @@
       },
       "default": "",
       "pattern": "^[\\w\\\\;.\\- ]*$",
-      "group": "mods"
+      "group": "mods",
+      "description": {
+        "ru": "Mod ID со страницы мода, через точку с запятой. В Build 42 перед каждым ставится \\",
+        "en": "The Mod ID from the mod page, separated by semicolons. Build 42 needs a \\ before each one"
+      }
     }
   ]
 }

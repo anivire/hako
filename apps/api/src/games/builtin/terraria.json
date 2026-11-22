@@ -1123,8 +1123,8 @@
         "en": "World"
       },
       "description": {
-        "ru": "Имя файла мира. Если такого мира нет, он создаётся при первом запуске",
-        "en": "World file name. A missing world is created on the first start"
+        "ru": "Имя файла мира. Если такого мира нет, он создаётся при первом запуске. Другие миры — на вкладке «Миры»",
+        "en": "World file name. A missing world is created on the first start. Other worlds are on the Worlds tab"
       },
       "default": "world",
       "pattern": "^[a-zA-Z0-9_-]{1,32}$",

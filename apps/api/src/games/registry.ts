@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { type GameTemplate, SOURCE_VALUE_PATTERN, gameTemplateSchema, resolveTemplate, variableVisible } from '@hako/shared'
@@ -102,7 +103,7 @@ export function resolveVariables(game: GameTemplate, input: Record<string, strin
       out[v.key] = ''
       continue
     }
-    const value = raw[v.key]!
+    const value = raw[v.key] || (v.random ? Array.from({ length: v.random.length }, () => v.random!.chars[randomInt(v.random!.chars.length)]).join('') : '')
     const fail = () => badRequest(`VARIABLE_INVALID:${v.key}`)
     if (value.length > 1024) fail()
     if (v.required && (value === '' || (v.type === 'boolean' && value !== 'true'))) fail()

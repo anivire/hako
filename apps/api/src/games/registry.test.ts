@@ -23,6 +23,17 @@ test('core keeper passes a port only for direct connect', () => {
   assert.ok(containerEnv(game, resolveVariables(game, { DIRECT: 'true' })).includes('SERVER_PORT=27015'))
 })
 
+test('random variables are filled once and kept', () => {
+  const game = gameTemplateSchema.parse(coreKeeper)
+  const first = resolveVariables(game, {})
+  assert.match(first.GAME_ID!, /^[1-9A-NP-XZa-wz]{28}$/)
+  assert.equal(first.PASSWORD, '')
+  assert.equal(resolveVariables(game, first, first).GAME_ID, first.GAME_ID)
+  assert.match(resolveVariables(game, { ...first, DIRECT: 'true' }, first).PASSWORD!, /^[a-z2-9]{12}$/)
+  const pz = gameTemplateSchema.parse(projectZomboid)
+  assert.ok(containerEnv(pz, { ...resolveVariables(pz, { ADMIN_PASSWORD: 'secret' }), ...builtinVariables(4096) }).includes('PASSWORD='))
+})
+
 test('interpolate fills known keys and blanks unknown ones', () => {
   assert.equal(interpolate('itzg/minecraft-server:{{JAVA}}', { JAVA: 'java21' }), 'itzg/minecraft-server:java21')
   assert.equal(interpolate('{{ A }}-{{MISSING}}', { A: 'x' }), 'x-')

@@ -74,6 +74,7 @@ Most games already have a community Docker image that installs and runs the serv
 | `link` | `{ "url", "text" }`. A `boolean` with a link is shown as "I agree to the <link>" with a switch, like the Minecraft EULA; while a required one is off, the row is tinted as a warning. On other types the link follows the description. |
 | `preview` | Map from a value to the text it adds to the `startup` preview, for example `{ "true": "--add-modules=jdk.incubator.vector" }`. |
 | `auto` | `{ "key", "rules": [{ "pattern", "value" }] }`. When the variable's value is `auto`, the server starts with the `value` of the first rule whose regular expression matches the value of variable `key`, or of the last rule when none match. Minecraft uses it to pick the Java image from `VERSION`. |
+| `random` | `{ "length", "chars" }`. An empty value is replaced with a random string of `length` characters from `chars` when the server is created or its settings are saved, so ids and passwords stay the same across restarts and are visible in the settings. Core Keeper uses it for the Game ID. |
 | `editable` | `false` locks the value after the server is created, for things like world names. |
 
 A variable used inside `image` or `command` should be a `select` or have a strict `pattern`, so a user cannot point the server at any image. Values from a `source` are always limited to letters, digits and `_ . + -`.
