@@ -12,7 +12,8 @@ export function MemoryPicker({ value, min, max, onChange, id }: { value: number;
   const { t } = useTranslation()
   const [draft, setDraft] = useState<string | null>(null)
   const top = max && max >= min ? max : Infinity
-  const steps = [...new Set([...PRESETS.filter((m) => m >= min && m < top), ...(Number.isFinite(top) ? [top] : []), Math.min(top, Math.max(min, value))])].sort((a, b) => a - b)
+  const steps = [...new Set([Math.min(min, top), ...PRESETS.filter((m) => m > min && m < top), ...(Number.isFinite(top) ? [top] : [])])].sort((a, b) => a - b)
+  const nearest = steps.reduce((best, m) => (Math.abs(m - value) < Math.abs(best - value) ? m : best), steps[0]!)
   const commit = (raw: string) => {
     const mb = Math.round(Number(raw))
     setDraft(null)
@@ -20,7 +21,7 @@ export function MemoryPicker({ value, min, max, onChange, id }: { value: number;
   }
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <StepSlider value={String(value)} onChange={(next) => onChange(Number(next))} label={t('servers.memoryPick')} options={steps.map((m) => ({ value: String(m), label: sizeLabel(m) }))} className="min-w-64 flex-1" />
+      <StepSlider value={String(nearest)} onChange={(next) => onChange(Number(next))} label={t('servers.memoryPick')} options={steps.map((m) => ({ value: String(m), label: sizeLabel(m) }))} className="min-w-64 flex-1" />
       <label className="flex h-9 w-36 shrink-0 items-center gap-2 rounded-lg bg-field px-3 focus-within:bg-field-hover">
         <input
           id={id}

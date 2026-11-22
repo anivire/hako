@@ -55,6 +55,8 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
     onSuccess: (updated) => {
       client.setQueryData(keys.server(server.id), updated)
       client.invalidateQueries({ queryKey: keys.servers })
+      setMemory(updated.memory)
+      setVariables(updated.variables)
       toast.success(t('settings.saved'))
     },
   })
