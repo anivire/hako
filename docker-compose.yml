@@ -4,6 +4,7 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+      - "2022:2022"
     volumes:
       - hako-data:/data
       - /var/run/docker.sock:/var/run/docker.sock

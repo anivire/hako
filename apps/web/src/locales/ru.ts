@@ -427,6 +427,12 @@ export const ru = {
     toBottom: 'Вниз',
   },
   files: {
+    sftpTitle: 'Подключение по SFTP',
+    sftpHost: 'Сервер',
+    sftpPort: 'Порт',
+    sftpUser: 'Логин',
+    sftpHint: 'Пароль — ваш пароль от панели. Подходит FileZilla, WinSCP и любой SFTP-клиент',
+    sftpCopied: 'Скопировано',
     discard: 'Отменить несохранённые изменения?',
     back: 'К файлам',
     unsaved: 'Есть несохранённые изменения',

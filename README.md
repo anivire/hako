@@ -24,7 +24,7 @@ hako (箱, "box") runs each game server in its own Docker container and gives yo
 **Configure**
 - A settings form for each game instead of raw files: `server.properties`, Factorio and Terraria configs, BepInEx mod configs, with descriptions, defaults and markers on changed values.
 - Minecraft players: admins, bans and the allowlist, plus everyone who has joined, with kick, ban and op in one click. Changes go through the console while the server runs.
-- File manager with an editor, upload and download.
+- File manager with an editor, upload and download, and SFTP access with the panel login for FileZilla or WinSCP.
 - Backups of the server folder: the world is saved first while the server runs, the last N are kept, restore and download in one click.
 - Update checks every 6 hours: a new version of the server Docker image and mod updates are marked on the server card and the server page.
 - Worlds: several per server, switch between them, download one as a `.zip` or upload your own.
@@ -109,6 +109,7 @@ All variables are optional. The CurseForge key can also be changed in the admin 
 | `DOCKER_SOCKET` | `/var/run/docker.sock` | Docker socket, or `//./pipe/docker_engine` on Windows |
 | `PORT`, `HOST` | `3000`, `0.0.0.0` | Where the panel listens |
 | `SESSION_DAYS` | `30` | Login session lifetime |
+| `SFTP_PORT` | `2022` | SFTP access to server files, `0` turns it off. Log in as `<user>.<server id>` with the panel password |
 | `CURSEFORGE_API_KEY` | | CurseForge modpacks. The key contains `$`, so wrap it in single quotes in `.env` |
 
 ## Development

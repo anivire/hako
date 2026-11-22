@@ -429,6 +429,12 @@ export const en: Messages = {
     toBottom: 'To the bottom',
   },
   files: {
+    sftpTitle: 'Connect over SFTP',
+    sftpHost: 'Host',
+    sftpPort: 'Port',
+    sftpUser: 'Username',
+    sftpHint: 'The password is your panel password. FileZilla, WinSCP or any SFTP client works',
+    sftpCopied: 'Copied',
     discard: 'Discard unsaved changes?',
     back: 'Back to files',
     unsaved: 'Unsaved changes',

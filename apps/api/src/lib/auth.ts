@@ -93,12 +93,12 @@ function countAttempt(key: string, limit: number) {
   if (entry.count > limit) throw new HTTPException(429, { message: 'TOO_MANY_ATTEMPTS' })
 }
 
-function loginKeys(c: Context, username: string) {
-  const ip = clientIp(c) ?? 'unknown'
+function loginKeys(c: Context | string, username: string) {
+  const ip = typeof c === 'string' ? c : (clientIp(c) ?? 'unknown')
   return { ip: `ip:${ip}`, account: `${ip}:${username.toLowerCase()}` }
 }
 
-export function checkLoginRate(c: Context, username: string) {
+export function checkLoginRate(c: Context | string, username: string) {
   const t = Date.now()
   for (const [key, entry] of attempts) if (entry.resetAt < t) attempts.delete(key)
   const keys = loginKeys(c, username)
@@ -106,6 +106,6 @@ export function checkLoginRate(c: Context, username: string) {
   countAttempt(keys.account, ACCOUNT_LIMIT)
 }
 
-export function resetLoginRate(c: Context, username: string) {
+export function resetLoginRate(c: Context | string, username: string) {
   attempts.delete(loginKeys(c, username).account)
 }

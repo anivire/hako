@@ -11,6 +11,7 @@ import { hashPassword, randomToken } from './lib/crypto'
 import { recoverInstances } from './runtime/instances'
 import { startScheduler } from './services/schedules'
 import { startUpdateChecks } from './services/updates'
+import { startSftp } from './services/sftp'
 
 async function bootstrapAdmin() {
   if (db.select({ id: users.id }).from(users).where(eq(users.role, 'admin')).get()) return
@@ -44,6 +45,7 @@ await bootstrapAdmin()
 await recoverInstances()
 startScheduler()
 startUpdateChecks()
+startSftp()
 
 for (const signal of ['SIGTERM', 'SIGINT'] as const) process.once(signal, () => process.exit(0))
 

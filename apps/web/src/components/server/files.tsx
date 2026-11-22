@@ -9,19 +9,20 @@ import {
   RiFolder3Fill,
   RiFolderAddFill,
   RiSave3Fill,
+  RiServerFill,
   RiUploadCloud2Fill,
   RiUploadFill,
 } from '@remixicon/react'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { FileEntry, Server } from '@hako/shared'
-import { Badge, Button, Card, EmptyState, Input, Progress, Skeleton, Tooltip, cn, toast } from '@hako/ui'
+import { Badge, Button, Card, EmptyState, Input, Popover, PopoverContent, PopoverTrigger, Progress, Skeleton, Tooltip, cn, toast } from '@hako/ui'
 import { type DragEvent, type FormEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { ask } from '../../lib/confirm'
 import { api } from '../../lib/api'
 import { formatBytes, joinPath, parentPath } from '../../lib/format'
-import { errorMessage, keys } from '../../lib/queries'
+import { errorMessage, keys, useUser } from '../../lib/queries'
 import { droppedFiles, uploads, useUploads } from '../../lib/uploads'
 import { CodeEditor, languageOf } from '../code-editor'
 
@@ -271,6 +272,7 @@ export function ServerFiles({ server }: { server: Server }) {
             </span>
           ))}
         </nav>
+        <SftpInfo server={server} />
         <Button size="sm" onClick={() => setFolder('')}>
           <RiFolderAddFill />
           {t('files.newFolder')}
@@ -381,5 +383,44 @@ export function ServerFiles({ server }: { server: Server }) {
         ) : null}
       </div>
     </div>
+  )
+}
+
+function SftpInfo({ server }: { server: Server }) {
+  const { t } = useTranslation()
+  const user = useUser()
+  const system = useQuery({ queryKey: ['system'], queryFn: api.system, staleTime: 60_000 })
+  const port = system.data?.sftpPort
+  if (!port) return null
+  const rows: [string, string][] = [
+    [t('files.sftpHost'), location.hostname],
+    [t('files.sftpPort'), String(port)],
+    [t('files.sftpUser'), `${user.username}.${server.id}`],
+  ]
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button size="sm" variant="ghost">
+          <RiServerFill />
+          SFTP
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-4">
+        <div className="mb-2 text-sm font-medium">{t('files.sftpTitle')}</div>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
+          {rows.map(([label, value]) => (
+            <div key={label} className="contents">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd>
+                <button type="button" className="cursor-pointer break-all text-left font-mono hover:text-accent" onClick={() => navigator.clipboard.writeText(value).then(() => toast.success(t('files.sftpCopied')))}>
+                  {value}
+                </button>
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-3 text-xs text-muted-foreground">{t('files.sftpHint')}</p>
+      </PopoverContent>
+    </Popover>
   )
 }

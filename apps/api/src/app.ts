@@ -25,7 +25,7 @@ app.use(async (c, next) => {
 })
 
 app.get('/api/health', (c) => c.json({ ok: true }))
-app.get('/api/system', requireAuth, async (c) => c.json({ docker: await dockerAvailable(), ...(await dockerResources()) }))
+app.get('/api/system', requireAuth, async (c) => c.json({ docker: await dockerAvailable(), ...(await dockerResources()), sftpPort: env.sftpPort || null }))
 app.get('/api/users', requireAuth, (c) => {
   const q = (c.req.query('q') ?? '').trim().slice(0, 32)
   const me = c.get('user').id
