@@ -1,0 +1,1 @@
+ALTER TABLE `servers` ADD `backup_limit` integer DEFAULT 5 NOT NULL;

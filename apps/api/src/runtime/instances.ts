@@ -177,6 +177,10 @@ class Instance {
     instances.delete(this.id)
   }
 
+  notice(text: string) {
+    this.log(`\r\n[hako] ${text}\r\n`)
+  }
+
   replayPlayers() {
     this.players?.feed(this.history)
   }

@@ -9,6 +9,7 @@ import type {
   AddonUpdate,
   AddonVersion,
   AddonsOverview,
+  BackupsOverview,
   FileEntry,
   PlayerEntry,
   PlayerList,
@@ -108,6 +109,13 @@ export const api = {
   movePath: (id: string, from: string, to: string) => request<{ ok: true }>('POST', `${at(id)}/files/move?${p(from)}`, { to }),
   removePath: (id: string, path: string) => request<{ ok: true }>('DELETE', `${at(id)}/files?${p(path)}`),
   downloadUrl: (id: string, path: string) => `/api${at(id)}/files/download?${p(path)}`,
+
+  backups: (id: string) => get<BackupsOverview>(`${at(id)}/backups`),
+  createBackup: (id: string) => request<{ ok: true }>('POST', `${at(id)}/backups`),
+  setBackupLimit: (id: string, limit: number) => request<BackupsOverview>('PATCH', `${at(id)}/backups`, { limit }),
+  restoreBackup: (id: string, name: string) => request<{ ok: true }>('POST', `${at(id)}/backups/${encodeURIComponent(name)}/restore`),
+  deleteBackup: (id: string, name: string) => request<BackupsOverview>('DELETE', `${at(id)}/backups/${encodeURIComponent(name)}`),
+  backupDownloadUrl: (id: string, name: string) => `/api${at(id)}/backups/${encodeURIComponent(name)}/download`,
 
   addons: (id: string) => get<AddonsOverview>(`${at(id)}/addons`),
   roster: (id: string) => get<PlayerRecord[]>(`${at(id)}/players`),

@@ -4,7 +4,7 @@ import { loadGames } from '../games/registry'
 import { allows, requiredPermission } from './access'
 
 loadGames()
-const valheim = { id: 'x', name: 'v', game: 'valheim', memory: 4096, cpu: null, icon: null, variables: {}, ports: {}, ownerId: 1, createdAt: '' }
+const valheim = { id: 'x', name: 'v', game: 'valheim', memory: 4096, cpu: null, backupLimit: 5, icon: null, variables: {}, ports: {}, ownerId: 1, createdAt: '' }
 
 test('each server action needs its own permission', () => {
   assert.equal(requiredPermission('GET', '', valheim, ''), null)
@@ -21,6 +21,7 @@ test('each server action needs its own permission', () => {
   assert.equal(requiredPermission('POST', '/addons', valheim, ''), 'addons')
   assert.equal(requiredPermission('GET', '/addons/icon', valheim, ''), null)
   assert.equal(requiredPermission('PUT', '/members/2', valheim, ''), 'manage')
+  assert.equal(requiredPermission('POST', '/backups/x/restore', valheim, ''), 'files')
 })
 
 test('managers can do everything, members only what they were given', () => {

@@ -21,6 +21,7 @@ export const env = {
   databasePath: path.resolve(str('DATABASE_PATH', path.join(dataDir, 'hako.db'))),
   serversDir: path.resolve(str('SERVERS_DIR', path.join(dataDir, 'servers'))),
   gamesDir: path.resolve(str('GAMES_DIR', path.join(dataDir, 'games'))),
+  backupsDir: path.resolve(str('BACKUPS_DIR', path.join(dataDir, 'backups'))),
   dockerSocket: str('DOCKER_SOCKET', process.platform === 'win32' ? '//./pipe/docker_engine' : '/var/run/docker.sock'),
   webDist: str('WEB_DIST'),
   sessionDays: int('SESSION_DAYS', 30),

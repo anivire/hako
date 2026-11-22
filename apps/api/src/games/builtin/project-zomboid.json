@@ -52,6 +52,15 @@
     "command": "quit",
     "timeout": 120
   },
+  "backup": {
+    "before": [
+      "save"
+    ],
+    "wait": 10,
+    "exclude": [
+      "Logs"
+    ]
+  },
   "players": {
     "name": "^[A-Za-z0-9_.-]{1,32}$",
     "kick": "kickuser \"{{NAME}}\""

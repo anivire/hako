@@ -42,6 +42,12 @@
     "command": "exit",
     "timeout": 30
   },
+  "backup": {
+    "before": [
+      "save"
+    ],
+    "wait": 5
+  },
   "players": {
     "name": "^[^\\s].{0,19}$",
     "kick": "kick {{NAME}}",

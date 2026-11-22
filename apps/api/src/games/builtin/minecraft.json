@@ -54,6 +54,23 @@
   "stop": {
     "timeout": 210
   },
+  "backup": {
+    "before": [
+      "save-off",
+      "save-all flush"
+    ],
+    "after": [
+      "save-on"
+    ],
+    "wait": 5,
+    "exclude": [
+      "logs",
+      "crash-reports",
+      "libraries",
+      "versions",
+      ".cache"
+    ]
+  },
   "players": {
     "name": "^[A-Za-z0-9_]{1,16}$",
     "avatar": "https://minotar.net/helm/{{NAME}}/32",

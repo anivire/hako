@@ -47,6 +47,8 @@ export function requiredPermission(method: string, sub: string, server: ServerRo
       return 'files'
     case 'players':
       return 'config'
+    case 'backups':
+      return 'files'
     case 'map':
       return method === 'GET' ? null : 'settings'
     case 'addons':

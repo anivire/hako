@@ -61,6 +61,8 @@ export const addonSourcesSchema = z.array(z.object({ source: z.string(), params:
 
 export const volumesSchema = z.array(z.object({ path: z.string().startsWith('/'), folder: z.string().regex(/^[\w.-]+$/).refine((f) => f !== '.' && f !== '..') }))
 
+export const backupSpecSchema = z.object({ before: z.array(z.string()).default([]), after: z.array(z.string()).default([]), wait: z.number().int().min(0).max(120).default(5), exclude: z.array(z.string().regex(/^[\w.-]+$/)).default([]) })
+
 export const templateOverrideSchema = z.object({
   image: z.string().min(1).optional(),
   command: z.array(z.string()).optional(),
@@ -129,6 +131,7 @@ export const gameTemplateSchema = z.object({
   addons: addonSourcesSchema.default([]),
   configs: z.array(configFileSchema).default([]),
   files: z.array(fileRuleSchema).default([]),
+  backup: backupSpecSchema.default({ before: [], after: [], wait: 5, exclude: [] }),
   startup: z.string().optional(),
   groups: z.array(z.object({ id: z.string(), name: textSchema, description: textSchema.optional(), collapsed: z.boolean().optional() })).default([]),
 })
@@ -234,6 +237,20 @@ export type ServerCreateInput = z.infer<typeof serverCreateSchema>
 
 export const serverUpdateSchema = serverCreateSchema.omit({ game: true, ports: true }).partial()
 export type ServerUpdateInput = z.infer<typeof serverUpdateSchema>
+
+export interface Backup {
+  name: string
+  size: number
+  createdAt: string
+}
+
+export interface BackupsOverview {
+  backups: Backup[]
+  limit: number
+  running: boolean
+}
+
+export const backupLimitSchema = z.object({ limit: z.number().int().min(1).max(100) })
 
 export const powerSchema = z.object({ action: z.enum(['start', 'stop', 'restart', 'kill']) })
 export type PowerAction = z.infer<typeof powerSchema>['action']

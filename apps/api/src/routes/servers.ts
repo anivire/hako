@@ -10,7 +10,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
-import { type Member, type Permission, type PortCheck, type Server, type ServerAccess, memberSchema, serverInviteCreateSchema, addonInstallSchema, addonToggleSchema, addonUpdateSchema, powerSchema, serverCreateSchema, serverUpdateSchema } from '@hako/shared'
+import { type Member, type Permission, type PortCheck, type Server, type ServerAccess, backupLimitSchema, memberSchema, serverInviteCreateSchema, addonInstallSchema, addonToggleSchema, addonUpdateSchema, powerSchema, serverCreateSchema, serverUpdateSchema } from '@hako/shared'
 import { addonKind, addonSource, modpackStatus, addonUpdates, addonsOverview, installAddon, modpackBase, removeAddon, setAddonEnabled, updateAddons } from '../addons/manager'
 import { accessOf, allows, requiredPermission } from '../lib/access'
 import { db, now } from '../db/client'
@@ -26,6 +26,7 @@ import { parseBody } from '../lib/validate'
 import { type ServerRow, dockerPublishedPorts, dockerResources, hostPortFree, instance, quickStats, runningCommand, serverDir, serverPorts, startedAtOf, statusOf, versionOf } from '../runtime/instances'
 import { addPlayer, kickPlayer, readPlayers, removePlayer, roster } from '../services/players'
 import { diskUsage } from '../services/usage'
+import { backupBusy, backupFile, backupsOverview, createBackup, pruneBackups, removeBackups, restoreBackup } from '../services/backups'
 import { proxyMap, setMap, setMapShare, sharedServer } from '../services/map'
 import { MAX_EDIT_BYTES, listDir, makeDir, movePath, readText, removePath, resolveInside, writeFile } from '../services/files'
 
@@ -185,12 +186,14 @@ export const serverRoutes = new Hono<ServerEnv>()
     const server = c.get('server')
     await instance(server.id).destroy()
     await fs.rm(serverDir(server.id), { recursive: true, force: true })
+    await removeBackups(server.id)
     db.delete(servers).where(eq(servers.id, server.id)).run()
     return c.json({ ok: true })
   })
   .post('/:id/power', async (c) => {
     const { action } = await parseBody(c, powerSchema)
     const server = c.get('server')
+    if ((action === 'start' || action === 'restart') && backupBusy(server.id)) badRequest('BACKUP_RUNNING')
     const run = instance(server.id).power(action, server)
     run.catch(() => {})
     return c.json({ ok: true })
@@ -297,6 +300,34 @@ export const serverRoutes = new Hono<ServerEnv>()
     if (!stat.isFile()) badRequest('NOT_A_FILE')
     return new Response(Readable.toWeb(createReadStream(file)) as ReadableStream, {
       headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(stat.size), 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(path.basename(file))}` },
+    })
+  })
+  .get('/:id/backups', async (c) => c.json(await backupsOverview(c.get('server'))))
+  .post('/:id/backups', (c) => {
+    const server = c.get('server')
+    if (backupBusy(server.id)) badRequest('BACKUP_RUNNING')
+    createBackup(server).catch(() => {})
+    return c.json({ ok: true })
+  })
+  .patch('/:id/backups', async (c) => {
+    const { limit } = await parseBody(c, backupLimitSchema)
+    const row = db.update(servers).set({ backupLimit: limit }).where(eq(servers.id, c.get('server').id)).returning().get()
+    await pruneBackups(row)
+    return c.json(await backupsOverview(row))
+  })
+  .post('/:id/backups/:name/restore', async (c) => {
+    await restoreBackup(c.get('server'), c.req.param('name'))
+    return c.json({ ok: true })
+  })
+  .delete('/:id/backups/:name', async (c) => {
+    await fs.rm(backupFile(c.get('server').id, c.req.param('name')), { force: true })
+    return c.json(await backupsOverview(c.get('server')))
+  })
+  .get('/:id/backups/:name/download', async (c) => {
+    const file = backupFile(c.get('server').id, c.req.param('name'))
+    const stat = await fs.stat(file).catch(() => notFound('PATH_NOT_FOUND'))
+    return new Response(Readable.toWeb(createReadStream(file)) as ReadableStream, {
+      headers: { 'Content-Type': 'application/gzip', 'Content-Length': String(stat.size), 'Content-Disposition': `attachment; filename="${c.get('server').id}-${path.basename(file)}"` },
     })
   })
   .get('/:id/addons', async (c) => c.json(await addonsOverview(c.get('server'))))

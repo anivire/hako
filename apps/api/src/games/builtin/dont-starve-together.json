@@ -80,6 +80,12 @@
     "command": "c_shutdown(true)",
     "timeout": 120
   },
+  "backup": {
+    "before": [
+      "c_save()"
+    ],
+    "wait": 5
+  },
   "configs": [
     {
       "path": "Cluster_1/cluster.ini",

@@ -25,6 +25,7 @@ hako (箱, "box") runs each game server in its own Docker container and gives yo
 - A settings form for each game instead of raw files: `server.properties`, Factorio and Terraria configs, BepInEx mod configs, with descriptions, defaults and markers on changed values.
 - Minecraft players: admins, bans and the allowlist, plus everyone who has joined, with kick, ban and op in one click. Changes go through the console while the server runs.
 - File manager with an editor, upload and download.
+- Backups of the server folder: the world is saved first while the server runs, the last N are kept, restore and download in one click.
 
 **Mods**
 - Minecraft mods and plugins from Modrinth: search, install with required dependencies, turn off or remove.
@@ -101,6 +102,7 @@ All variables are optional. The CurseForge key can also be changed in the admin 
 | `DATA_DIR`, `DATABASE_PATH` | `./data`, `<DATA_DIR>/hako.db` | Database location; the Docker image uses `/data` |
 | `SERVERS_DIR` | `<DATA_DIR>/servers` | Server files |
 | `GAMES_DIR` | `<DATA_DIR>/games` | Extra game templates |
+| `BACKUPS_DIR` | `<DATA_DIR>/backups` | Server backups, one folder per server |
 | `DOCKER_SOCKET` | `/var/run/docker.sock` | Docker socket, or `//./pipe/docker_engine` on Windows |
 | `PORT`, `HOST` | `3000`, `0.0.0.0` | Where the panel listens |
 | `SESSION_DAYS` | `30` | Login session lifetime |

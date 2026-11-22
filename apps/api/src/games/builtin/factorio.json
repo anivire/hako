@@ -41,6 +41,12 @@
   "stop": {
     "timeout": 60
   },
+  "backup": {
+    "before": [
+      "/server-save"
+    ],
+    "wait": 5
+  },
   "healthcheck": false,
   "players": {
     "name": "^[A-Za-z0-9_.-]{1,60}$",

@@ -37,6 +37,13 @@
   "stop": {
     "timeout": 120
   },
+  "backup": {
+    "exclude": [
+      "gamefiles",
+      "logs",
+      "backups"
+    ]
+  },
   "variables": [
     {
       "key": "BETA",

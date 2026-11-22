@@ -39,6 +39,7 @@ export const servers = sqliteTable('servers', {
   game: text('game').notNull(),
   memory: integer('memory').notNull(),
   cpu: real('cpu'),
+  backupLimit: integer('backup_limit').notNull().default(5),
   icon: text('icon'),
   variables: text('variables', { mode: 'json' }).$type<Record<string, string>>().notNull().default({}),
   ports: text('ports', { mode: 'json' }).$type<Record<string, number>>().notNull().default({}),
