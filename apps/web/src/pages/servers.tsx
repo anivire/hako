@@ -108,7 +108,7 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
             share={stats ? stats.memory / memoryLimit : null}
             value={stats ? `${formatBytes(stats.memory, 2)} / ${formatBytes(memoryLimit, 2)}` : memoryLabel(server.memory)}
           />
-          <Meter label={t('servers.specCpu')} share={stats ? stats.cpu / 100 / stats.cpuLimit : null} value={stats ? (server.cpu ? `${Math.round(stats.cpu)}% / ${server.cpu * 100}%` : `${Math.round(stats.cpu / stats.cpuLimit)}%`) : cores} />
+          <Meter label={t('servers.specCpu')} share={stats ? stats.cpu / 100 / stats.cpuLimit : null} value={stats ? (server.cpu ? `${stats.cpu.toFixed(2)}% / ${server.cpu * 100}%` : `${(stats.cpu / stats.cpuLimit).toFixed(2)}%`) : cores} />
           <div className="flex items-center justify-between gap-3 pt-0.5 font-mono text-xs text-subtle-foreground">
             <span className="flex min-w-0 items-center gap-1.5 [&_svg]:size-3.5 [&_svg]:shrink-0">
               <RiHardDrive3Fill />
