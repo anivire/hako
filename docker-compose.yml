@@ -1,0 +1,20 @@
+services:
+  hako:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - hako-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /srv/hako/servers:/srv/hako/servers
+      - /srv/hako/games:/data/games
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SERVERS_DIR: /srv/hako/servers
+      CURSEFORGE_API_KEY: ${CURSEFORGE_API_KEY:-}
+
+volumes:
+  hako-data:

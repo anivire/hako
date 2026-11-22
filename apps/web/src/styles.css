@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@hako/ui/styles.css';
+@import '@south-paw/typeface-minecraft/index.css';
+
+@font-face {
+  font-family: 'Monocraft';
+  font-display: swap;
+  src: url('./assets/fonts/Monocraft.ttf') format('truetype');
+}
+
+@utility font-minecraft {
+  font-family: 'Minecraft', 'Monocraft', monospace;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+@source '../../../packages/ui/src';
+
+:root {
+  --page-max-setting: 100vw;
+  --page-max: var(--page-max-setting);
+}
+
+body {
+  min-height: 100dvh;
+}
+
+@utility page-frame {
+  max-width: var(--page-max);
+  margin-left: clamp(var(--rail-left, 0px), calc((100% - var(--page-max)) / 2), calc(100% - var(--page-max) - var(--rail-right, 0px)));
+  margin-right: auto;
+}
+
+.empty-state {
+  flex-grow: 1;
+}
+
+.page-frame:has(> .empty-state) {
+  display: flex;
+  flex-direction: column;
+}

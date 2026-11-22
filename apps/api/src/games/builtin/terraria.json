@@ -1,0 +1,2093 @@
+{
+  "id": "terraria",
+  "name": "Terraria",
+  "description": {
+    "ru": "Ванильный сервер или tModLoader с модами из Steam Workshop",
+    "en": "Vanilla server or tModLoader with Steam Workshop mods"
+  },
+  "icon": "data:image/png;base64,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",
+  "image": "ryshe/terraria:{{VERSION}}",
+  "command": [
+    "-world",
+    "/data/{{WORLD}}.wld",
+    "-autocreate",
+    "{{SIZE}}",
+    "-worldname",
+    "{{WORLD}}"
+  ],
+  "dataPath": "/data",
+  "ports": [
+    {
+      "name": "game",
+      "container": 7777,
+      "protocol": "tcp"
+    }
+  ],
+  "memory": {
+    "default": 2048,
+    "min": 512
+  },
+  "console": {
+    "ready": "Server started",
+    "players": {
+      "join": "(?:^|: )([^:]+?)(?: \\([^)]*\\))? has joined\\.",
+      "leave": "(?:^|: )([^:]+?) has left\\."
+    }
+  },
+  "stop": {
+    "command": "exit",
+    "timeout": 30
+  },
+  "configs": [
+    {
+      "path": "serverconfig.txt",
+      "format": "properties",
+      "name": {
+        "ru": "Сервер",
+        "en": "Server"
+      },
+      "groups": [
+        {
+          "id": "general",
+          "name": {
+            "ru": "Основное",
+            "en": "General"
+          }
+        },
+        {
+          "id": "world",
+          "name": {
+            "ru": "Новый мир",
+            "en": "New world"
+          },
+          "description": {
+            "ru": "Применяется, только когда мир создаётся",
+            "en": "Applies only when the world is created"
+          }
+        },
+        {
+          "id": "journey",
+          "name": {
+            "ru": "Режим «Путешествие»",
+            "en": "Journey mode"
+          },
+          "description": {
+            "ru": "Кому доступны силы путешествия в мире этой сложности",
+            "en": "Who can use Journey powers in a world of this difficulty"
+          }
+        }
+      ],
+      "defaults": "maxplayers=8\npassword=\nmotd=\nsecure=1\nlanguage=en-US\nnpcstream=60\npriority=1\ndifficulty=0\nseed=\njourneypermission_time_setfrozen=2\njourneypermission_time_setdawn=2\njourneypermission_time_setnoon=2\njourneypermission_time_setdusk=2\njourneypermission_time_setmidnight=2\njourneypermission_time_setspeed=2\njourneypermission_godmode=2\njourneypermission_increaseplacementrange=2\njourneypermission_setdifficulty=2\njourneypermission_setspawnrate=2\njourneypermission_biomespread_setfrozen=2\njourneypermission_wind_setstrength=2\njourneypermission_wind_setfrozen=2\njourneypermission_rain_setstrength=2\njourneypermission_rain_setfrozen=2\n",
+      "fields": [
+        {
+          "key": "maxplayers",
+          "name": {
+            "ru": "Максимум игроков",
+            "en": "Max players"
+          },
+          "type": "number",
+          "default": "8",
+          "group": "general"
+        },
+        {
+          "key": "password",
+          "name": {
+            "ru": "Пароль",
+            "en": "Password"
+          },
+          "description": {
+            "ru": "Пусто — без пароля",
+            "en": "Empty means no password"
+          },
+          "group": "general"
+        },
+        {
+          "key": "motd",
+          "name": {
+            "ru": "Сообщение дня",
+            "en": "Message of the day"
+          },
+          "group": "general"
+        },
+        {
+          "key": "secure",
+          "name": {
+            "ru": "Защита от читов",
+            "en": "Cheat protection"
+          },
+          "type": "select",
+          "options": [
+            {
+              "value": "1",
+              "label": {
+                "ru": "Включена",
+                "en": "On"
+              }
+            },
+            {
+              "value": "0",
+              "label": {
+                "ru": "Выключена",
+                "en": "Off"
+              }
+            }
+          ],
+          "default": "1",
+          "group": "general"
+        },
+        {
+          "key": "language",
+          "name": {
+            "ru": "Язык сервера",
+            "en": "Server language"
+          },
+          "type": "select",
+          "options": [
+            {
+              "value": "en-US",
+              "label": "English"
+            },
+            {
+              "value": "ru-RU",
+              "label": "Русский"
+            },
+            {
+              "value": "de-DE",
+              "label": "Deutsch"
+            },
+            {
+              "value": "fr-FR",
+              "label": "Français"
+            },
+            {
+              "value": "es-ES",
+              "label": "Español"
+            },
+            {
+              "value": "pt-BR",
+              "label": "Português"
+            },
+            {
+              "value": "pl-PL",
+              "label": "Polski"
+            },
+            {
+              "value": "it-IT",
+              "label": "Italiano"
+            },
+            {
+              "value": "zh-Hans",
+              "label": "中文"
+            }
+          ],
+          "default": "en-US",
+          "group": "general"
+        },
+        {
+          "key": "npcstream",
+          "name": {
+            "ru": "Синхронизация NPC",
+            "en": "NPC stream"
+          },
+          "description": {
+            "ru": "Чем меньше, тем плавнее враги и больше трафик; 0 — выключено",
+            "en": "Lower means smoother enemies and more traffic; 0 turns it off"
+          },
+          "type": "number",
+          "default": "60",
+          "group": "general"
+        },
+        {
+          "key": "difficulty",
+          "name": {
+            "ru": "Сложность",
+            "en": "Difficulty"
+          },
+          "type": "select",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Классика",
+                "en": "Classic"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Эксперт",
+                "en": "Expert"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Мастер",
+                "en": "Master"
+              }
+            },
+            {
+              "value": "3",
+              "label": {
+                "ru": "Путешествие",
+                "en": "Journey"
+              }
+            }
+          ],
+          "default": "0",
+          "group": "world"
+        },
+        {
+          "key": "seed",
+          "name": {
+            "ru": "Сид",
+            "en": "Seed"
+          },
+          "group": "world"
+        },
+        {
+          "key": "priority",
+          "name": {
+            "ru": "Приоритет процесса",
+            "en": "Process priority"
+          },
+          "type": "select",
+          "default": "1",
+          "group": "general",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Реальное время",
+                "en": "Realtime"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Высокий",
+                "en": "High"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Выше обычного",
+                "en": "Above normal"
+              }
+            },
+            {
+              "value": "3",
+              "label": {
+                "ru": "Обычный",
+                "en": "Normal"
+              }
+            },
+            {
+              "value": "4",
+              "label": {
+                "ru": "Ниже обычного",
+                "en": "Below normal"
+              }
+            },
+            {
+              "value": "5",
+              "label": {
+                "ru": "Низкий",
+                "en": "Idle"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_time_setfrozen",
+          "name": {
+            "ru": "Остановка времени",
+            "en": "Freeze time"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_time_setdawn",
+          "name": {
+            "ru": "Рассвет",
+            "en": "Set dawn"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_time_setnoon",
+          "name": {
+            "ru": "Полдень",
+            "en": "Set noon"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_time_setdusk",
+          "name": {
+            "ru": "Закат",
+            "en": "Set dusk"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_time_setmidnight",
+          "name": {
+            "ru": "Полночь",
+            "en": "Set midnight"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_time_setspeed",
+          "name": {
+            "ru": "Скорость времени",
+            "en": "Time speed"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_godmode",
+          "name": {
+            "ru": "Бессмертие",
+            "en": "God mode"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_increaseplacementrange",
+          "name": {
+            "ru": "Дальность строительства",
+            "en": "Placement range"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_setdifficulty",
+          "name": {
+            "ru": "Сложность врагов",
+            "en": "Enemy difficulty"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_setspawnrate",
+          "name": {
+            "ru": "Частота появления врагов",
+            "en": "Enemy spawn rate"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_biomespread_setfrozen",
+          "name": {
+            "ru": "Остановка распространения биомов",
+            "en": "Freeze biome spread"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_wind_setstrength",
+          "name": {
+            "ru": "Сила ветра",
+            "en": "Wind strength"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_wind_setfrozen",
+          "name": {
+            "ru": "Остановка ветра",
+            "en": "Freeze wind"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_rain_setstrength",
+          "name": {
+            "ru": "Сила дождя",
+            "en": "Rain strength"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        },
+        {
+          "key": "journeypermission_rain_setfrozen",
+          "name": {
+            "ru": "Остановка дождя",
+            "en": "Freeze rain"
+          },
+          "type": "select",
+          "default": "2",
+          "group": "journey",
+          "options": [
+            {
+              "value": "0",
+              "label": {
+                "ru": "Никому",
+                "en": "Nobody"
+              }
+            },
+            {
+              "value": "1",
+              "label": {
+                "ru": "Только хосту",
+                "en": "Host only"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "ru": "Всем",
+                "en": "Everyone"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "key": "TYPE",
+      "step": "setup",
+      "name": {
+        "ru": "Сервер",
+        "en": "Server"
+      },
+      "type": "select",
+      "default": "vanilla",
+      "group": "version",
+      "options": [
+        {
+          "value": "vanilla",
+          "label": "Terraria",
+          "description": {
+            "ru": "Официальный сервер без модов",
+            "en": "Official server, no mods"
+          },
+          "icon": "data:image/png;base64,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",
+          "env": {
+            "CONFIGPATH": "/data",
+            "CONFIG_FILENAME": "serverconfig.txt",
+            "LOGPATH": "/data/logs",
+            "WORLDPATH": "/data"
+          }
+        },
+        {
+          "value": "tshock",
+          "label": "TShock",
+          "description": {
+            "ru": "Плагины, права и защита от гриферов",
+            "en": "Plugins, permissions and anti-griefing"
+          },
+          "icon": "data:image/png;base64,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",
+          "env": {
+            "CONFIGPATH": "/data/tshock",
+            "LOGPATH": "/data/logs"
+          },
+          "template": {
+            "image": "ryshe/terraria:{{TSHOCK_VERSION}}",
+            "configs": [
+              {
+                "path": "tshock/config.json",
+                "format": "json",
+                "name": {
+                  "ru": "TShock",
+                  "en": "TShock"
+                },
+                "description": {
+                  "ru": "Настройки TShock, файл появляется после первого запуска",
+                  "en": "TShock settings, the file appears after the first start"
+                },
+                "groups": [],
+                "fields": []
+              }
+            ],
+            "volumes": [
+              {
+                "path": "/plugins",
+                "folder": "plugins"
+              }
+            ]
+          }
+        },
+        {
+          "value": "tmodloader",
+          "label": "tModLoader",
+          "description": {
+            "ru": "Моды из Steam Workshop",
+            "en": "Mods from the Steam Workshop"
+          },
+          "icon": "data:image/png;base64,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",
+          "env": {
+            "TMOD_WORLDNAME": "{{WORLD}}",
+            "TMOD_WORLDSIZE": "{{SIZE}}",
+            "TMOD_DIFFICULTY": "{{DIFFICULTY}}",
+            "TMOD_WORLDSEED": "{{SEED}}",
+            "TMOD_MAXPLAYERS": "{{MAXPLAYERS}}",
+            "TMOD_MOTD": "{{MOTD}}",
+            "TMOD_PASS": "{{PASSWORD}}",
+            "TMOD_LANGUAGE": "{{LANGUAGE}}",
+            "TMOD_AUTODOWNLOAD": "{{MODS}}",
+            "TMOD_ENABLEDMODS": "{{MODS_ENABLED}}",
+            "TMOD_AUTOSAVE_INTERVAL": "{{AUTOSAVE}}",
+            "TMOD_PORT": "7777",
+            "TMOD_SECURE": "{{SECURE}}",
+            "TMOD_NPCSTREAM": "{{NPCSTREAM}}",
+            "TMOD_SHUTDOWN_MESSAGE": "{{SHUTDOWN_MESSAGE}}",
+            "TMOD_JOURNEY_SETFROZEN": "{{JOURNEY_SETFROZEN}}",
+            "TMOD_JOURNEY_SETDAWN": "{{JOURNEY_SETDAWN}}",
+            "TMOD_JOURNEY_SETNOON": "{{JOURNEY_SETNOON}}",
+            "TMOD_JOURNEY_SETDUSK": "{{JOURNEY_SETDUSK}}",
+            "TMOD_JOURNEY_SETMIDNIGHT": "{{JOURNEY_SETMIDNIGHT}}",
+            "TMOD_JOURNEY_TIME_SPEED": "{{JOURNEY_TIME_SPEED}}",
+            "TMOD_JOURNEY_GODMODE": "{{JOURNEY_GODMODE}}",
+            "TMOD_JOURNEY_PLACEMENT_RANGE": "{{JOURNEY_PLACEMENT_RANGE}}",
+            "TMOD_JOURNEY_SET_DIFFICULTY": "{{JOURNEY_SET_DIFFICULTY}}",
+            "TMOD_JOURNEY_SPAWN_RATE": "{{JOURNEY_SPAWN_RATE}}",
+            "TMOD_JOURNEY_BIOME_SPREAD": "{{JOURNEY_BIOME_SPREAD}}",
+            "TMOD_JOURNEY_WIND_STRENGTH": "{{JOURNEY_WIND_STRENGTH}}",
+            "TMOD_JOURNEY_WIND_FROZEN": "{{JOURNEY_WIND_FROZEN}}",
+            "TMOD_JOURNEY_RAIN_STRENGTH": "{{JOURNEY_RAIN_STRENGTH}}",
+            "TMOD_JOURNEY_RAIN_FROZEN": "{{JOURNEY_RAIN_FROZEN}}"
+          },
+          "template": {
+            "image": "jacobsmile/tmodloader1.4:{{TML_VERSION}}",
+            "command": [],
+            "console": {
+              "ready": "Server started",
+              "exec": [
+                "inject"
+              ],
+              "players": {
+                "join": "(?:^|: )([^:]+?)(?: \\([^)]*\\))? has joined\\.",
+                "leave": "(?:^|: )([^:]+?) has left\\."
+              }
+            },
+            "stop": {
+              "timeout": 60
+            },
+            "configs": [],
+            "addons": [
+              {
+                "source": "workshop",
+                "params": {
+                  "appId": "1281930",
+                  "all": "MODS",
+                  "enabled": "MODS_ENABLED",
+                  "enabledFile": "tModLoader/Mods/enabled.json"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "key": "VERSION",
+      "step": "setup",
+      "name": {
+        "ru": "Версия Terraria",
+        "en": "Terraria version"
+      },
+      "type": "select",
+      "default": "vanilla-1.4.5.8",
+      "options": [
+        {
+          "value": "vanilla-1.4.5.8",
+          "label": {
+            "ru": "1.4.5.8 — последняя",
+            "en": "1.4.5.8 — latest"
+          }
+        },
+        {
+          "value": "vanilla-1.4.5.7",
+          "label": "1.4.5.7"
+        },
+        {
+          "value": "vanilla-1.4.5.6",
+          "label": "1.4.5.6"
+        },
+        {
+          "value": "vanilla-1.4.5.5",
+          "label": "1.4.5.5"
+        },
+        {
+          "value": "vanilla-1.4.5.4",
+          "label": "1.4.5.4"
+        },
+        {
+          "value": "vanilla-1.4.5.3",
+          "label": "1.4.5.3"
+        },
+        {
+          "value": "vanilla-1.4.5.2",
+          "label": "1.4.5.2"
+        },
+        {
+          "value": "vanilla-1.4.5.1",
+          "label": "1.4.5.1"
+        }
+      ],
+      "group": "version",
+      "when": {
+        "TYPE": [
+          "vanilla"
+        ]
+      }
+    },
+    {
+      "key": "TSHOCK_VERSION",
+      "step": "setup",
+      "name": {
+        "ru": "Версия TShock",
+        "en": "TShock version"
+      },
+      "type": "select",
+      "default": "tshock-1.4.5.8-6.2.1",
+      "options": [
+        {
+          "value": "tshock-1.4.5.8-6.2.1",
+          "label": {
+            "ru": "6.2.1 · Terraria 1.4.5.8 — последняя",
+            "en": "6.2.1 · Terraria 1.4.5.8 — latest"
+          }
+        },
+        {
+          "value": "tshock-1.4.5.6-6.1.0",
+          "label": "6.1.0 · Terraria 1.4.5.6"
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tshock"
+        ]
+      },
+      "group": "version"
+    },
+    {
+      "key": "TML_VERSION",
+      "step": "setup",
+      "name": {
+        "ru": "Версия tModLoader",
+        "en": "tModLoader version"
+      },
+      "type": "select",
+      "default": "v2026.09.2.1",
+      "options": [
+        {
+          "value": "v2026.09.2.1",
+          "label": {
+            "ru": "2026.09.2.1 — последняя",
+            "en": "2026.09.2.1 — latest"
+          }
+        },
+        {
+          "value": "v2026.08.3.0",
+          "label": "2026.08.3.0"
+        },
+        {
+          "value": "v2026.08.2.2",
+          "label": "2026.08.2.2"
+        },
+        {
+          "value": "v2026.08.2.1",
+          "label": "2026.08.2.1"
+        },
+        {
+          "value": "v2026.08.2.0",
+          "label": "2026.08.2.0"
+        },
+        {
+          "value": "v2026.07.3.0",
+          "label": "2026.07.3.0"
+        },
+        {
+          "value": "v2026.07.2.6",
+          "label": "2026.07.2.6"
+        },
+        {
+          "value": "v2026.07.2.5",
+          "label": "2026.07.2.5"
+        },
+        {
+          "value": "v2026.06.3.6",
+          "label": "2026.06.3.6"
+        }
+      ],
+      "group": "version",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    },
+    {
+      "key": "WORLD",
+      "name": {
+        "ru": "Мир",
+        "en": "World"
+      },
+      "description": {
+        "ru": "Имя файла мира. Если такого мира нет, он создаётся при первом запуске",
+        "en": "World file name. A missing world is created on the first start"
+      },
+      "default": "world",
+      "pattern": "^[a-zA-Z0-9_-]{1,32}$",
+      "editable": false,
+      "group": "world"
+    },
+    {
+      "key": "SIZE",
+      "name": {
+        "ru": "Размер нового мира",
+        "en": "New world size"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "1",
+          "label": {
+            "ru": "Маленький",
+            "en": "Small"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Средний",
+            "en": "Medium"
+          }
+        },
+        {
+          "value": "3",
+          "label": {
+            "ru": "Большой",
+            "en": "Large"
+          }
+        }
+      ],
+      "group": "world"
+    },
+    {
+      "key": "DIFFICULTY",
+      "name": {
+        "ru": "Сложность нового мира",
+        "en": "New world difficulty"
+      },
+      "type": "select",
+      "default": "0",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Классика",
+            "en": "Classic"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Эксперт",
+            "en": "Expert"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Мастер",
+            "en": "Master"
+          }
+        },
+        {
+          "value": "3",
+          "label": {
+            "ru": "Путешествие",
+            "en": "Journey"
+          }
+        }
+      ],
+      "group": "world",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    },
+    {
+      "key": "SEED",
+      "name": {
+        "ru": "Сид нового мира",
+        "en": "New world seed"
+      },
+      "default": "",
+      "pattern": "^[\\w .-]{0,64}$",
+      "group": "world",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    },
+    {
+      "key": "ACCESS",
+      "name": {
+        "ru": "Вход",
+        "en": "Joining"
+      },
+      "type": "select",
+      "default": "open",
+      "options": [
+        {
+          "value": "open",
+          "label": {
+            "ru": "Без пароля",
+            "en": "No password"
+          },
+          "env": {
+            "TMOD_PASS": "N/A"
+          }
+        },
+        {
+          "value": "password",
+          "label": {
+            "ru": "По паролю",
+            "en": "With password"
+          }
+        }
+      ],
+      "group": "access",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    },
+    {
+      "key": "PASSWORD",
+      "name": {
+        "ru": "Пароль",
+        "en": "Password"
+      },
+      "required": true,
+      "pattern": "^\\S{1,64}$",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "ACCESS": [
+          "password"
+        ]
+      },
+      "group": "access"
+    },
+    {
+      "key": "MAXPLAYERS",
+      "name": {
+        "ru": "Максимум игроков",
+        "en": "Max players"
+      },
+      "type": "number",
+      "default": "8",
+      "pattern": "^([1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$",
+      "group": "server",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    },
+    {
+      "key": "MOTD",
+      "name": {
+        "ru": "Сообщение дня",
+        "en": "Message of the day"
+      },
+      "default": "",
+      "group": "server",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    },
+    {
+      "key": "LANGUAGE",
+      "name": {
+        "ru": "Язык сервера",
+        "en": "Server language"
+      },
+      "type": "select",
+      "default": "en-US",
+      "options": [
+        {
+          "value": "en-US",
+          "label": "English"
+        },
+        {
+          "value": "ru-RU",
+          "label": "Русский"
+        },
+        {
+          "value": "de-DE",
+          "label": "Deutsch"
+        },
+        {
+          "value": "fr-FR",
+          "label": "Français"
+        },
+        {
+          "value": "es-ES",
+          "label": "Español"
+        },
+        {
+          "value": "pt-BR",
+          "label": "Português"
+        },
+        {
+          "value": "pl-PL",
+          "label": "Polski"
+        },
+        {
+          "value": "it-IT",
+          "label": "Italiano"
+        },
+        {
+          "value": "zh-Hans",
+          "label": "中文"
+        }
+      ],
+      "group": "server",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    },
+    {
+      "key": "SECURE",
+      "name": {
+        "ru": "Защита от читов",
+        "en": "Cheat protection"
+      },
+      "type": "select",
+      "default": "1",
+      "options": [
+        {
+          "value": "1",
+          "label": {
+            "ru": "Включена",
+            "en": "On"
+          }
+        },
+        {
+          "value": "0",
+          "label": {
+            "ru": "Выключена",
+            "en": "Off"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      },
+      "group": "server"
+    },
+    {
+      "key": "NPCSTREAM",
+      "name": {
+        "ru": "Синхронизация NPC",
+        "en": "NPC stream"
+      },
+      "description": {
+        "ru": "Чем меньше, тем плавнее враги и больше трафик; 0 — выключено",
+        "en": "Lower means smoother enemies and more traffic; 0 turns it off"
+      },
+      "type": "number",
+      "default": "60",
+      "pattern": "^[0-9]{1,3}$",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      },
+      "group": "server"
+    },
+    {
+      "key": "AUTOSAVE",
+      "name": {
+        "ru": "Автосохранение, мин",
+        "en": "Autosave, minutes"
+      },
+      "type": "number",
+      "default": "10",
+      "pattern": "^[1-9][0-9]{0,2}$",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      },
+      "group": "server"
+    },
+    {
+      "key": "SHUTDOWN_MESSAGE",
+      "name": {
+        "ru": "Сообщение при остановке",
+        "en": "Shutdown message"
+      },
+      "description": {
+        "ru": "Пишется в чат перед выключением сервера",
+        "en": "Posted to the chat before the server shuts down"
+      },
+      "default": "",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      },
+      "group": "server"
+    },
+    {
+      "key": "JOURNEY_SETFROZEN",
+      "name": {
+        "ru": "Остановка времени",
+        "en": "Freeze time"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_SETDAWN",
+      "name": {
+        "ru": "Рассвет",
+        "en": "Set dawn"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_SETNOON",
+      "name": {
+        "ru": "Полдень",
+        "en": "Set noon"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_SETDUSK",
+      "name": {
+        "ru": "Закат",
+        "en": "Set dusk"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_SETMIDNIGHT",
+      "name": {
+        "ru": "Полночь",
+        "en": "Set midnight"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_TIME_SPEED",
+      "name": {
+        "ru": "Скорость времени",
+        "en": "Time speed"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_GODMODE",
+      "name": {
+        "ru": "Бессмертие",
+        "en": "God mode"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_PLACEMENT_RANGE",
+      "name": {
+        "ru": "Дальность строительства",
+        "en": "Placement range"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_SET_DIFFICULTY",
+      "name": {
+        "ru": "Сложность врагов",
+        "en": "Enemy difficulty"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_SPAWN_RATE",
+      "name": {
+        "ru": "Частота появления врагов",
+        "en": "Enemy spawn rate"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_BIOME_SPREAD",
+      "name": {
+        "ru": "Остановка распространения биомов",
+        "en": "Freeze biome spread"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_WIND_STRENGTH",
+      "name": {
+        "ru": "Сила ветра",
+        "en": "Wind strength"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_WIND_FROZEN",
+      "name": {
+        "ru": "Остановка ветра",
+        "en": "Freeze wind"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_RAIN_STRENGTH",
+      "name": {
+        "ru": "Сила дождя",
+        "en": "Rain strength"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "JOURNEY_RAIN_FROZEN",
+      "name": {
+        "ru": "Остановка дождя",
+        "en": "Freeze rain"
+      },
+      "type": "select",
+      "default": "2",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Никому",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Только хосту",
+            "en": "Host only"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Всем",
+            "en": "Everyone"
+          }
+        }
+      ],
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ],
+        "DIFFICULTY": [
+          "3"
+        ]
+      },
+      "group": "journey"
+    },
+    {
+      "key": "MODS",
+      "name": {
+        "ru": "Моды из Workshop",
+        "en": "Workshop mods"
+      },
+      "step": "managed",
+      "default": "",
+      "pattern": "^([0-9]{1,20}(,[0-9]{1,20})*)?$",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    },
+    {
+      "key": "MODS_ENABLED",
+      "name": {
+        "ru": "Включённые моды",
+        "en": "Enabled mods"
+      },
+      "step": "managed",
+      "default": "",
+      "pattern": "^([0-9]{1,20}(,[0-9]{1,20})*)?$",
+      "when": {
+        "TYPE": [
+          "tmodloader"
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "id": "version",
+      "name": {
+        "ru": "Версия",
+        "en": "Version"
+      }
+    },
+    {
+      "id": "world",
+      "name": {
+        "ru": "Мир",
+        "en": "World"
+      }
+    },
+    {
+      "id": "access",
+      "name": {
+        "ru": "Доступ",
+        "en": "Access"
+      }
+    },
+    {
+      "id": "server",
+      "name": {
+        "ru": "Сервер",
+        "en": "Server"
+      },
+      "collapsed": true
+    },
+    {
+      "id": "journey",
+      "name": {
+        "ru": "Режим «Путешествие»",
+        "en": "Journey mode"
+      },
+      "description": {
+        "ru": "Кому доступны силы путешествия в мире этой сложности",
+        "en": "Who can use Journey powers in a world of this difficulty"
+      },
+      "collapsed": true
+    }
+  ]
+}
