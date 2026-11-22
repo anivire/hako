@@ -257,6 +257,10 @@ export const ru = {
     imageUpdateStart: 'Скачать',
     imageUpdating: 'Скачиваю образ, следите за консолью',
     updatesAvailable: 'Есть обновления',
+    addonUpdates_one: '{{count}} обновление',
+    addonUpdates_few: '{{count}} обновления',
+    addonUpdates_many: '{{count}} обновлений',
+    addonUpdates_other: '{{count}} обновления',
   },
   worlds: {
     title: 'Миры',

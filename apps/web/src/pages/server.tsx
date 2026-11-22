@@ -1,4 +1,4 @@
-import { RiArchiveStackFill, RiArrowRightSLine, RiCalendarScheduleFill, RiDownloadCloud2Fill, RiEarthFill, RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
+import { RiArchiveStackFill, RiArrowRightSLine, RiArrowUpLine, RiCalendarScheduleFill, RiDownloadCloud2Fill, RiEarthFill, RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type GameVariable, type PowerAction, resolveTemplate, variableVisible } from '@hako/shared'
 import { Badge, Button, EmptyState, Popover, PopoverContent, PopoverTrigger, Segmented, Skeleton, Tooltip, cn, toast } from '@hako/ui'
@@ -103,6 +103,13 @@ function ServerView({ id }: { id: string }) {
   const [compact, setCompact] = useState(() => readStorage(COMPACT_KEY) === 'true')
   const games = useGames()
   const socket = useServerSocket(id)
+  const loaded = server.data
+  const loadedGame = loaded && games.data?.find((g) => g.id === loaded.game)
+  const addons = useQuery({ queryKey: keys.addons(id), queryFn: () => api.addons(id), enabled: Boolean(loaded?.addons && can(loaded, 'addons')) })
+  const addonUpdates = useQuery({ queryKey: ['addon-updates', id], queryFn: () => api.addonUpdates(id), enabled: false })
+  const worlds = useQuery({ queryKey: keys.worlds(id), queryFn: () => api.worlds(id), enabled: Boolean(loaded && loadedGame && resolveTemplate(loadedGame, loaded.variables).worlds && can(loaded, 'files')) })
+  const backups = useQuery({ queryKey: keys.backups(id), queryFn: () => api.backups(id), enabled: Boolean(loaded && can(loaded, 'files')) })
+  const schedules = useQuery({ queryKey: keys.schedules(id), queryFn: () => api.schedules(id), enabled: Boolean(loaded && can(loaded, 'settings')) })
   const power = useMutation({
     mutationFn: (action: PowerAction) => api.power(id, action),
     onSuccess: () => client.invalidateQueries({ queryKey: keys.servers, exact: true }),
@@ -170,6 +177,7 @@ function ServerView({ id }: { id: string }) {
   const requested = params.get('tab') as Tab | null
   const tab = requested && tabs.includes(requested) ? requested : 'overview'
   const address = serverAddress(s)
+  const counts: Partial<Record<Tab, number>> = { worlds: worlds.data?.worlds.length, backups: backups.data?.backups.length, schedules: schedules.data?.schedules.length }
   const offline = s.status === 'offline'
   return (
     <Page>
@@ -274,7 +282,7 @@ function ServerView({ id }: { id: string }) {
           size={compact ? 'sm' : 'md'}
           value={tab}
           onChange={(next) => setParams({ tab: next }, { replace: true })}
-          options={tabs.map((value) => ({ value, label: t(`server.tabs.${value === 'addons' ? s.addons! : value}`), icon: TAB_ICONS[value], count: value === 'addons' && s.updates.addons ? s.updates.addons : undefined }))}
+          options={tabs.map((value) => ({ value, label: value === 'addons' ? <AddonsTabLabel kind={s.addons!} total={addons.data?.entries.length} updates={addonUpdates.data?.length ?? s.updates.addons} /> : t(`server.tabs.${value}`), icon: TAB_ICONS[value], count: counts[value] || undefined }))}
         />
         <Tooltip content={compact ? t('console.fullView') : t('console.compactView')}>
           <Button
@@ -304,6 +312,22 @@ function ServerView({ id }: { id: string }) {
       {tab === 'access' ? <ServerAccess server={s} /> : null}
       <UploadManager server={s} />
     </Page>
+  )
+}
+
+function AddonsTabLabel({ kind, total, updates }: { kind: 'mods' | 'plugins'; total?: number; updates: number }) {
+  const { t } = useTranslation()
+  return (
+    <>
+      {t(`server.tabs.${kind}`)}
+      {total !== undefined ? <span className="font-mono text-[0.6875rem] text-subtle-foreground">{total}</span> : null}
+      {updates ? (
+        <span title={t('server.addonUpdates', { count: updates })} className="-ml-0.5 inline-flex items-center font-mono text-[0.6875rem] text-accent [&_svg]:!size-3">
+          <RiArrowUpLine />
+          {updates}
+        </span>
+      ) : null}
+    </>
   )
 }
 

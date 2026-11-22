@@ -259,6 +259,10 @@ export const en: Messages = {
     imageUpdateStart: 'Download',
     imageUpdating: 'Downloading the image, watch the console',
     updatesAvailable: 'Updates available',
+    addonUpdates_one: '{{count}} update',
+    addonUpdates_few: '{{count}} updates',
+    addonUpdates_many: '{{count}} updates',
+    addonUpdates_other: '{{count}} updates',
   },
   worlds: {
     title: 'Worlds',
