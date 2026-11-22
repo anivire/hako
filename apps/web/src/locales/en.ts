@@ -168,6 +168,8 @@ export const en: Messages = {
     pathExists: 'Something with this name already exists there',
     variable: 'Invalid value for {{detail}}',
     portTaken: 'This port is used by another server',
+    memoryHigh: 'The system does not have that much memory',
+    cpuHigh: 'The system does not have that many cores',
     memoryLow: 'Not enough memory for this game',
     gameUnknown: 'Game template not found',
     offline: 'The server is offline',

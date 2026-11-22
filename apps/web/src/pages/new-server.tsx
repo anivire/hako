@@ -216,7 +216,7 @@ function Wizard({ games }: { games: GameTemplate[] }) {
         icon: suggestion?.icon ?? null,
         game: game.id,
         memory: mem,
-        cpu,
+        cpu: cpu && system.data?.cpus ? Math.min(cpu, system.data.cpus) : cpu,
         variables: withDefaults(game, variables),
         ports: Object.fromEntries(
           Object.entries(ports)
@@ -323,7 +323,7 @@ function Wizard({ games }: { games: GameTemplate[] }) {
               </div>
             </Field>
             <Field label={t('servers.memoryPick')} hint={t('servers.memoryMin', { size: sizeLabel(game.memory.min) })}>
-              <MemoryPicker value={mem} min={game.memory.min} onChange={setMemory} />
+              <MemoryPicker value={mem} min={game.memory.min} max={system.data?.memory} onChange={setMemory} />
             </Field>
             <Field label={t('settings.cpu')} hint={cpu ? t('settings.cpuHint', { count: cpu }) : t('settings.cpuNone')}>
               <StepSlider

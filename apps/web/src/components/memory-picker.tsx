@@ -8,14 +8,15 @@ export function sizeLabel(mb: number) {
   return mb >= 1024 ? `${Number((mb / 1024).toFixed(1))} GB` : `${mb} MB`
 }
 
-export function MemoryPicker({ value, min, onChange, id }: { value: number; min: number; onChange: (mb: number) => void; id?: string }) {
+export function MemoryPicker({ value, min, max, onChange, id }: { value: number; min: number; max?: number | null; onChange: (mb: number) => void; id?: string }) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState<string | null>(null)
-  const steps = [...new Set([...PRESETS.filter((m) => m >= min), value >= min ? value : min])].sort((a, b) => a - b)
+  const top = max && max >= min ? max : Infinity
+  const steps = [...new Set([...PRESETS.filter((m) => m >= min && m < top), ...(Number.isFinite(top) ? [top] : []), Math.min(top, Math.max(min, value))])].sort((a, b) => a - b)
   const commit = (raw: string) => {
     const mb = Math.round(Number(raw))
     setDraft(null)
-    if (Number.isFinite(mb) && mb > 0) onChange(Math.max(min, mb))
+    if (Number.isFinite(mb) && mb > 0) onChange(Math.min(top, Math.max(min, mb)))
   }
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
@@ -26,6 +27,7 @@ export function MemoryPicker({ value, min, onChange, id }: { value: number; min:
           type="number"
           inputMode="numeric"
           min={min}
+          max={Number.isFinite(top) ? top : undefined}
           step={256}
           value={draft ?? String(value)}
           onChange={(e) => setDraft(e.target.value)}

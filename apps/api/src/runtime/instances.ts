@@ -526,11 +526,17 @@ export function hostPortFree(port: number, protocol: 'tcp' | 'udp'): Promise<boo
   })
 }
 
-export async function dockerCpus(): Promise<number | null> {
+let resources: { at: number; value: { cpus: number | null; memory: number | null } } | null = null
+
+export async function dockerResources(): Promise<{ cpus: number | null; memory: number | null }> {
+  if (resources && Date.now() - resources.at < 60_000) return resources.value
   try {
-    return ((await docker.info()) as { NCPU?: number }).NCPU ?? null
+    const info = (await docker.info()) as { NCPU?: number; MemTotal?: number }
+    const value = { cpus: info.NCPU ?? null, memory: info.MemTotal ? Math.floor(info.MemTotal / 1024 / 1024) : null }
+    resources = { at: Date.now(), value }
+    return value
   } catch {
-    return null
+    return { cpus: null, memory: null }
   }
 }
 

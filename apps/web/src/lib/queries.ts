@@ -62,6 +62,8 @@ export function errorMessage(error: unknown, t: TFunction): string {
     VARIABLE_INVALID: 'errors.variable',
     PORT_TAKEN: 'errors.portTaken',
     MEMORY_TOO_LOW: 'errors.memoryLow',
+    MEMORY_TOO_HIGH: 'errors.memoryHigh',
+    CPU_TOO_HIGH: 'errors.cpuHigh',
     GAME_UNKNOWN: 'errors.gameUnknown',
     SERVER_OFFLINE: 'errors.offline',
     PATH_INVALID: 'errors.path',

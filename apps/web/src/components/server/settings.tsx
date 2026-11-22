@@ -110,7 +110,7 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
             <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={64} required />
           </Field>
           <Field label={t('servers.memory')} hint={t('servers.memoryHint', { min: game.memory.min })} htmlFor="settings-memory">
-            <MemoryPicker id="settings-memory" value={memory} min={game.memory.min} onChange={setMemory} />
+            <MemoryPicker id="settings-memory" value={memory} min={game.memory.min} max={system.data?.memory} onChange={setMemory} />
           </Field>
           <Field label={t('settings.cpu')} hint={cpu ? t('settings.cpuHint', { count: cpu }) : t('settings.cpuNone')}>
             <StepSlider

@@ -23,7 +23,7 @@ import { optionSource } from '../options'
 import { type AppEnv, requireAuth } from '../lib/auth'
 import { badRequest, notFound } from '../lib/http'
 import { parseBody } from '../lib/validate'
-import { type ServerRow, dockerPublishedPorts, hostPortFree, instance, quickStats, runningCommand, serverDir, serverPorts, startedAtOf, statusOf, versionOf } from '../runtime/instances'
+import { type ServerRow, dockerPublishedPorts, dockerResources, hostPortFree, instance, quickStats, runningCommand, serverDir, serverPorts, startedAtOf, statusOf, versionOf } from '../runtime/instances'
 import { addPlayer, kickPlayer, readPlayers, removePlayer, roster } from '../services/players'
 import { diskUsage } from '../services/usage'
 import { proxyMap, setMap, setMapShare, sharedServer } from '../services/map'
@@ -66,6 +66,12 @@ async function checkPorts(requested: Record<string, number>, game: ReturnType<ty
     out.push({ name: p.name, protocol: p.protocol, requested: wanted ?? null, free, port })
   }
   return out
+}
+
+async function checkResources(memory?: number, cpu?: number | null) {
+  const host = await dockerResources()
+  if (memory !== undefined && host.memory && memory > host.memory) badRequest('MEMORY_TOO_HIGH')
+  if (cpu && host.cpus && cpu > host.cpus) badRequest('CPU_TOO_HIGH')
 }
 
 async function allocatePorts(requested: Record<string, number>, game: ReturnType<typeof requireGame>): Promise<Record<string, number>> {
@@ -149,6 +155,7 @@ export const serverRoutes = new Hono<ServerEnv>()
     const input = await parseBody(c, serverCreateSchema)
     const game = requireGame(input.game)
     if (input.memory < game.memory.min) badRequest('MEMORY_TOO_LOW')
+    await checkResources(input.memory, input.cpu)
     const row = db
       .insert(servers)
       .values({ id: randomBytes(4).toString('hex'), name: input.name, game: game.id, memory: input.memory, cpu: input.cpu ?? null, icon: input.icon ?? null, variables: resolveVariables(game, input.variables), ports: await allocatePorts(input.ports, game), ownerId: c.get('user').id, createdAt: now() })
@@ -165,6 +172,7 @@ export const serverRoutes = new Hono<ServerEnv>()
     const server = c.get('server')
     const game = requireGame(server.game)
     if (input.memory !== undefined && input.memory < game.memory.min) badRequest('MEMORY_TOO_LOW')
+    await checkResources(input.memory, input.cpu)
     const row = db
       .update(servers)
       .set({ name: input.name, memory: input.memory, cpu: input.cpu, icon: input.icon, variables: input.variables ? resolveVariables(game, input.variables, server.variables) : undefined })

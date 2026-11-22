@@ -10,7 +10,7 @@ import { db } from './db/client'
 import { users } from './db/schema'
 import { env } from './env'
 import { type AppEnv, requireAuth } from './lib/auth'
-import { dockerAvailable, dockerCpus } from './runtime/instances'
+import { dockerAvailable, dockerResources } from './runtime/instances'
 import { adminRoutes } from './routes/admin'
 import { authRoutes } from './routes/auth'
 import { gameRoutes, serverRoutes, shareRoutes } from './routes/servers'
@@ -25,7 +25,7 @@ app.use(async (c, next) => {
 })
 
 app.get('/api/health', (c) => c.json({ ok: true }))
-app.get('/api/system', requireAuth, async (c) => c.json({ docker: await dockerAvailable(), cpus: await dockerCpus() }))
+app.get('/api/system', requireAuth, async (c) => c.json({ docker: await dockerAvailable(), ...(await dockerResources()) }))
 app.get('/api/users', requireAuth, (c) => {
   const q = (c.req.query('q') ?? '').trim().slice(0, 32)
   const me = c.get('user').id
