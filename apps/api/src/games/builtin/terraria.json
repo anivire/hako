@@ -48,6 +48,16 @@
     ],
     "wait": 5
   },
+  "worlds": {
+    "entry": "{{NAME}}.wld",
+    "paths": [
+      "{{NAME}}.wld",
+      "{{NAME}}.wld.bak",
+      "{{NAME}}.twld",
+      "{{NAME}}.twld.bak"
+    ],
+    "variable": "WORLD"
+  },
   "players": {
     "name": "^[^\\s].{0,19}$",
     "kick": "kick {{NAME}}",

@@ -71,6 +71,19 @@
       ".cache"
     ]
   },
+  "worlds": {
+    "entry": "{{NAME}}/level.dat",
+    "paths": [
+      "{{NAME}}",
+      "{{NAME}}_nether",
+      "{{NAME}}_the_end"
+    ],
+    "property": {
+      "config": "server.properties",
+      "key": "level-name",
+      "default": "world"
+    }
+  },
   "players": {
     "name": "^[A-Za-z0-9_]{1,16}$",
     "avatar": "https://minotar.net/helm/{{NAME}}/32",

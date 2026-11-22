@@ -61,6 +61,18 @@
       "Logs"
     ]
   },
+  "worlds": {
+    "entry": "Saves/Multiplayer/{{NAME}}",
+    "paths": [
+      "Saves/Multiplayer/{{NAME}}",
+      "Server/{{NAME}}.ini",
+      "Server/{{NAME}}_SandboxVars.lua",
+      "Server/{{NAME}}_spawnregions.lua",
+      "Server/{{NAME}}_spawnpoints.lua",
+      "db/{{NAME}}.db"
+    ],
+    "variable": "WORLD"
+  },
   "players": {
     "name": "^[A-Za-z0-9_.-]{1,32}$",
     "kick": "kickuser \"{{NAME}}\""

@@ -1,4 +1,4 @@
-import { RiArchiveStackFill, RiArrowRightSLine, RiCalendarScheduleFill, RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
+import { RiArchiveStackFill, RiArrowRightSLine, RiCalendarScheduleFill, RiEarthFill, RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type GameVariable, type PowerAction, resolveTemplate, variableVisible } from '@hako/shared'
 import { Badge, Button, EmptyState, Popover, PopoverContent, PopoverTrigger, Segmented, Skeleton, Tooltip, cn, toast } from '@hako/ui'
@@ -10,6 +10,7 @@ import { StatusBadge, serverAddress } from '../components/server-bits'
 import { ServerAddons } from '../components/server/addons'
 import { ServerBackups } from '../components/server/backups'
 import { ServerSchedules } from '../components/server/schedules'
+import { ServerWorlds } from '../components/server/worlds'
 import { PLAYERS_TAB, ServerConfig } from '../components/server/config'
 import { ServerConsole } from '../components/server/console'
 import { ServerChat } from '../components/server/chat'
@@ -30,7 +31,7 @@ import { readStorage, writeStorage } from '../lib/storage'
 
 const COMPACT_KEY = 'hako:compact-metrics'
 
-type Tab = 'overview' | 'map' | 'config' | 'files' | 'addons' | 'backups' | 'schedules' | 'settings' | 'access'
+type Tab = 'overview' | 'map' | 'config' | 'files' | 'addons' | 'worlds' | 'backups' | 'schedules' | 'settings' | 'access'
 
 const TAB_ICONS: Record<Tab, ReactNode> = {
   overview: <RiDashboard3Fill />,
@@ -38,6 +39,7 @@ const TAB_ICONS: Record<Tab, ReactNode> = {
   config: <RiFileSettingsFill />,
   files: <RiFolder3Fill />,
   addons: <RiPuzzle2Fill />,
+  worlds: <RiEarthFill />,
   backups: <RiArchiveStackFill />,
   schedules: <RiCalendarScheduleFill />,
   settings: <RiSettings3Fill />,
@@ -150,6 +152,7 @@ function ServerView({ id }: { id: string }) {
     ...(game.configs.length && (can(s, 'config') || can(s, 'files')) ? (['config'] as const) : []),
     ...(can(s, 'files') ? (['files'] as const) : []),
     ...(s.addons && can(s, 'addons') ? (['addons'] as const) : []),
+    ...(game.worlds && can(s, 'files') ? (['worlds'] as const) : []),
     ...(can(s, 'files') ? (['backups'] as const) : []),
     ...(can(s, 'settings') ? (['schedules'] as const) : []),
     ...(can(s, 'settings') ? (['settings'] as const) : []),
@@ -269,6 +272,7 @@ function ServerView({ id }: { id: string }) {
       {tab === 'config' ? <ServerConfig server={s} game={game} online={socket.players} /> : null}
       {tab === 'files' ? <ServerFiles server={s} /> : null}
       {tab === 'addons' ? <ServerAddons server={s} game={game} /> : null}
+      {tab === 'worlds' ? <ServerWorlds server={s} /> : null}
       {tab === 'backups' ? <ServerBackups server={s} /> : null}
       {tab === 'schedules' ? <ServerSchedules server={s} game={game} /> : null}
       {tab === 'settings' ? <ServerSettings key={s.id} server={s} game={game} /> : null}

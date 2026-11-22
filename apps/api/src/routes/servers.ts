@@ -26,6 +26,7 @@ import { parseBody } from '../lib/validate'
 import { type ServerRow, dockerPublishedPorts, dockerResources, hostPortFree, instance, quickStats, runningCommand, serverDir, serverPorts, startedAtOf, statusOf, versionOf } from '../runtime/instances'
 import { addPlayer, kickPlayer, readPlayers, removePlayer, roster } from '../services/players'
 import { diskUsage } from '../services/usage'
+import { deleteWorld, downloadWorld, listWorlds, selectWorld, uploadWorld } from '../services/worlds'
 import { createSchedule, deleteSchedule, listSchedules, runScheduleNow, updateSchedule } from '../services/schedules'
 import { backupBusy, backupFile, backupsOverview, createBackup, pruneBackups, removeBackups, restoreBackup } from '../services/backups'
 import { proxyMap, setMap, setMapShare, sharedServer } from '../services/map'
@@ -331,6 +332,14 @@ export const serverRoutes = new Hono<ServerEnv>()
       headers: { 'Content-Type': 'application/gzip', 'Content-Length': String(stat.size), 'Content-Disposition': `attachment; filename="${c.get('server').id}-${path.basename(file)}"` },
     })
   })
+  .get('/:id/worlds', async (c) => c.json(await listWorlds(c.get('server'))))
+  .put('/:id/worlds/current', async (c) => {
+    const { name } = await parseBody(c, z.object({ name: z.string().trim().min(1).max(64) }))
+    return c.json(await selectWorld(c.get('server'), name))
+  })
+  .post('/:id/worlds/upload', bodyLimit({ maxSize: MAX_UPLOAD, onError: () => badRequest('FILE_TOO_LARGE') }), async (c) => c.json(await uploadWorld(c.get('server'), (c.req.query('name') ?? '').slice(0, 200), new Uint8Array(await c.req.arrayBuffer()))))
+  .get('/:id/worlds/:name/download', (c) => downloadWorld(c.get('server'), c.req.param('name')))
+  .delete('/:id/worlds/:name', async (c) => c.json(await deleteWorld(c.get('server'), c.req.param('name'))))
   .get('/:id/schedules', (c) => c.json(listSchedules(c.get('server').id)))
   .post('/:id/schedules', async (c) => c.json(createSchedule(c.get('server').id, await parseBody(c, scheduleSchema))))
   .put('/:id/schedules/:sid', async (c) => c.json(updateSchedule(c.get('server').id, Number(c.req.param('sid')), await parseBody(c, scheduleSchema))))

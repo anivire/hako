@@ -12,6 +12,7 @@ import type {
   BackupsOverview,
   ScheduleInput,
   SchedulesOverview,
+  WorldsOverview,
   FileEntry,
   PlayerEntry,
   PlayerList,
@@ -118,6 +119,12 @@ export const api = {
   restoreBackup: (id: string, name: string) => request<{ ok: true }>('POST', `${at(id)}/backups/${encodeURIComponent(name)}/restore`),
   deleteBackup: (id: string, name: string) => request<BackupsOverview>('DELETE', `${at(id)}/backups/${encodeURIComponent(name)}`),
   backupDownloadUrl: (id: string, name: string) => `/api${at(id)}/backups/${encodeURIComponent(name)}/download`,
+
+  worlds: (id: string) => get<WorldsOverview>(`${at(id)}/worlds`),
+  selectWorld: (id: string, name: string) => request<WorldsOverview>('PUT', `${at(id)}/worlds/current`, { name }),
+  uploadWorld: (id: string, file: File) => request<WorldsOverview>('POST', `${at(id)}/worlds/upload?name=${encodeURIComponent(file.name)}`, file),
+  deleteWorld: (id: string, name: string) => request<WorldsOverview>('DELETE', `${at(id)}/worlds/${encodeURIComponent(name)}`),
+  worldDownloadUrl: (id: string, name: string) => `/api${at(id)}/worlds/${encodeURIComponent(name)}/download`,
 
   schedules: (id: string) => get<SchedulesOverview>(`${at(id)}/schedules`),
   createSchedule: (id: string, input: ScheduleInput) => request<SchedulesOverview>('POST', `${at(id)}/schedules`, input),

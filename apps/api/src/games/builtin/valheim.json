@@ -46,6 +46,16 @@
   "stop": {
     "timeout": 120
   },
+  "worlds": {
+    "entry": "worlds_local/{{NAME}}.fwl",
+    "paths": [
+      "worlds_local/{{NAME}}.fwl",
+      "worlds_local/{{NAME}}.db",
+      "worlds_local/{{NAME}}.fwl.old",
+      "worlds_local/{{NAME}}.db.old"
+    ],
+    "variable": "WORLD"
+  },
   "variables": [
     {
       "key": "WORLD",

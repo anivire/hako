@@ -26,6 +26,7 @@ hako (箱, "box") runs each game server in its own Docker container and gives yo
 - Minecraft players: admins, bans and the allowlist, plus everyone who has joined, with kick, ban and op in one click. Changes go through the console while the server runs.
 - File manager with an editor, upload and download.
 - Backups of the server folder: the world is saved first while the server runs, the last N are kept, restore and download in one click.
+- Worlds: several per server, switch between them, download one as a `.zip` or upload your own.
 - Schedules: cron tasks made of steps, such as a message to players, a pause, a console command, a backup and a restart.
 
 **Mods**

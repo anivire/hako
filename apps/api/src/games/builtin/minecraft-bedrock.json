@@ -45,6 +45,17 @@
     ],
     "wait": 5
   },
+  "worlds": {
+    "entry": "worlds/{{NAME}}/level.dat",
+    "paths": [
+      "worlds/{{NAME}}"
+    ],
+    "property": {
+      "config": "server.properties",
+      "key": "level-name",
+      "default": "Bedrock level"
+    }
+  },
   "players": {
     "name": "^[A-Za-z0-9][A-Za-z0-9 ]{0,15}$",
     "kick": "kick \"{{NAME}}\"",

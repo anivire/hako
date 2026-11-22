@@ -64,6 +64,28 @@ export const volumesSchema = z.array(z.object({ path: z.string().startsWith('/')
 
 export const backupSpecSchema = z.object({ before: z.array(z.string()).default([]), after: z.array(z.string()).default([]), wait: z.number().int().min(0).max(120).default(5), exclude: z.array(z.string().regex(/^[\w.-]+$/)).default([]) })
 
+const worldPathSchema = z.string().min(1).max(256).refine((p) => !p.split('/').some((s) => s === '..' || s === ''), 'relative path')
+export const worldsSchema = z.object({
+  entry: worldPathSchema.refine((p) => p.split('/').filter((s) => s.includes('{{NAME}}')).length === 1, 'one {{NAME}} segment'),
+  paths: z.array(worldPathSchema).min(1),
+  variable: z.string().optional(),
+  property: z.object({ config: z.string(), key: z.string(), default: z.string() }).optional(),
+})
+export type WorldsSpec = z.infer<typeof worldsSchema>
+
+export interface World {
+  name: string
+  size: number
+  modifiedAt: string | null
+  current: boolean
+}
+
+export interface WorldsOverview {
+  worlds: World[]
+  current: string
+  offline: boolean
+}
+
 export const templateOverrideSchema = z.object({
   image: z.string().min(1).optional(),
   command: z.array(z.string()).optional(),
@@ -73,6 +95,7 @@ export const templateOverrideSchema = z.object({
   addons: addonSourcesSchema.optional(),
   volumes: volumesSchema.optional(),
   players: playersSchema.optional(),
+  worlds: worldsSchema.optional(),
 })
 
 export const variableSchema = z.object({
@@ -132,6 +155,7 @@ export const gameTemplateSchema = z.object({
   addons: addonSourcesSchema.default([]),
   configs: z.array(configFileSchema).default([]),
   files: z.array(fileRuleSchema).default([]),
+  worlds: worldsSchema.optional(),
   backup: backupSpecSchema.default({ before: [], after: [], wait: 5, exclude: [] }),
   startup: z.string().optional(),
   groups: z.array(z.object({ id: z.string(), name: textSchema, description: textSchema.optional(), collapsed: z.boolean().optional() })).default([]),

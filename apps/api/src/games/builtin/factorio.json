@@ -47,6 +47,13 @@
     ],
     "wait": 5
   },
+  "worlds": {
+    "entry": "saves/{{NAME}}.zip",
+    "paths": [
+      "saves/{{NAME}}.zip"
+    ],
+    "variable": "SAVE_NAME"
+  },
   "healthcheck": false,
   "players": {
     "name": "^[A-Za-z0-9_.-]{1,60}$",
