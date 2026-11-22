@@ -103,7 +103,6 @@ export function NavPositionSettings({ compact }: { compact?: boolean }) {
 }
 
 function ServerOrder() {
-  const { t } = useTranslation()
   const text = useText()
   const { serverOrder, setServerOrder, hiddenServers, setHiddenServers } = useAppearance()
   const servers = useQuery({ queryKey: keys.servers, queryFn: api.servers })
@@ -141,7 +140,6 @@ function ServerOrder() {
           })}
         </SortableContext>
       </DndContext>
-      <p className="px-2 pt-1 text-xs text-muted-foreground">{t('appearance.serverOrderHint')}</p>
     </div>
   )
 }

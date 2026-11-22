@@ -48,7 +48,9 @@ export async function readText(serverId: string, relative: string): Promise<stri
   const stat = await fs.stat(file).catch(() => notFound('PATH_NOT_FOUND'))
   if (!stat.isFile()) badRequest('NOT_A_FILE')
   if (stat.size > MAX_EDIT_BYTES) badRequest('FILE_TOO_LARGE')
-  return fs.readFile(file, 'utf8')
+  const data = await fs.readFile(file)
+  if (data.includes(0)) badRequest('FILE_BINARY')
+  return data.toString('utf8')
 }
 
 export async function writeFile(serverId: string, relative: string, data: string | Uint8Array) {

@@ -100,7 +100,7 @@ Settings that live in a config file should not also be template variables passed
 
 | Source | Params | Gives |
 |---|---|---|
-| `minecraft-versions` | `snapshots`: `true` to include snapshots | `LATEST` and Minecraft releases, from Modrinth |
+| `minecraft-versions` | `snapshots`, `betas`: `true` to include snapshots or old beta versions | `LATEST` and Minecraft releases, from Modrinth |
 | `modrinth-modpacks` | | Modpack slugs from Modrinth search, use with `search: true` |
 | `modrinth-versions` | `project`: slug or id | Versions of a Modrinth project, empty value means the latest |
 | `curseforge-modpacks` | | Modpack slugs from CurseForge search, needs `CURSEFORGE_API_KEY` |

@@ -5,7 +5,7 @@ import { db } from '../db/client'
 import { serverMembers, servers, users } from '../db/schema'
 import { env } from '../env'
 import { type AppEnv, requireAdmin, requireAuth, toUser } from '../lib/auth'
-import { badRequest } from '../lib/http'
+import { badRequest, notFound } from '../lib/http'
 import { intParam, parseBody } from '../lib/validate'
 import { createInvite, deleteInvite, listInvites } from '../services/invites'
 import { curseforgeKey, getSetting, setSetting } from '../services/settings'
@@ -25,14 +25,12 @@ async function reachable(provider: (typeof PROVIDERS)[number]): Promise<boolean>
   return Boolean(res && (provider.needsKey ? res.ok : res.status < 500))
 }
 
-async function providers(): Promise<ProviderInfo[]> {
-  const checks = await Promise.all(PROVIDERS.map(reachable))
-  return PROVIDERS.map((p, i) => ({
+function providers(): ProviderInfo[] {
+  return PROVIDERS.map((p) => ({
     id: p.id,
     url: p.url,
     needsKey: Boolean(p.needsKey),
     keySource: p.needsKey ? (getSetting('curseforgeApiKey') ? 'settings' : env.curseforgeApiKey ? 'env' : null) : null,
-    reachable: checks[i]!,
   }))
 }
 
@@ -74,9 +72,13 @@ export const adminRoutes = new Hono<AppEnv>()
     deleteInvite(intParam(c, 'id'))
     return c.json(listInvites({}))
   })
-  .get('/providers', async (c) => c.json(await providers()))
+  .get('/providers', (c) => c.json(providers()))
+  .get('/providers/:id/status', async (c) => {
+    const provider = PROVIDERS.find((p) => p.id === c.req.param('id')) ?? notFound()
+    return c.json({ reachable: await reachable(provider) })
+  })
   .put('/providers/curseforge', async (c) => {
     const { key } = await parseBody(c, providerKeySchema)
     setSetting('curseforgeApiKey', key)
-    return c.json(await providers())
+    return c.json(providers())
   })

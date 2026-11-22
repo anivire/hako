@@ -55,7 +55,6 @@ export const en: Messages = {
     unavailable: 'The Java process is not running yet',
   },
   appearance: {
-    serverOrderHint: 'Drag to change the order in the navigation bar, switch off to hide a server there',
     navPosition: {
       title: 'Navigation bar',
       left: 'Left',
@@ -167,6 +166,7 @@ export const en: Messages = {
     offline: 'The server is offline',
     path: 'Invalid path',
     fileTooLarge: 'The file is too large',
+    fileBinary: 'This is a binary file, it cannot be opened as text',
     addonsUnsupported: 'This server does not support mods',
     addonNoVersion: 'No version for this game version and server type',
     addonDownload: 'Could not download the file',
@@ -259,6 +259,8 @@ export const en: Messages = {
     clear: 'Clear the screen',
     fullscreen: 'Full screen',
     exitFullscreen: 'Exit full screen',
+    expandConsole: 'Expand console',
+    shrinkConsole: 'Shrink console',
     toBottom: 'To the bottom',
   },
   files: {
@@ -361,7 +363,7 @@ export const en: Messages = {
   },
   system: {
     dockerTitle: 'Docker is unavailable',
-    dockerHint: 'Servers cannot start until the panel connects to Docker. Start Docker or check DOCKER_SOCKET.',
+    dockerHint: 'Servers cannot start until the panel connects to Docker. Make sure Docker is running on this machine.',
   },
   settings: {
     changedRevert: 'Changed · revert',
@@ -374,7 +376,8 @@ export const en: Messages = {
     saved: 'Saved',
     dangerTitle: 'Delete',
     deleteHint: 'The server and all its files are deleted for good',
-    confirmDelete: 'Type “{{name}}” to delete the server',
+    deleteTitle: 'Delete {{name}}?',
+    confirmDelete: 'Type “{{name}}” to confirm',
     delete: 'Delete server',
     icon: 'Icon',
     iconHint: 'Shown in the server list and the header. The image is scaled down to 128 × 128',
@@ -430,6 +433,8 @@ export const en: Messages = {
       title: 'Providers',
       hint: 'External services the panel takes versions, modpacks, mods and player data from',
       recheck: 'Check again',
+      checking: 'Checking…',
+      settings: 'Settings',
       noKey: 'Needs a key',
       reachable: 'Reachable',
       unreachable: 'Unreachable',

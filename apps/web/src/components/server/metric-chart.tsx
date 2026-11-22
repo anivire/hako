@@ -100,7 +100,9 @@ export function StatCard({
   format,
   length,
   loading,
+  compact,
 }: {
+  compact?: boolean
   title: string
   icon: ReactNode
   value: string
@@ -112,6 +114,14 @@ export function StatCard({
   loading?: boolean
 }) {
   const chart = !loading && series && max !== undefined && format && length
+  if (compact)
+    return (
+      <Card className="flex min-w-0 items-center gap-2.5 px-4 py-3 text-muted-foreground">
+        <span className="[&_svg]:size-4">{icon}</span>
+        <span className="truncate text-sm">{title}</span>
+        {loading ? <Skeleton className="ml-auto h-5 w-16" /> : <span className="ml-auto shrink-0 text-lg font-semibold tabular-nums tracking-tight text-foreground">{value}</span>}
+      </Card>
+    )
   return (
     <Card className="flex min-h-[9.75rem] min-w-0 flex-col justify-between overflow-hidden">
       <div className={cn('flex flex-col gap-0.5 px-4 pt-3.5', !chart && !loading && 'flex-1 pb-3.5')}>

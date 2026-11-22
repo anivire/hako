@@ -1,7 +1,7 @@
 import { RiCheckFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type GameVariable, type PowerAction, resolveTemplate, variableVisible } from '@hako/shared'
-import { Button, EmptyState, Segmented, Skeleton, Tooltip, cn, toast } from '@hako/ui'
+import { Badge, Button, EmptyState, Segmented, Skeleton, Tooltip, toast } from '@hako/ui'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router'
@@ -96,21 +96,23 @@ function ServerView({ id }: { id: string }) {
   if (server.isPending || games.isPending)
     return (
       <Page>
-        <div className="mb-6 flex items-center gap-5">
-          <Skeleton className="size-16 rounded-[22%]" />
-          <div className="flex flex-1 flex-col gap-2.5">
-            <Skeleton className="h-7 w-56" />
-            <Skeleton className="h-4 w-72" />
+        <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-4">
+          <Skeleton className="size-[72px] rounded-[22%]" />
+          <div className="flex min-w-0 flex-1 flex-col justify-between gap-1 self-stretch">
+            <Skeleton className="h-8 w-56 max-w-full" />
+            <Skeleton className="h-6 w-80 max-w-full" />
           </div>
           <Skeleton className="h-9 w-28" />
         </div>
-        <Skeleton className="mb-4 h-10 w-full max-w-xl" />
-        <div className="mb-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-36" />
-          ))}
+        <Skeleton className="mb-4 h-10 w-96 max-w-full rounded-xl" />
+        <div className="flex flex-1 flex-col gap-3">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="min-h-[9.75rem]" />
+            ))}
+          </div>
+          <Skeleton className="min-h-80 flex-1" />
         </div>
-        <Skeleton className="h-96" />
       </Page>
     )
   if (server.error || !server.data)
@@ -143,14 +145,14 @@ function ServerView({ id }: { id: string }) {
   return (
     <Page>
       <DockerWarning />
-      <header className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-4">
-        <ServerAvatar game={game} values={s.variables} icon={s.icon} size={64} ring="var(--color-background)" />
-        <div className="min-w-0 flex-1">
+      <header className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-4">
+        <ServerAvatar game={game} values={s.variables} icon={s.icon} size={72} ring="var(--color-background)" />
+        <div className="flex min-w-0 flex-1 flex-col justify-between gap-1 self-stretch">
           <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xl font-semibold tracking-tight">
             <span className="break-words">{s.name}</span>
             <StatusBadge status={s.status} />
           </h1>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.9375rem] text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 [&>*]:min-h-6 text-[0.9375rem] text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0">
             <span className="flex items-center gap-1.5">
               <RiPriceTag3Fill />
               <ServerSummary game={game} values={s.variables} version={s.version} />
@@ -166,9 +168,18 @@ function ServerView({ id }: { id: string }) {
                 })
               }
             >
-              {copied ? <RiCheckFill className="text-success" /> : <RiLinkM />}
-              <span className={cn('text-sm', copied ? 'text-success' : 'font-mono')} aria-live="polite">
-                {copied ? t('server.copied') : address}
+              <span aria-live="polite" className="flex items-center gap-1.5">
+                {copied ? (
+                  <Badge variant="success">
+                    <RiCheckFill />
+                    {t('server.copied')}
+                  </Badge>
+                ) : (
+                  <>
+                    <RiLinkM />
+                    <span className="font-mono text-sm">{address}</span>
+                  </>
+                )}
               </span>
             </button>
             {s.startedAt && !offline ? (

@@ -70,6 +70,7 @@ export function errorMessage(error: unknown, t: TFunction): string {
     PLAYER_NOT_FOUND: 'errors.playerNotFound',
     PLAYER_NAME_INVALID: 'errors.playerName',
     FILE_TOO_LARGE: 'errors.fileTooLarge',
+    FILE_BINARY: 'errors.fileBinary',
     NOT_A_FILE: 'errors.path',
     MODPACK_LINKED: 'errors.modpackLinked',
     MODPACK_NOT_LINKED: 'errors.modpackLinked',

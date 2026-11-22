@@ -42,7 +42,7 @@ const compact = new Intl.NumberFormat('en', { notation: 'compact' })
 const SOURCES: Record<string, OptionSource> = {
   async 'minecraft-versions'(params) {
     const tags = await cachedJson<{ version: string; version_type: string }[]>(`${MODRINTH}/tag/game_version`)
-    const allowed = params.snapshots === 'true' ? ['release', 'snapshot'] : ['release']
+    const allowed = ['release', ...(params.snapshots === 'true' ? ['snapshot'] : []), ...(params.betas === 'true' ? ['beta'] : [])]
     const list = tags.filter((t) => allowed.includes(t.version_type))
     const latest = tags.find((t) => t.version_type === 'release')?.version
     return [{ value: 'LATEST', label: LATEST, hint: latest }, ...list.map((t) => ({ value: t.version, label: t.version, hint: t.version_type === 'release' ? undefined : t.version_type }))]

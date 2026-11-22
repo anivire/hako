@@ -2,7 +2,9 @@ import {
   RiArrowDownFill,
   RiTeamFill,
   RiArrowUpDownFill,
+  RiContractUpDownFill,
   RiCpuFill,
+  RiExpandUpDownFill,
   RiDatabase2Fill,
   RiHardDrive3Fill,
   RiArrowDownSLine,
@@ -31,6 +33,7 @@ import { CONSOLE_BACKGROUND, ConsoleTerminal, type TerminalHandle } from './term
 import type { LogFilter } from '../../lib/log-highlight'
 
 const FONT_KEY = 'hako:console-font'
+const COMPACT_KEY = 'hako:compact-metrics'
 const FILTERS: LogFilter[] = ['all', 'error', 'warn', 'info']
 const FONT_SIZES = [11, 12, 13, 14, 16, 18]
 
@@ -42,7 +45,7 @@ function rates(stats: ServerStats[], key: 'rx' | 'tx') {
   })
 }
 
-function Metrics({ server, stats }: { server: Server; stats: ServerStats[] }) {
+function Metrics({ server, stats, compact }: { server: Server; stats: ServerStats[]; compact: boolean }) {
   const { t } = useTranslation()
   const last = stats.at(-1)
   const live = server.status !== 'offline' && last
@@ -61,6 +64,7 @@ function Metrics({ server, stats }: { server: Server; stats: ServerStats[] }) {
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
       <StatCard
+        compact={compact}
         title={t('console.cpu')}
         icon={<RiCpuFill />}
         value={live ? percent(last.cpu) : '—'}
@@ -72,6 +76,7 @@ function Metrics({ server, stats }: { server: Server; stats: ServerStats[] }) {
         loading={warming}
       />
       <StatCard
+        compact={compact}
         title={t('console.memory')}
         icon={<RiDatabase2Fill />}
         value={live ? percent((last.memory / memoryLimit) * 100) : '—'}
@@ -83,6 +88,7 @@ function Metrics({ server, stats }: { server: Server; stats: ServerStats[] }) {
         loading={warming}
       />
       <StatCard
+        compact={compact}
         title={t('console.network')}
         icon={<RiArrowUpDownFill />}
         value={live && rx.length ? `${formatBytes(rx.at(-1)! + tx.at(-1)!)}/s` : '—'}
@@ -113,7 +119,7 @@ function Metrics({ server, stats }: { server: Server; stats: ServerStats[] }) {
         length={SAMPLES - 1}
         loading={server.status !== 'offline' && rx.length < 2}
       />
-      <StatCard title={t('console.storage')} icon={<RiHardDrive3Fill />} value={usage.data ? formatBytes(usage.data.bytes) : '—'} detail={t('console.storageHint')} loading={usage.isPending} />
+      <StatCard compact={compact} title={t('console.storage')} icon={<RiHardDrive3Fill />} value={usage.data ? formatBytes(usage.data.bytes) : '—'} detail={t('console.storageHint')} loading={usage.isPending} />
     </div>
   )
 }
@@ -194,6 +200,7 @@ export function ServerConsole({ server, socket, playerList }: { server: Server; 
     const stored = Number(readStorage(FONT_KEY))
     return FONT_SIZES.includes(stored) ? stored : 13
   })
+  const [compact, setCompact] = useState(() => readStorage(COMPACT_KEY) === 'true')
   const allowed = server.access.manage || server.access.permissions.includes('console')
   const offline = server.status === 'offline' || !allowed
 
@@ -246,7 +253,7 @@ export function ServerConsole({ server, socket, playerList }: { server: Server; 
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <Metrics server={server} stats={socket.stats} />
+      <Metrics server={server} stats={socket.stats} compact={compact} />
       {playerList && server.status !== 'offline' ? <Players server={server} players={socket.players} heads={playerList === 'minecraft'} /> : null}
       <Card className={cn('flex flex-1 flex-col overflow-hidden', fullscreen && 'fixed inset-0 z-50 rounded-none')}>
         <div className="flex flex-wrap items-center gap-2 p-2.5 lg:grid lg:grid-cols-[1fr_minmax(16rem,26rem)_1fr]">
@@ -320,6 +327,15 @@ export function ServerConsole({ server, socket, playerList }: { server: Server; 
               </ToolButton>
               <ToolButton label={t('console.clear')} onClick={() => terminal.current?.clear()}>
                 <RiEraserFill />
+              </ToolButton>
+              <ToolButton
+                label={compact ? t('console.shrinkConsole') : t('console.expandConsole')}
+                onClick={() => {
+                  setCompact(!compact)
+                  writeStorage(COMPACT_KEY, String(!compact))
+                }}
+              >
+                {compact ? <RiContractUpDownFill /> : <RiExpandUpDownFill />}
               </ToolButton>
               <ToolButton label={fullscreen ? t('console.exitFullscreen') : t('console.fullscreen')} onClick={() => setFullscreen(!fullscreen)}>
                 {fullscreen ? <RiFullscreenExitFill /> : <RiFullscreenFill />}

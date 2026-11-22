@@ -1,7 +1,7 @@
 import { RiArrowGoBackFill, RiUploadFill } from '@remixicon/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { GameTemplate, Server } from '@hako/shared'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Field, Input, Tooltip, toast } from '@hako/ui'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, DialogClose, DialogContent, DialogTrigger, Field, Input, Tooltip, toast } from '@hako/ui'
 import { type FormEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GroupIcon } from '../../lib/group-icons'
@@ -145,20 +145,46 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
               </div>
             </CardHeader>
             <CardContent>
-              <Button
-                variant="danger"
-                loading={remove.isPending}
-                onClick={() => {
-                  if (prompt(t('settings.confirmDelete', { name: server.name })) === server.name) remove.mutate()
-                }}
-              >
-                {t('settings.delete')}
-              </Button>
+              <DeleteServer name={server.name} pending={remove.isPending} onConfirm={() => remove.mutate()} />
             </CardContent>
           </Card>
         ) : null}
       </div>
     </div>
+  )
+}
+
+function DeleteServer({ name, pending, onConfirm }: { name: string; pending: boolean; onConfirm: () => void }) {
+  const { t } = useTranslation()
+  const [typed, setTyped] = useState('')
+  const match = typed.trim() === name
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    if (match) onConfirm()
+  }
+  return (
+    <Dialog onOpenChange={() => setTyped('')}>
+      <DialogTrigger asChild>
+        <Button variant="danger">{t('settings.delete')}</Button>
+      </DialogTrigger>
+      <DialogContent title={t('settings.deleteTitle', { name })} description={t('settings.deleteHint')}>
+        <form onSubmit={submit} className="flex flex-col gap-4 px-6 pb-5 pt-2">
+          <Field label={t('settings.confirmDelete', { name })}>
+            <Input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={name} autoComplete="off" spellCheck={false} autoFocus />
+          </Field>
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button type="button" variant="ghost">
+                {t('common.cancel')}
+              </Button>
+            </DialogClose>
+            <Button type="submit" variant="danger" disabled={!match} loading={pending}>
+              {t('settings.delete')}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -12,7 +12,7 @@ import {
   RiUploadCloud2Fill,
   RiUploadFill,
 } from '@remixicon/react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { FileEntry, Server } from '@hako/shared'
 import { Badge, Button, Card, EmptyState, Input, Progress, Skeleton, Tooltip, cn, toast } from '@hako/ui'
 import { type DragEvent, type FormEvent, useRef, useState } from 'react'
@@ -73,7 +73,7 @@ function FileEditor({ server, path, onClose }: { server: Server; path: string; o
           {t('common.save')}
         </Button>
       </div>
-      <div className="min-h-0 flex-1 bg-inset">
+      <div className="min-h-0 flex-1 px-2 pb-2">
         {file.error ? (
           <EmptyState title={errorMessage(file.error, t)} />
         ) : file.isPending ? (
@@ -164,7 +164,7 @@ export function ServerFiles({ server }: { server: Server }) {
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const depth = useRef(0)
   const upload = useRef<HTMLInputElement>(null)
-  const files = useQuery({ queryKey: keys.files(server.id, dir), queryFn: () => api.files(server.id, dir) })
+  const files = useQuery({ queryKey: keys.files(server.id, dir), queryFn: () => api.files(server.id, dir), placeholderData: keepPreviousData })
   const refresh = () => client.invalidateQueries({ queryKey: ['files', server.id] })
   const navigate = (change: (next: URLSearchParams) => void) =>
     setParams((p) => {

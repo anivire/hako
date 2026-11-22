@@ -326,7 +326,6 @@ export interface ProviderInfo {
   url: string
   needsKey: boolean
   keySource: 'settings' | 'env' | null
-  reachable: boolean | null
 }
 
 export const usernameSchema = z.string().regex(/^[a-zA-Z0-9_.-]{3,32}$/)

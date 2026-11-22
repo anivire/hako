@@ -29,6 +29,7 @@
     "CF_FILE_ID": "{{CF_FILE_ID}}",
     "MEMORY": "{{SERVER_HEAP}}M",
     "TZ": "UTC",
+    "STOP_DURATION": "180",
     "JVM_OPTS": "{{JVM_OPTS}}",
     "EXTRA_ARGS": "{{EXTRA_ARGS}}",
     "USE_SIMD_FLAGS": "{{SIMD}}",
@@ -37,15 +38,15 @@
     "MODRINTH_EXCLUDE_FILES": "{{MODPACK_EXCLUDE}}"
   },
   "console": {
-    "ready": "Done \\(",
+    "ready": "Done \\(|Server started in",
     "version": "Starting minecraft server version (\\S+)",
     "players": {
-      "join": ": ([A-Za-z0-9_.]{1,16})(?:\\[[^\\]]*\\])? joined the game",
-      "leave": ": ([A-Za-z0-9_.]{1,16}) left the game"
+      "join": "(?:: |\\] )([A-Za-z0-9_.]{1,16})(?:\\[[^\\]]*\\])?(?: joined the game| \\[\\/[^\\]]*\\] logged in with entity id)",
+      "leave": "(?:: |\\] )([A-Za-z0-9_.]{1,16})(?: left the game| lost connection)"
     }
   },
   "stop": {
-    "timeout": 90
+    "timeout": 210
   },
   "variables": [
     {
@@ -70,6 +71,18 @@
           "label": {
             "ru": "Модпак",
             "en": "Modpack"
+          }
+        },
+        {
+          "value": "custom",
+          "label": {
+            "ru": "Своё ядро",
+            "en": "Custom jar"
+          },
+          "env": {
+            "TYPE": "CUSTOM",
+            "CUSTOM_SERVER": "/data/server.jar",
+            "DISABLE_HEALTHCHECK": "true"
           }
         }
       ],
@@ -208,6 +221,38 @@
       "group": "version"
     },
     {
+      "key": "SNAPSHOTS",
+      "step": "setup",
+      "name": {
+        "ru": "Снапшоты",
+        "en": "Snapshots"
+      },
+      "type": "boolean",
+      "default": "false",
+      "when": {
+        "KIND": [
+          "core"
+        ]
+      },
+      "group": "version"
+    },
+    {
+      "key": "BETAS",
+      "step": "setup",
+      "name": {
+        "ru": "Бета-версии",
+        "en": "Beta versions"
+      },
+      "type": "boolean",
+      "default": "false",
+      "when": {
+        "KIND": [
+          "core"
+        ]
+      },
+      "group": "version"
+    },
+    {
       "key": "VERSION",
       "step": "setup",
       "name": {
@@ -218,7 +263,11 @@
       "default": "LATEST",
       "required": true,
       "source": {
-        "id": "minecraft-versions"
+        "id": "minecraft-versions",
+        "params": {
+          "snapshots": "{{SNAPSHOTS}}",
+          "betas": "{{BETAS}}"
+        }
       },
       "when": {
         "KIND": [
@@ -345,6 +394,30 @@
         ],
         "PLATFORM": [
           "MRPACK"
+        ]
+      }
+    },
+    {
+      "key": "CUSTOM_JAR",
+      "step": "setup",
+      "group": "version",
+      "name": {
+        "ru": "Файл ядра",
+        "en": "Server jar"
+      },
+      "description": {
+        "ru": "Исполняемый .jar сервера, он сохранится как server.jar в папке сервера",
+        "en": "The server's runnable .jar, saved as server.jar in the server folder"
+      },
+      "type": "file",
+      "required": true,
+      "file": {
+        "accept": ".jar",
+        "path": "server.jar"
+      },
+      "when": {
+        "KIND": [
+          "custom"
         ]
       }
     },

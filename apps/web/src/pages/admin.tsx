@@ -1,7 +1,7 @@
-import { RiAddFill, RiDeleteBin6Fill, RiExternalLinkLine, RiGroupFill, RiKey2Fill, RiPlugFill, RiRefreshLine, RiTicket2Fill } from '@remixicon/react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { AdminUser, ProviderInfo } from '@hako/shared'
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Field, Input, Select, Popover, PopoverClose, PopoverContent, PopoverTrigger, Segmented, Skeleton, Spinner, StatusDot, Tooltip, toast } from '@hako/ui'
+import { RiAddFill, RiDeleteBin6Fill, RiExternalLinkLine, RiGroupFill, RiKey2Fill, RiPlugFill, RiRefreshLine, RiSettings3Fill, RiTicket2Fill } from '@remixicon/react'
+import { useIsFetching, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { AdminUser, ProviderId, ProviderInfo } from '@hako/shared'
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, DialogContent, DialogTrigger, Field, Input, Select, Popover, PopoverClose, PopoverContent, PopoverTrigger, Segmented, Skeleton, Spinner, StatusDot, Tooltip, toast } from '@hako/ui'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
@@ -177,14 +177,30 @@ function Users() {
   )
 }
 
+const statusKey = (id: ProviderId) => ['admin', 'providers', id, 'status']
+
 function ProviderStatus({ info }: { info: ProviderInfo }) {
   const { t } = useTranslation()
-  if (info.needsKey && !info.keySource) return <Badge variant="warning">{t('admin.providers.noKey')}</Badge>
+  const missingKey = info.needsKey && !info.keySource
+  const status = useQuery({ queryKey: statusKey(info.id), queryFn: () => api.providerStatus(info.id), staleTime: 60_000, enabled: !missingKey })
+  if (missingKey) return <Badge variant="warning">{t('admin.providers.noKey')}</Badge>
+  if (status.isFetching || status.isPending)
+    return (
+      <Badge variant="neutral">
+        <Spinner />
+        {t('admin.providers.checking')}
+      </Badge>
+    )
+  const ok = status.data?.reachable ?? false
   return (
-    <Badge variant={info.reachable ? 'success' : 'danger'}>
-      <StatusDot tone={info.reachable ? 'success' : 'danger'} pulse={!info.reachable} />
-      {info.reachable ? t('admin.providers.reachable') : t('admin.providers.unreachable')}
-    </Badge>
+    <Tooltip content={t('admin.providers.recheck')}>
+      <button type="button" className="cursor-pointer rounded-full" onClick={() => void status.refetch()}>
+        <Badge variant={ok ? 'success' : 'danger'}>
+          <StatusDot tone={ok ? 'success' : 'danger'} pulse={!ok} />
+          {ok ? t('admin.providers.reachable') : t('admin.providers.unreachable')}
+        </Badge>
+      </button>
+    </Tooltip>
   )
 }
 
@@ -205,7 +221,7 @@ function CurseforgeKey({ info, onChange }: { info: ProviderInfo; onChange: (list
     if (key.trim()) save.mutate(key.trim())
   }
   return (
-    <form onSubmit={submit} className="mt-3 flex flex-col gap-2">
+    <form onSubmit={submit} className="flex flex-col gap-2">
       <div className="flex gap-2">
         <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={info.keySource ? t('admin.providers.keySet', { source: t(`admin.providers.source.${info.keySource}`) }) : t('admin.providers.keyPlaceholder')} autoComplete="off" />
         <Button type="submit" variant="secondary" disabled={!key.trim()} loading={save.isPending && save.variables !== null}>
@@ -223,11 +239,61 @@ function CurseforgeKey({ info, onChange }: { info: ProviderInfo; onChange: (list
   )
 }
 
+function ProviderRow({ info, onChange }: { info: ProviderInfo; onChange: (list: ProviderInfo[]) => void }) {
+  const { t } = useTranslation()
+  const name = t(`admin.providers.names.${info.id}`)
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-lg px-3 py-2">
+      <ProviderIcon id={info.id} />
+      <span className="min-w-0 flex-1">
+        <a href={info.url} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1 text-sm font-medium hover:text-accent">
+          <span className="truncate">{name}</span>
+          <RiExternalLinkLine className="size-3.5 shrink-0 text-subtle-foreground" />
+        </a>
+        <span className="mt-0.5 flex h-5 min-w-0 items-center gap-2 overflow-hidden">
+          <ProviderStatus info={info} />
+          <span className="hidden min-w-0 truncate text-xs text-subtle-foreground sm:block">{t(`admin.providers.about.${info.id}`)}</span>
+        </span>
+      </span>
+      {info.needsKey ? (
+        <Dialog>
+          <Tooltip content={t('admin.providers.settings')}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label={t('admin.providers.settings')}>
+                <RiSettings3Fill />
+              </Button>
+            </DialogTrigger>
+          </Tooltip>
+          <DialogContent
+            title={
+              <span className="flex items-center gap-3">
+                <ProviderIcon id={info.id} />
+                <span className="flex min-w-0 flex-col items-start gap-1">
+                  {name}
+                  <ProviderStatus info={info} />
+                </span>
+              </span>
+            }
+          >
+            <div className="px-6 pb-6 pt-2">
+              <CurseforgeKey info={info} onChange={onChange} />
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+    </div>
+  )
+}
+
 function Providers() {
   const { t } = useTranslation()
   const client = useQueryClient()
-  const providers = useQuery({ queryKey: ['admin', 'providers'], queryFn: api.providers, staleTime: 60_000 })
-  const setData = (list: ProviderInfo[]) => client.setQueryData(['admin', 'providers'], list)
+  const providers = useQuery({ queryKey: ['admin', 'providers'], queryFn: api.providers })
+  const checking = useIsFetching({ queryKey: ['admin', 'providers'] }) > 0
+  const setData = (list: ProviderInfo[]) => {
+    client.setQueryData(['admin', 'providers'], list)
+    void client.invalidateQueries({ queryKey: statusKey('curseforge') })
+  }
   return (
     <Card>
       <CardHeader>
@@ -236,35 +302,23 @@ function Providers() {
           <CardDescription>{t('admin.providers.hint')}</CardDescription>
         </div>
         <Tooltip content={t('admin.providers.recheck')}>
-          <Button variant="ghost" size="icon-sm" aria-label={t('admin.providers.recheck')} onClick={() => void providers.refetch()} disabled={providers.isFetching}>
-            {providers.isFetching ? <Spinner /> : <RiRefreshLine />}
+          <Button variant="ghost" size="icon-sm" aria-label={t('admin.providers.recheck')} onClick={() => void client.invalidateQueries({ queryKey: ['admin', 'providers'] })} disabled={checking}>
+            {checking ? <Spinner /> : <RiRefreshLine />}
           </Button>
         </Tooltip>
       </CardHeader>
-      <div className="flex flex-col pb-2">
+      <div className="flex flex-col px-2 pb-3">
         {providers.isPending
-          ? [0, 1, 2].map((i) => (
-              <div key={i} className="flex items-center gap-3 px-5 py-3.5">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="ml-auto h-6 w-24 rounded-full" />
+          ? [0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-3 py-2">
+                <Skeleton className="size-9 shrink-0 rounded-lg" />
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                </div>
               </div>
             ))
-          : providers.data?.map((p) => (
-              <div key={p.id} className="px-5 py-3.5">
-                <div className="flex flex-wrap items-center gap-3">
-                  <ProviderIcon id={p.id} />
-                  <div className="min-w-0 flex-1">
-                    <a href={p.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium hover:text-accent">
-                      {t(`admin.providers.names.${p.id}`)}
-                      <RiExternalLinkLine className="size-3.5 text-subtle-foreground" />
-                    </a>
-                    <div className="text-xs text-muted-foreground">{t(`admin.providers.about.${p.id}`)}</div>
-                  </div>
-                  <ProviderStatus info={p} />
-                </div>
-                {p.needsKey ? <div className="sm:pl-12"><CurseforgeKey info={p} onChange={setData} /></div> : null}
-              </div>
-            ))}
+          : providers.data?.map((p) => <ProviderRow key={p.id} info={p} onChange={setData} />)}
       </div>
     </Card>
   )

@@ -53,7 +53,6 @@ export const ru = {
     unavailable: 'Процесс Java пока не запущен',
   },
   appearance: {
-    serverOrderHint: 'Перетаскивайте, чтобы поменять порядок в панели навигации, выключите, чтобы скрыть сервер там',
     navPosition: {
       title: 'Панель навигации',
       left: 'Слева',
@@ -165,6 +164,7 @@ export const ru = {
     offline: 'Сервер выключен',
     path: 'Неверный путь',
     fileTooLarge: 'Файл слишком большой',
+    fileBinary: 'Это бинарный файл, его нельзя открыть как текст',
     addonsUnsupported: 'Этот сервер не поддерживает моды',
     addonNoVersion: 'Нет версии для этой версии игры и ядра',
     addonDownload: 'Не удалось скачать файл',
@@ -257,6 +257,8 @@ export const ru = {
     clear: 'Очистить экран',
     fullscreen: 'Во весь экран',
     exitFullscreen: 'Выйти из полноэкранного режима',
+    expandConsole: 'Развернуть консоль',
+    shrinkConsole: 'Уменьшить консоль',
     toBottom: 'Вниз',
   },
   files: {
@@ -359,7 +361,7 @@ export const ru = {
   },
   system: {
     dockerTitle: 'Docker недоступен',
-    dockerHint: 'Серверы не запустятся, пока панель не подключится к Docker. Запустите Docker или проверьте DOCKER_SOCKET.',
+    dockerHint: 'Серверы не запустятся, пока панель не подключится к Docker. Проверьте, что Docker запущен на этой машине.',
   },
   settings: {
     changedRevert: 'Изменено · вернуть',
@@ -372,7 +374,8 @@ export const ru = {
     saved: 'Сохранено',
     dangerTitle: 'Удаление',
     deleteHint: 'Сервер и все его файлы удалятся без возможности восстановления',
-    confirmDelete: 'Введите «{{name}}», чтобы удалить сервер',
+    deleteTitle: 'Удалить {{name}}?',
+    confirmDelete: 'Введите «{{name}}», чтобы подтвердить',
     delete: 'Удалить сервер',
     icon: 'Иконка',
     iconHint: 'Показывается в списке серверов и в шапке. Картинка уменьшится до 128 × 128',
@@ -428,6 +431,8 @@ export const ru = {
       title: 'Провайдеры',
       hint: 'Внешние сервисы, откуда панель берёт версии, модпаки, моды и данные игроков',
       recheck: 'Проверить снова',
+      checking: 'Проверка…',
+      settings: 'Настройки',
       noKey: 'Нужен ключ',
       reachable: 'Доступен',
       unreachable: 'Недоступен',

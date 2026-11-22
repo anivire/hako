@@ -22,7 +22,40 @@ export function groupOf(game: GameTemplate, variable: GameVariable): string {
 
 export function visibleVariables(game: GameTemplate, values: Record<string, string>, step?: GameVariable['step'], group?: string) {
   const all = withDefaults(game, values)
-  return game.variables.filter((v) => v.step !== 'managed' && (!step || v.step === step) && (group === undefined || groupOf(game, v) === group) && variableVisible(v, all))
+  return game.variables.filter((v) => v.step !== 'managed' && !isFilter(game, v) && (!step || v.step === step) && (group === undefined || groupOf(game, v) === group) && variableVisible(v, all))
+}
+
+function isFilter(game: GameTemplate, variable: GameVariable) {
+  return variable.type === 'boolean' && game.variables.some((v) => dependsOn(v).includes(variable.key))
+}
+
+function SourceFilters({ game, variable, values, onFilter, disabled }: { game: GameTemplate; variable: GameVariable; values: Record<string, string>; onFilter: (key: string, value: string) => void; disabled?: boolean }) {
+  const text = useText()
+  const filters = game.variables.filter((f) => isFilter(game, f) && dependsOn(variable).includes(f.key) && variableVisible(f, values))
+  if (!filters.length) return null
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {filters.map((f) => {
+        const on = values[f.key] === 'true'
+        return (
+          <button
+            key={f.key}
+            type="button"
+            aria-pressed={on}
+            disabled={disabled}
+            onClick={() => onFilter(f.key, on ? 'false' : 'true')}
+            className={cn(
+              'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-3 text-[0.8125rem] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-3.5',
+              on ? 'bg-accent-soft text-accent' : 'bg-foreground/[0.05] text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {on ? <RiCheckFill /> : null}
+            {text(f.name)}
+          </button>
+        )
+      })}
+    </div>
+  )
 }
 
 export function missingVariable(game: GameTemplate, values: Record<string, string>, step?: GameVariable['step']): GameVariable | undefined {
@@ -241,7 +274,7 @@ function FileField({ id, variable, value, onFile, disabled }: { id: string; vari
   )
 }
 
-function VariableField({ game, variable, values, onChange, onFile, disabled, error }: { game: GameTemplate; variable: GameVariable; values: Record<string, string>; onChange: (value: string, option?: VariableOption) => void; onFile?: (file: File) => void; disabled?: boolean; error?: string }) {
+function VariableField({ game, variable, values, onChange, onFilter, onFile, disabled, error }: { game: GameTemplate; variable: GameVariable; values: Record<string, string>; onChange: (value: string, option?: VariableOption) => void; onFilter: (key: string, value: string) => void; onFile?: (file: File) => void; disabled?: boolean; error?: string }) {
   const text = useText()
   const value = values[variable.key] ?? ''
   const id = `var-${variable.key}`
@@ -300,7 +333,12 @@ function VariableField({ game, variable, values, onChange, onFile, disabled, err
     )
   } else if (variable.source) {
     const Picker = variable.source.search ? SourceSearch : SourceSelect
-    control = <Picker game={game} variable={variable} values={values} value={value} onChange={onChange} disabled={disabled} />
+    control = (
+      <div className="flex flex-col gap-2">
+        <SourceFilters game={game} variable={variable} values={values} onFilter={onFilter} disabled={disabled} />
+        <Picker game={game} variable={variable} values={values} value={value} onChange={onChange} disabled={disabled} />
+      </div>
+    )
   } else if (variable.type === 'select' && variable.options) {
     if (variable.options.some((o) => o.description)) control = <OptionGrid variable={variable} value={value} onChange={onChange} disabled={disabled} />
     else if (variable.options.length <= 4) control = <Segmented value={value} onChange={onChange} options={variable.options.map((o) => ({ value: o.value, label: text(o.label) || o.value, disabled }))} />
@@ -368,7 +406,7 @@ export function VariablesForm({
   return (
     <div className="flex flex-col gap-5">
       {visibleVariables(game, values, step, group).map((v) => {
-        const field = <VariableField key={v.key} game={game} variable={v} values={all} onChange={(value, option) => set(v.key, value, option)} onFile={onFile && ((file) => onFile(v.key, file))} disabled={existing && !v.editable} error={errors?.[v.key]} />
+        const field = <VariableField key={v.key} game={game} variable={v} values={all} onChange={(value, option) => set(v.key, value, option)} onFilter={(key, value) => set(key, value)} onFile={onFile && ((file) => onFile(v.key, file))} disabled={existing && !v.editable} error={errors?.[v.key]} />
         if (!before || (all[v.key] ?? '') === (before[v.key] ?? '')) return field
         return (
           <div key={v.key} className="-mx-3 flex flex-col gap-2 rounded-lg bg-accent-soft px-3 py-2.5">
