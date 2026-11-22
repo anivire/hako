@@ -10,7 +10,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
-import { type Member, type Permission, type PortCheck, type Server, type ServerAccess, backupLimitSchema, memberSchema, serverInviteCreateSchema, addonInstallSchema, addonToggleSchema, addonUpdateSchema, powerSchema, serverCreateSchema, serverUpdateSchema } from '@hako/shared'
+import { type Member, type Permission, type PortCheck, type Server, type ServerAccess, backupLimitSchema, memberSchema, scheduleSchema, serverInviteCreateSchema, addonInstallSchema, addonToggleSchema, addonUpdateSchema, powerSchema, serverCreateSchema, serverUpdateSchema } from '@hako/shared'
 import { addonKind, addonSource, modpackStatus, addonUpdates, addonsOverview, installAddon, modpackBase, removeAddon, setAddonEnabled, updateAddons } from '../addons/manager'
 import { accessOf, allows, requiredPermission } from '../lib/access'
 import { db, now } from '../db/client'
@@ -26,6 +26,7 @@ import { parseBody } from '../lib/validate'
 import { type ServerRow, dockerPublishedPorts, dockerResources, hostPortFree, instance, quickStats, runningCommand, serverDir, serverPorts, startedAtOf, statusOf, versionOf } from '../runtime/instances'
 import { addPlayer, kickPlayer, readPlayers, removePlayer, roster } from '../services/players'
 import { diskUsage } from '../services/usage'
+import { createSchedule, deleteSchedule, listSchedules, runScheduleNow, updateSchedule } from '../services/schedules'
 import { backupBusy, backupFile, backupsOverview, createBackup, pruneBackups, removeBackups, restoreBackup } from '../services/backups'
 import { proxyMap, setMap, setMapShare, sharedServer } from '../services/map'
 import { MAX_EDIT_BYTES, listDir, makeDir, movePath, readText, removePath, resolveInside, writeFile } from '../services/files'
@@ -330,6 +331,11 @@ export const serverRoutes = new Hono<ServerEnv>()
       headers: { 'Content-Type': 'application/gzip', 'Content-Length': String(stat.size), 'Content-Disposition': `attachment; filename="${c.get('server').id}-${path.basename(file)}"` },
     })
   })
+  .get('/:id/schedules', (c) => c.json(listSchedules(c.get('server').id)))
+  .post('/:id/schedules', async (c) => c.json(createSchedule(c.get('server').id, await parseBody(c, scheduleSchema))))
+  .put('/:id/schedules/:sid', async (c) => c.json(updateSchedule(c.get('server').id, Number(c.req.param('sid')), await parseBody(c, scheduleSchema))))
+  .delete('/:id/schedules/:sid', (c) => c.json(deleteSchedule(c.get('server').id, Number(c.req.param('sid')))))
+  .post('/:id/schedules/:sid/run', (c) => c.json(runScheduleNow(c.get('server').id, Number(c.req.param('sid')))))
   .get('/:id/addons', async (c) => c.json(await addonsOverview(c.get('server'))))
   .get('/:id/addons/modpack', async (c) => c.json(await modpackStatus(c.get('server'))))
   .post('/:id/addons/unlink', async (c) => {

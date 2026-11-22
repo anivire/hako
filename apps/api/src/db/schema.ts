@@ -1,3 +1,4 @@
+import type { ScheduleAction } from '@hako/shared'
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
@@ -53,6 +54,18 @@ export const serverMembers = sqliteTable('server_members', {
   permissions: text('permissions', { mode: 'json' }).$type<string[]>().notNull().default([]),
   createdAt: text('created_at').notNull(),
 }, (t) => [primaryKey({ columns: [t.serverId, t.userId] }), index('server_members_user_idx').on(t.userId)])
+
+export const schedules = sqliteTable('schedules', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  serverId: text('server_id').notNull().references(() => servers.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  cron: text('cron').notNull(),
+  actions: text('actions', { mode: 'json' }).$type<ScheduleAction[]>().notNull(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+  lastRunAt: text('last_run_at'),
+  lastError: text('last_error'),
+  createdAt: text('created_at').notNull(),
+}, (t) => [index('schedules_server_idx').on(t.serverId)])
 
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),

@@ -10,6 +10,8 @@ import type {
   AddonVersion,
   AddonsOverview,
   BackupsOverview,
+  ScheduleInput,
+  SchedulesOverview,
   FileEntry,
   PlayerEntry,
   PlayerList,
@@ -116,6 +118,12 @@ export const api = {
   restoreBackup: (id: string, name: string) => request<{ ok: true }>('POST', `${at(id)}/backups/${encodeURIComponent(name)}/restore`),
   deleteBackup: (id: string, name: string) => request<BackupsOverview>('DELETE', `${at(id)}/backups/${encodeURIComponent(name)}`),
   backupDownloadUrl: (id: string, name: string) => `/api${at(id)}/backups/${encodeURIComponent(name)}/download`,
+
+  schedules: (id: string) => get<SchedulesOverview>(`${at(id)}/schedules`),
+  createSchedule: (id: string, input: ScheduleInput) => request<SchedulesOverview>('POST', `${at(id)}/schedules`, input),
+  updateSchedule: (id: string, sid: number, input: ScheduleInput) => request<SchedulesOverview>('PUT', `${at(id)}/schedules/${sid}`, input),
+  deleteSchedule: (id: string, sid: number) => request<SchedulesOverview>('DELETE', `${at(id)}/schedules/${sid}`),
+  runSchedule: (id: string, sid: number) => request<SchedulesOverview>('POST', `${at(id)}/schedules/${sid}/run`),
 
   addons: (id: string) => get<AddonsOverview>(`${at(id)}/addons`),
   roster: (id: string) => get<PlayerRecord[]>(`${at(id)}/players`),

@@ -43,6 +43,13 @@
       "when": 1795380845605,
       "tag": "0005_backup_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795381141552,
+      "tag": "0006_schedules",
+      "breakpoints": true
     }
   ]
 }

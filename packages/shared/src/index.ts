@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { parseCron } from './cron'
 
 export type Locale = 'ru' | 'en'
 
@@ -252,6 +253,38 @@ export interface BackupsOverview {
 
 export const backupLimitSchema = z.object({ limit: z.number().int().min(1).max(100) })
 
+export const scheduleActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('command'), command: z.string().trim().min(1).max(2000) }),
+  z.object({ type: z.literal('say'), message: z.string().trim().min(1).max(500) }),
+  z.object({ type: z.literal('wait'), seconds: z.number().int().min(1).max(3600) }),
+  z.object({ type: z.literal('backup') }),
+  z.object({ type: z.literal('start') }),
+  z.object({ type: z.literal('stop') }),
+  z.object({ type: z.literal('restart') }),
+])
+export type ScheduleAction = z.infer<typeof scheduleActionSchema>
+
+export const scheduleSchema = z.object({
+  name: z.string().trim().min(1).max(64),
+  cron: z.string().trim().max(120).refine((v) => parseCron(v) !== null, 'invalid cron'),
+  actions: z.array(scheduleActionSchema).min(1).max(30),
+  enabled: z.boolean().default(true),
+})
+export type ScheduleInput = z.infer<typeof scheduleSchema>
+
+export interface Schedule extends ScheduleInput {
+  id: number
+  lastRunAt: string | null
+  lastError: string | null
+  nextRunAt: string | null
+  running: boolean
+}
+
+export interface SchedulesOverview {
+  schedules: Schedule[]
+  timeZone: string
+}
+
 export const powerSchema = z.object({ action: z.enum(['start', 'stop', 'restart', 'kill']) })
 export type PowerAction = z.infer<typeof powerSchema>['action']
 
@@ -420,6 +453,7 @@ export const userRoleSchema = z.object({ role: z.enum(['admin', 'user']) })
 export const providerKeySchema = z.object({ key: z.string().trim().max(200).nullable() })
 export const localeSchema = z.object({ locale: z.enum(['ru', 'en']) })
 export { parseProperties, updateProperties } from './properties'
+export { type Cron, cronMatches, nextCronRun, parseCron } from './cron'
 export { parseJsonConfig, parseJsonList, updateJsonConfig, writeJsonList } from './json-config'
 export { type BepinexEntry, type BepinexFile, bepinexId, parseBepinex, parseIdList, updateBepinex, writeIdList } from './bepinex'
 
