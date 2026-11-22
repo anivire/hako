@@ -99,6 +99,7 @@ export const api = {
   createServer: (input: ServerCreateInput) => request<Server>('POST', '/servers', input),
   updateServer: (id: string, input: ServerUpdateInput) => request<Server>('PATCH', at(id), input),
   deleteServer: (id: string) => request<{ ok: true }>('DELETE', at(id)),
+  updateImage: (id: string) => request<{ ok: true }>('POST', `${at(id)}/updates/image`),
   power: (id: string, action: PowerAction) => request<{ ok: true }>('POST', `${at(id)}/power`, { action }),
 
   process: (id: string) => get<{ command: string | null }>(`${at(id)}/process`),

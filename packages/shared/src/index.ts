@@ -201,6 +201,12 @@ export interface Member {
 
 export const memberSchema = z.object({ permissions: permissionsSchema })
 
+export interface ServerUpdates {
+  image: boolean
+  addons: number
+  checkedAt: string | null
+}
+
 export interface Server {
   id: string
   name: string
@@ -214,6 +220,7 @@ export interface Server {
   startedAt: string | null
   version: string | null
   addons: 'mods' | 'plugins' | null
+  updates: ServerUpdates
   access: ServerAccess
   ownerId: number
   createdAt: string

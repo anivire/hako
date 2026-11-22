@@ -77,6 +77,7 @@ export function errorMessage(error: unknown, t: TFunction): string {
     WORLD_IS_CURRENT: 'errors.worldCurrent',
     WORLD_ARCHIVE_INVALID: 'errors.worldArchive',
     WORLDS_UNSUPPORTED: 'errors.worldsUnsupported',
+    IMAGE_PULLING: 'errors.imagePulling',
     PATH_INVALID: 'errors.path',
     PATH_NOT_FOUND: 'errors.path',
     PATH_EXISTS: 'errors.pathExists',

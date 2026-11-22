@@ -1,7 +1,7 @@
-import { RiAddFill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiSearchFill } from '@remixicon/react'
+import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiSearchFill } from '@remixicon/react'
 import { useQuery } from '@tanstack/react-query'
 import type { GameTemplate, QuickStats, Server, ServerStatus } from '@hako/shared'
-import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, cn } from '@hako/ui'
+import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, Tooltip, cn } from '@hako/ui'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
@@ -24,6 +24,16 @@ const VIEW_KEY = 'hako:servers-view'
 
 function memoryLabel(memory: number) {
   return memory >= 1024 && memory % 1024 === 0 ? `${memory / 1024} GB` : `${memory} MB`
+}
+
+function UpdateMark({ server }: { server: Server }) {
+  const { t } = useTranslation()
+  if (!server.updates.image && !server.updates.addons) return null
+  return (
+    <Tooltip content={t('server.updatesAvailable')}>
+      <RiDownloadCloud2Fill className="size-4 shrink-0 text-accent" aria-label={t('server.updatesAvailable')} />
+    </Tooltip>
+  )
 }
 
 function useDisk(id: string) {
@@ -80,7 +90,10 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
         <div className="flex items-start gap-4">
           <ServerAvatar game={game} values={server.variables} icon={server.icon} size={64} ring="var(--color-surface)" />
           <div className="min-w-0 flex-1">
-            <div className="break-words text-[0.9375rem] font-semibold tracking-tight">{server.name}</div>
+            <div className="flex items-center gap-1.5 break-words text-[0.9375rem] font-semibold tracking-tight">
+              {server.name}
+              <UpdateMark server={server} />
+            </div>
             {game ? (
               <div className="truncate text-[0.8125rem] text-muted-foreground">
                 <ServerSummary game={game} values={server.variables} version={server.version} />
@@ -120,7 +133,10 @@ function ServerRow({ server, game }: { server: Server; game: GameTemplate | unde
     <TLink to={`/servers/${server.id}`} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors [--avatar-ring:var(--color-surface)] hover:bg-muted hover:[--avatar-ring:var(--color-muted)]">
       <ServerAvatar game={game} values={server.variables} icon={server.icon} size={36} ring="var(--color-surface)" />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold tracking-tight">{server.name}</div>
+        <div className="flex items-center gap-1.5 truncate text-sm font-semibold tracking-tight">
+          {server.name}
+          <UpdateMark server={server} />
+        </div>
         {game ? (
           <div className="truncate text-[0.8125rem] text-muted-foreground">
             <ServerSummary game={game} values={server.variables} version={server.version} />

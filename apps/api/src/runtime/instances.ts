@@ -77,6 +77,28 @@ function templateVars(server: ServerRow, game: GameTemplate) {
   return autoVariables(game, vars)
 }
 
+export function serverImage(server: ServerRow): string | null {
+  const game = serverGame(server)
+  return game ? interpolate(game.image, templateVars(server, game)) : null
+}
+
+export async function imageOutdated(image: string): Promise<boolean> {
+  try {
+    const local = await docker.getImage(image).inspect()
+    const remote = (await docker.getImage(image).distribution()) as { Descriptor?: { digest?: string } }
+    const digest = remote.Descriptor?.digest
+    return Boolean(digest) && !(local.RepoDigests ?? []).some((d) => d.endsWith(`@${digest}`))
+  } catch {
+    return false
+  }
+}
+
+export async function pullImage(image: string, log: (line: string) => void) {
+  log(`pulling ${image}`)
+  const stream = await docker.pull(image)
+  await new Promise<void>((resolve, reject) => docker.modem.followProgress(stream, (err) => (err ? reject(err) : resolve())))
+}
+
 async function ensureImage(image: string, log: (line: string) => void) {
   try {
     await docker.getImage(image).inspect()

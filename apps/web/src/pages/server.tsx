@@ -1,4 +1,4 @@
-import { RiArchiveStackFill, RiArrowRightSLine, RiCalendarScheduleFill, RiEarthFill, RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
+import { RiArchiveStackFill, RiArrowRightSLine, RiCalendarScheduleFill, RiDownloadCloud2Fill, RiEarthFill, RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type GameVariable, type PowerAction, resolveTemplate, variableVisible } from '@hako/shared'
 import { Badge, Button, EmptyState, Popover, PopoverContent, PopoverTrigger, Segmented, Skeleton, Tooltip, cn, toast } from '@hako/ui'
@@ -28,6 +28,7 @@ import { can } from '../lib/access'
 import { ServerAccess } from '../components/server/access'
 import { PlayerHead } from '../components/server/players'
 import { readStorage, writeStorage } from '../lib/storage'
+import { ask } from '../lib/confirm'
 
 const COMPACT_KEY = 'hako:compact-metrics'
 
@@ -105,6 +106,14 @@ function ServerView({ id }: { id: string }) {
   const power = useMutation({
     mutationFn: (action: PowerAction) => api.power(id, action),
     onSuccess: () => client.invalidateQueries({ queryKey: keys.servers, exact: true }),
+    onError: (e) => toast.error(errorMessage(e, t)),
+  })
+  const pull = useMutation({
+    mutationFn: () => api.updateImage(id),
+    onSuccess: () => {
+      toast.success(t('server.imageUpdating'))
+      client.setQueryData(keys.server(id), (old: typeof server.data) => old && { ...old, updates: { ...old.updates, image: false } })
+    },
     onError: (e) => toast.error(errorMessage(e, t)),
   })
   if (server.isPending || games.isPending)
@@ -211,6 +220,22 @@ function ServerView({ id }: { id: string }) {
                 </span>
               </>
             ) : null}
+            {s.updates.image && can(s, 'settings') ? (
+              <>
+                <span className="text-subtle-foreground">·</span>
+                <Tooltip content={t('server.imageUpdateHint')}>
+                  <button
+                    type="button"
+                    disabled={pull.isPending}
+                    className="flex cursor-pointer items-center gap-1.5 text-accent hover:underline"
+                    onClick={() => void ask({ title: t('server.imageUpdateConfirm'), description: t('server.imageUpdateConfirmHint'), confirm: t('server.imageUpdateStart') }).then((ok) => ok && pull.mutate())}
+                  >
+                    <RiDownloadCloud2Fill />
+                    {t('server.imageUpdate')}
+                  </button>
+                </Tooltip>
+              </>
+            ) : null}
             {game.console.players && !offline ? (
               <>
                 <span className="text-subtle-foreground">·</span>
@@ -249,7 +274,7 @@ function ServerView({ id }: { id: string }) {
           size={compact ? 'sm' : 'md'}
           value={tab}
           onChange={(next) => setParams({ tab: next }, { replace: true })}
-          options={tabs.map((value) => ({ value, label: t(`server.tabs.${value === 'addons' ? s.addons! : value}`), icon: TAB_ICONS[value] }))}
+          options={tabs.map((value) => ({ value, label: t(`server.tabs.${value === 'addons' ? s.addons! : value}`), icon: TAB_ICONS[value], count: value === 'addons' && s.updates.addons ? s.updates.addons : undefined }))}
         />
         <Tooltip content={compact ? t('console.fullView') : t('console.compactView')}>
           <Button

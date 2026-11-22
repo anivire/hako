@@ -27,6 +27,7 @@ import { type ServerRow, dockerPublishedPorts, dockerResources, hostPortFree, in
 import { addPlayer, kickPlayer, readPlayers, removePlayer, roster } from '../services/players'
 import { diskUsage } from '../services/usage'
 import { deleteWorld, downloadWorld, listWorlds, selectWorld, uploadWorld } from '../services/worlds'
+import { updateImage, updatesOf } from '../services/updates'
 import { createSchedule, deleteSchedule, listSchedules, runScheduleNow, updateSchedule } from '../services/schedules'
 import { backupBusy, backupFile, backupsOverview, createBackup, pruneBackups, removeBackups, restoreBackup } from '../services/backups'
 import { proxyMap, setMap, setMapShare, sharedServer } from '../services/map'
@@ -52,7 +53,7 @@ function iconUrl(raw: string): URL {
 
 function toServer(row: ServerRow, access: ServerAccess): Server {
   const game = requireGame(row.game)
-  return { id: row.id, name: row.name, game: row.game, memory: row.memory, cpu: row.cpu ?? null, icon: row.icon, variables: row.variables, ports: serverPorts(row, game), status: statusOf(row.id), startedAt: startedAtOf(row.id), version: versionOf(row.id), addons: addonKind(row), access, ownerId: row.ownerId, createdAt: row.createdAt }
+  return { id: row.id, name: row.name, game: row.game, memory: row.memory, cpu: row.cpu ?? null, icon: row.icon, variables: row.variables, ports: serverPorts(row, game), status: statusOf(row.id), startedAt: startedAtOf(row.id), version: versionOf(row.id), addons: addonKind(row), updates: updatesOf(row.id), access, ownerId: row.ownerId, createdAt: row.createdAt }
 }
 
 async function checkPorts(requested: Record<string, number>, game: ReturnType<typeof requireGame>): Promise<PortCheck[]> {
@@ -331,6 +332,10 @@ export const serverRoutes = new Hono<ServerEnv>()
     return new Response(Readable.toWeb(createReadStream(file)) as ReadableStream, {
       headers: { 'Content-Type': 'application/gzip', 'Content-Length': String(stat.size), 'Content-Disposition': `attachment; filename="${c.get('server').id}-${path.basename(file)}"` },
     })
+  })
+  .post('/:id/updates/image', (c) => {
+    updateImage(c.get('server'))
+    return c.json({ ok: true })
   })
   .get('/:id/worlds', async (c) => c.json(await listWorlds(c.get('server'))))
   .put('/:id/worlds/current', async (c) => {

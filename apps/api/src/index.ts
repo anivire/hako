@@ -10,6 +10,7 @@ import { purgeExpiredSessions } from './lib/auth'
 import { hashPassword, randomToken } from './lib/crypto'
 import { recoverInstances } from './runtime/instances'
 import { startScheduler } from './services/schedules'
+import { startUpdateChecks } from './services/updates'
 
 async function bootstrapAdmin() {
   if (db.select({ id: users.id }).from(users).where(eq(users.role, 'admin')).get()) return
@@ -42,6 +43,7 @@ loadGames()
 await bootstrapAdmin()
 await recoverInstances()
 startScheduler()
+startUpdateChecks()
 
 for (const signal of ['SIGTERM', 'SIGINT'] as const) process.once(signal, () => process.exit(0))
 
