@@ -1,4 +1,4 @@
-import { RiAddFill, RiArrowDownSLine, RiArrowUpSLine, RiCalendarScheduleFill, RiCloseFill, RiDeleteBin6Fill, RiEditFill, RiErrorWarningFill, RiPlayFill } from '@remixicon/react'
+import { RiAddFill, RiArrowDownSLine, RiArrowUpSLine, RiCloseFill, RiDeleteBin6Fill, RiEditFill, RiErrorWarningFill, RiPlayFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type Schedule, type ScheduleAction, type ScheduleInput, type SchedulesOverview, type Server, nextCronRun } from '@hako/shared'
 import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, Code, Dialog, DialogContent, EmptyState, Field, Input, Select, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
@@ -230,7 +230,7 @@ export function ServerSchedules({ server, game }: { server: Server; game: GameTe
           overview.data.schedules.map((s) => <ScheduleRow key={s.id} server={server} schedule={s} onEdit={() => setEditing(s)} />)
         ) : (
           <div className="px-5 pb-3">
-            <EmptyState icon={<RiCalendarScheduleFill className="size-10 text-subtle-foreground" />} title={t('schedules.empty')} description={t('schedules.emptyHint')} />
+            <EmptyState title={t('schedules.empty')} description={t('schedules.emptyHint')} />
           </div>
         )}
       </div>
