@@ -12,7 +12,7 @@ import { type ConsoleMessage, type GameTemplate, type PowerAction, type ServerSt
 import { db } from '../db/client'
 import { servers } from '../db/schema'
 import { env } from '../env'
-import { containerEnv, interpolate, serverGame } from '../games/registry'
+import { autoVariables, containerEnv, interpolate, serverGame } from '../games/registry'
 
 export type ServerRow = typeof servers.$inferSelect
 type Listener = (message: ConsoleMessage) => void
@@ -74,7 +74,7 @@ function templateVars(server: ServerRow, game: GameTemplate) {
     HAKO_CURSEFORGE_API_KEY: curseforgeKey(),
   }
   for (const p of ports) vars[`SERVER_PORT_${p.name.toUpperCase().replace(/-/g, '_')}`] = String(p.host)
-  return vars
+  return autoVariables(game, vars)
 }
 
 async function ensureImage(image: string, log: (line: string) => void) {

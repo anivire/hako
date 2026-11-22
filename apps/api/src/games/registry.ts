@@ -63,6 +63,16 @@ export function interpolate(value: string, vars: Record<string, string>): string
     .replace(/\{\{\s*([A-Z][A-Z0-9_]*)\s*\}\}/g, (_, key: string) => vars[key] ?? '')
 }
 
+export function autoVariables(game: GameTemplate, vars: Record<string, string>): Record<string, string> {
+  const out = { ...vars }
+  for (const v of game.variables) {
+    if (!v.auto || vars[v.key] !== 'auto') continue
+    const source = vars[v.auto.key] ?? ''
+    out[v.key] = v.auto.rules.find((r) => new RegExp(r.pattern).test(source))?.value ?? v.auto.rules.at(-1)!.value
+  }
+  return out
+}
+
 export function containerEnv(game: GameTemplate, vars: Record<string, string>): string[] {
   const env = { ...game.env }
   for (const v of game.variables) Object.assign(env, v.options?.find((o) => o.value === vars[v.key])?.env)

@@ -620,18 +620,54 @@
       "step": "setup",
       "name": "Java",
       "description": {
-        "ru": "Minecraft до 1.17 нужна Java 8, до 1.20.4 — Java 17",
-        "en": "Minecraft before 1.17 needs Java 8, before 1.20.5 Java 17"
+        "ru": "Автоматически подбирается по версии Minecraft: до 1.17 — Java 8, до 1.20.4 — Java 17, до 1.21.x — Java 21, с 26.1 — Java 25",
+        "en": "Picked from the Minecraft version by default: Java 8 before 1.17, Java 17 up to 1.20.4, Java 21 up to 1.21.x, Java 25 from 26.1"
       },
       "type": "select",
-      "default": "latest",
+      "default": "auto",
+      "auto": {
+        "key": "VERSION",
+        "rules": [
+          {
+            "pattern": "^([abc]\\d|rd-|inf-|1\\.([0-9]|1[0-6])(\\.|-|$)|(1\\d|20)w)",
+            "value": "java8"
+          },
+          {
+            "pattern": "^(1\\.1[7-9](\\.|-|$)|1\\.20(\\.[0-4])?(-|$)|2[1-3]w|24w(0\\d|1[0-3]))",
+            "value": "java17"
+          },
+          {
+            "pattern": "^(1\\.2[01](\\.|-|$)|2[45]w)",
+            "value": "java21"
+          },
+          {
+            "pattern": "^\\d{2}\\.\\d",
+            "value": "java25"
+          },
+          {
+            "pattern": "",
+            "value": "latest"
+          }
+        ]
+      },
       "options": [
+        {
+          "value": "auto",
+          "label": {
+            "ru": "По версии",
+            "en": "By version"
+          }
+        },
         {
           "value": "latest",
           "label": {
             "ru": "Последняя",
             "en": "Latest"
           }
+        },
+        {
+          "value": "java25",
+          "label": "Java 25"
         },
         {
           "value": "java21",

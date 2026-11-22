@@ -6,7 +6,7 @@ import minecraft from './builtin/minecraft.json'
 import terraria from './builtin/terraria.json'
 import valheim from './builtin/valheim.json'
 import bedrock from './builtin/minecraft-bedrock.json'
-import { containerEnv, interpolate, resolveVariables } from './registry'
+import { autoVariables, containerEnv, interpolate, resolveVariables } from './registry'
 
 test('builtin templates are valid', () => {
   for (const raw of [minecraft, bedrock, factorio, terraria, valheim]) assert.equal(gameTemplateSchema.safeParse(raw).success, true)
@@ -21,10 +21,33 @@ test('resolveVariables applies defaults and validates', () => {
   const game = gameTemplateSchema.parse(minecraft)
   const vars = resolveVariables(game, { EULA: 'true', TYPE: 'FABRIC' })
   assert.equal(vars.TYPE, 'FABRIC')
-  assert.equal(vars.JAVA, 'latest')
+  assert.equal(vars.JAVA, 'auto')
   assert.throws(() => resolveVariables(game, {}), /VARIABLE_INVALID:EULA/)
   assert.throws(() => resolveVariables(game, { EULA: 'true', TYPE: 'BUKKIT' }), /VARIABLE_INVALID:TYPE/)
   assert.throws(() => resolveVariables(game, { EULA: 'true', JAVA: 'latest; rm -rf /' }), /VARIABLE_INVALID:JAVA/)
+})
+
+test('auto Java follows the Minecraft version', () => {
+  const game = gameTemplateSchema.parse(minecraft)
+  const java = (VERSION: string, JAVA = 'auto') => autoVariables(game, { VERSION, JAVA }).JAVA
+  assert.equal(java('1.12.2'), 'java8')
+  assert.equal(java('1.16.5'), 'java8')
+  assert.equal(java('b1.7.3'), 'java8')
+  assert.equal(java('20w14a'), 'java8')
+  assert.equal(java('1.17'), 'java17')
+  assert.equal(java('1.20'), 'java17')
+  assert.equal(java('1.20.4'), 'java17')
+  assert.equal(java('1.20-pre1'), 'java17')
+  assert.equal(java('24w13a'), 'java17')
+  assert.equal(java('1.20.5-pre1'), 'java21')
+  assert.equal(java('1.20.6'), 'java21')
+  assert.equal(java('1.21.4'), 'java21')
+  assert.equal(java('24w14a'), 'java21')
+  assert.equal(java('26.1'), 'java25')
+  assert.equal(java('26.1-snapshot-2'), 'java25')
+  assert.equal(java('LATEST'), 'latest')
+  assert.equal(java(''), 'latest')
+  assert.equal(java('1.12.2', 'java17'), 'java17')
 })
 
 test('locked variables keep their existing value', () => {

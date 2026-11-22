@@ -88,6 +88,7 @@ export const variableSchema = z.object({
   pattern: z.string().optional(),
   preview: z.record(z.string(), z.string()).optional(),
   link: z.object({ url: z.string().url(), text: textSchema }).optional(),
+  auto: z.object({ key: z.string(), rules: z.array(z.object({ pattern: z.string(), value: z.string() })).min(1) }).optional(),
 })
 export type GameVariable = z.infer<typeof variableSchema>
 
