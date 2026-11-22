@@ -1,4 +1,7 @@
-import { RiAddFill, RiArrowDownSLine, RiArrowUpSLine, RiCloseFill, RiDeleteBin6Fill, RiEditFill, RiErrorWarningFill, RiPlayFill } from '@remixicon/react'
+import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { RiAddFill, RiCloseFill, RiDraggable, RiDeleteBin6Fill, RiEditFill, RiErrorWarningFill, RiPlayFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type Schedule, type ScheduleAction, type ScheduleInput, type SchedulesOverview, type Server, nextCronRun } from '@hako/shared'
 import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, Code, Dialog, DialogContent, EmptyState, Field, Input, Select, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
@@ -8,6 +11,7 @@ import { api } from '../../lib/api'
 import { can } from '../../lib/access'
 import { ask } from '../../lib/confirm'
 import { errorMessage, keys } from '../../lib/queries'
+import { restrictToVertical } from '../layout-settings'
 
 type ActionType = ScheduleAction['type']
 const TYPES: ActionType[] = ['say', 'wait', 'command', 'backup', 'restart', 'stop', 'start']
@@ -44,6 +48,40 @@ function ActionEditor({ action, chat, onChange }: { action: ScheduleAction; chat
   return null
 }
 
+interface Step {
+  id: string
+  action: ScheduleAction
+}
+
+let stepCounter = 0
+const step = (action: ScheduleAction): Step => ({ id: String(stepCounter++), action })
+
+function SortableStep({ step: { id, action }, chat, onChange, onRemove }: { step: Step; chat: boolean; onChange: (next: ScheduleAction) => void; onRemove: () => void }) {
+  const { t } = useTranslation()
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id })
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={cn('relative flex flex-wrap items-center gap-2 rounded-lg bg-foreground/[0.04] py-2 pl-1 pr-2', isDragging && 'z-10 bg-raised shadow-lg shadow-black/30')}>
+      <button
+        ref={setActivatorNodeRef}
+        type="button"
+        aria-label={t('appearance.dragToReorder')}
+        className="grid size-8 shrink-0 cursor-grab touch-none place-items-center rounded-md text-subtle-foreground hover:bg-field hover:text-foreground active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
+        <RiDraggable className="size-4" />
+      </button>
+      <span className="w-28 shrink-0 text-sm font-medium">{t(`schedules.actions.${action.type}`)}</span>
+      <div className="min-w-40 flex-1">
+        <ActionEditor action={action} chat={chat} onChange={onChange} />
+      </div>
+      <Button type="button" variant="ghost" size="icon-sm" className="ml-auto" aria-label={t('schedules.removeStep')} onClick={onRemove}>
+        <RiCloseFill />
+      </Button>
+    </div>
+  )
+}
+
 function ScheduleDialog({ server, game, initial, onClose }: { server: Server; game: GameTemplate; initial: Schedule | null; onClose: () => void }) {
   const { t, i18n } = useTranslation()
   const client = useQueryClient()
@@ -58,24 +96,24 @@ function ScheduleDialog({ server, game, initial, onClose }: { server: Server; ga
           actions: [...(chat ? [{ type: 'say', message: t('schedules.defaultWarning') } as const, { type: 'wait', seconds: 300 } as const] : []), { type: 'backup' }, { type: 'restart' }],
         },
   )
+  const [steps, setSteps] = useState(() => draft.actions.map(step))
   const [adding, setAdding] = useState<ActionType>('command')
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
   const next = nextCronRun(draft.cron)
+  const actions = steps.map((s) => s.action)
   const save = useMutation({
-    mutationFn: () => (initial ? api.updateSchedule(server.id, initial.id, draft) : api.createSchedule(server.id, draft)),
+    mutationFn: () => (initial ? api.updateSchedule(server.id, initial.id, { ...draft, actions }) : api.createSchedule(server.id, { ...draft, actions })),
     onSuccess: (data) => {
       client.setQueryData(keys.schedules(server.id), data)
       onClose()
     },
     onError: (e) => toast.error(errorMessage(e, t)),
   })
-  const setAction = (i: number, action: ScheduleAction) => setDraft({ ...draft, actions: draft.actions.map((a, j) => (j === i ? action : a)) })
-  const move = (i: number, by: number) => {
-    const list = [...draft.actions]
-    const [item] = list.splice(i, 1)
-    list.splice(i + by, 0, item!)
-    setDraft({ ...draft, actions: list })
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return
+    setSteps((list) => arrayMove(list, list.findIndex((s) => s.id === active.id), list.findIndex((s) => s.id === over.id)))
   }
-  const invalid = !draft.name.trim() || !next || !draft.actions.length || draft.actions.some((a) => (a.type === 'command' && !a.command.trim()) || (a.type === 'say' && !a.message.trim()))
+  const invalid = !draft.name.trim() || !next || !actions.length || actions.some((a) => (a.type === 'command' && !a.command.trim()) || (a.type === 'say' && !a.message.trim()))
   return (
     <DialogContent title={initial ? t('schedules.edit') : t('schedules.add')} className="w-[min(92vw,38rem)]">
       <form
@@ -104,29 +142,16 @@ function ScheduleDialog({ server, game, initial, onClose }: { server: Server; ga
         </Field>
         <div className="flex flex-col gap-2">
           <div className="text-[0.8125rem] font-medium">{t('schedules.steps')}</div>
-          {draft.actions.map((action, i) => (
-            <div key={i} className="flex flex-wrap items-center gap-2 rounded-lg bg-foreground/[0.04] px-3 py-2">
-              <span className="w-5 text-center text-xs tabular-nums text-subtle-foreground">{i + 1}</span>
-              <span className="w-28 shrink-0 text-sm font-medium">{t(`schedules.actions.${action.type}`)}</span>
-              <div className="min-w-40 flex-1">
-                <ActionEditor action={action} chat={chat} onChange={(a) => setAction(i, a)} />
-              </div>
-              <div className="ml-auto flex">
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={t('schedules.up')} disabled={i === 0} onClick={() => move(i, -1)}>
-                  <RiArrowUpSLine />
-                </Button>
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={t('schedules.down')} disabled={i === draft.actions.length - 1} onClick={() => move(i, 1)}>
-                  <RiArrowDownSLine />
-                </Button>
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={t('schedules.removeStep')} onClick={() => setDraft({ ...draft, actions: draft.actions.filter((_, j) => j !== i) })}>
-                  <RiCloseFill />
-                </Button>
-              </div>
-            </div>
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVertical]} onDragEnd={onDragEnd}>
+            <SortableContext items={steps.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+              {steps.map((s) => (
+                <SortableStep key={s.id} step={s} chat={chat} onChange={(action) => setSteps((list) => list.map((x) => (x.id === s.id ? { ...x, action } : x)))} onRemove={() => setSteps((list) => list.filter((x) => x.id !== s.id))} />
+              ))}
+            </SortableContext>
+          </DndContext>
           <div className="flex gap-2">
             <Select value={adding} onValueChange={(v) => setAdding(v as ActionType)} options={TYPES.map((type) => ({ value: type, label: t(`schedules.actions.${type}`), hint: t(`schedules.hints.${type}`) }))} className="w-56" />
-            <Button type="button" disabled={draft.actions.length >= 30} onClick={() => setDraft({ ...draft, actions: [...draft.actions, blank(adding)] })}>
+            <Button type="button" disabled={steps.length >= 30} onClick={() => setSteps([...steps, step(blank(adding))])}>
               <RiAddFill />
               {t('schedules.addStep')}
             </Button>

@@ -304,8 +304,6 @@ export const en: Messages = {
     steps: 'Steps in order',
     addStep: 'Add step',
     removeStep: 'Remove step',
-    up: 'Up',
-    down: 'Down',
     seconds: 'seconds',
     waitFor_one: 'Wait {{count}} second',
     waitFor_few: 'Wait {{count}} seconds',

@@ -302,8 +302,6 @@ export const ru = {
     steps: 'Шаги по порядку',
     addStep: 'Добавить шаг',
     removeStep: 'Убрать шаг',
-    up: 'Выше',
-    down: 'Ниже',
     seconds: 'секунд',
     waitFor_one: 'Подождать {{count}} секунду',
     waitFor_few: 'Подождать {{count}} секунды',

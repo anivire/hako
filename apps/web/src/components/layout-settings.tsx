@@ -13,7 +13,7 @@ import { keys, useGames } from '../lib/queries'
 import { ServerAvatar } from './game-icon'
 import { NAV } from '../lib/navigation'
 
-const restrictToVertical: Modifier = ({ transform }) => ({ ...transform, x: 0 })
+export const restrictToVertical: Modifier = ({ transform }) => ({ ...transform, x: 0 })
 
 function IconTile({ children }: { children: ReactNode }) {
   return <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent [&_svg]:size-4">{children}</span>
