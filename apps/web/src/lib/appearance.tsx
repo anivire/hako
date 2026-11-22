@@ -18,6 +18,15 @@ export type PageWidth = (typeof PAGE_WIDTHS)[number]['value']
 
 const DEFAULT_WIDTH: PageWidth = 'full'
 
+const STEP_DOWN_BELOW = [120, 96, 80]
+
+export function pageMax(value: PageWidth, viewport: number, rem: number) {
+  const index = PAGE_WIDTHS.findIndex((w) => w.value === value)
+  if (value === 'full') return PAGE_WIDTHS[index]!.max
+  const drop = STEP_DOWN_BELOW.filter((limit) => viewport < limit * rem).length
+  return PAGE_WIDTHS[Math.max(0, index - drop)]!.max
+}
+
 export type NavPosition = 'left' | 'top' | 'bottom' | 'right'
 
 export type NavLabels = 'always' | 'hover' | 'off'
@@ -37,7 +46,6 @@ interface State {
 }
 
 interface Appearance extends State {
-  pageWidthOptions: (typeof PAGE_WIDTHS)[number][]
   setTheme: (theme: ThemePreset) => void
   setScheme: (scheme: ColorScheme) => void
   setPageWidth: (width: PageWidth) => void
@@ -141,8 +149,8 @@ function updateFavicon() {
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState(load)
   const [width, rem] = useSyncExternalStore(subscribeWidth, viewportSnapshot).split('|').map(Number) as [number, number]
-  const pageWidthOptions = PAGE_WIDTHS.filter((w) => w.value === 'full' || Number.parseFloat(w.max) * rem <= width)
-  const pageWidth = pageWidthOptions.some((w) => w.value === state.pageWidth) ? state.pageWidth : 'full'
+  const pageWidth = state.pageWidth
+  const max = pageMax(pageWidth, width, rem)
 
   useEffect(() => {
     applyTheme(state.theme, state.scheme)
@@ -159,15 +167,14 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   }, [state])
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--page-max-setting', PAGE_WIDTHS.find((w) => w.value === pageWidth)!.max)
-  }, [pageWidth])
+    document.documentElement.style.setProperty('--page-max-setting', max)
+  }, [max])
 
   return (
     <AppearanceContext
       value={{
         ...state,
         pageWidth,
-        pageWidthOptions,
         setTheme: (theme) => setState((s) => ({ ...s, theme })),
         setScheme: (scheme) => setState((s) => ({ ...s, scheme })),
         setPageWidth: (pageWidth) => setState((s) => ({ ...s, pageWidth })),

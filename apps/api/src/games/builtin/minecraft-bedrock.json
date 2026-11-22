@@ -1,0 +1,511 @@
+{
+  "id": "minecraft-bedrock",
+  "name": "Minecraft: Bedrock Edition",
+  "description": {
+    "ru": "Официальный Bedrock Dedicated Server для Windows 10/11, консолей и телефонов",
+    "en": "Official Bedrock Dedicated Server for Windows 10/11, consoles and phones"
+  },
+  "image": "itzg/minecraft-bedrock-server:latest",
+  "dataPath": "/data",
+  "ports": [
+    {
+      "name": "game",
+      "container": 19132,
+      "protocol": "udp"
+    }
+  ],
+  "memory": {
+    "default": 2048,
+    "min": 512
+  },
+  "env": {
+    "EULA": "{{EULA}}",
+    "VERSION": "{{VERSION}}",
+    "ALLOW_LIST": "{{ALLOW_LIST}}",
+    "TZ": "UTC"
+  },
+  "console": {
+    "ready": "Server started\\.",
+    "version": "Version:? (\\d+(?:\\.\\d+)+)",
+    "players": {
+      "join": "Player connected: (.+?), xuid",
+      "leave": "Player disconnected: (.+?), xuid"
+    }
+  },
+  "stop": {
+    "command": "stop",
+    "timeout": 60
+  },
+  "players": {
+    "name": "^[A-Za-z0-9][A-Za-z0-9 ]{0,15}$",
+    "kick": "kick \"{{NAME}}\"",
+    "lists": {
+      "ops": {
+        "add": "op \"{{NAME}}\"",
+        "remove": "deop \"{{NAME}}\""
+      },
+      "whitelist": {
+        "add": "allowlist add \"{{NAME}}\"",
+        "remove": "allowlist remove \"{{NAME}}\""
+      }
+    }
+  },
+  "icon": "data:image/png;base64,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",
+  "variables": [
+    {
+      "key": "VERSION",
+      "name": {
+        "ru": "Версия",
+        "en": "Version"
+      },
+      "type": "select",
+      "default": "LATEST",
+      "group": "version",
+      "options": [
+        {
+          "value": "LATEST",
+          "label": {
+            "ru": "Последняя",
+            "en": "Latest"
+          }
+        },
+        {
+          "value": "PREVIEW",
+          "label": {
+            "ru": "Preview",
+            "en": "Preview"
+          }
+        }
+      ],
+      "description": {
+        "ru": "Preview — тестовые сборки, к ним подключаются только клиенты Preview",
+        "en": "Preview builds only accept Preview clients"
+      },
+      "step": "setup"
+    },
+    {
+      "key": "ALLOW_LIST",
+      "name": {
+        "ru": "Белый список",
+        "en": "Whitelist"
+      },
+      "description": {
+        "ru": "Пускать только игроков из allowlist.json. Добавить игрока: allowlist add <ник> в консоли",
+        "en": "Only let in players from allowlist.json. Add one with allowlist add <name> in the console"
+      },
+      "type": "boolean",
+      "default": "false"
+    },
+    {
+      "key": "EULA",
+      "name": {
+        "ru": "Я принимаю",
+        "en": "I agree to the"
+      },
+      "description": {
+        "ru": "Чтобы запустить сервер Minecraft, нужно принять лицензионное соглашение Mojang.",
+        "en": "You have to accept Mojang's End User License Agreement to run a Minecraft server."
+      },
+      "type": "boolean",
+      "default": "false",
+      "required": true,
+      "group": "license",
+      "link": {
+        "url": "https://aka.ms/MinecraftEULA",
+        "text": "Minecraft EULA"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "id": "version",
+      "name": {
+        "ru": "Версия",
+        "en": "Version"
+      },
+      "description": {
+        "ru": "Версия Bedrock-сервера",
+        "en": "Bedrock server version"
+      }
+    },
+    {
+      "id": "license",
+      "name": {
+        "ru": "Лицензия",
+        "en": "License"
+      }
+    }
+  ],
+  "configs": [
+    {
+      "path": "server.properties",
+      "format": "properties",
+      "name": {
+        "ru": "Сервер",
+        "en": "Server"
+      },
+      "defaults": "server-name=Dedicated Server\ngamemode=survival\nforce-gamemode=false\ndifficulty=easy\nallow-cheats=false\nmax-players=10\nonline-mode=true\nallow-list=false\nserver-port=19132\nserver-portv6=19133\nenable-lan-visibility=true\nview-distance=32\ntick-distance=4\nplayer-idle-timeout=30\nmax-threads=8\nlevel-name=Bedrock level\nlevel-seed=\ndefault-player-permission-level=member\ntexturepack-required=false\ncontent-log-file-enabled=false\ncompression-threshold=1\nchat-restriction=None\ndisable-player-interaction=false\n",
+      "groups": [
+        {
+          "id": "general",
+          "name": {
+            "ru": "Основное",
+            "en": "General"
+          },
+          "description": {
+            "ru": "Как сервер выглядит в списке и как в нём играют",
+            "en": "How the server looks in the list and how it plays"
+          }
+        },
+        {
+          "id": "players",
+          "name": {
+            "ru": "Игроки и доступ",
+            "en": "Players and access"
+          },
+          "description": {
+            "ru": "Кто может зайти и что им разрешено",
+            "en": "Who can join and what they are allowed to do"
+          }
+        },
+        {
+          "id": "world",
+          "name": {
+            "ru": "Мир",
+            "en": "World"
+          },
+          "description": {
+            "ru": "Генерация, мобы и измерения",
+            "en": "Generation, mobs and dimensions"
+          }
+        },
+        {
+          "id": "performance",
+          "name": {
+            "ru": "Производительность",
+            "en": "Performance"
+          },
+          "description": {
+            "ru": "Чем меньше дальность, тем легче серверу",
+            "en": "Lower distances make the server lighter"
+          }
+        }
+      ],
+      "fields": [
+        {
+          "key": "server-name",
+          "name": {
+            "ru": "Название сервера",
+            "en": "Server name"
+          },
+          "type": "string",
+          "default": "Dedicated Server",
+          "group": "general",
+          "description": {
+            "ru": "Показывается в списке серверов и в LAN",
+            "en": "Shown in the server list and on LAN"
+          }
+        },
+        {
+          "key": "gamemode",
+          "name": {
+            "ru": "Режим игры",
+            "en": "Game mode"
+          },
+          "type": "select",
+          "default": "survival",
+          "group": "general",
+          "options": [
+            {
+              "value": "survival",
+              "label": {
+                "ru": "Выживание",
+                "en": "Survival"
+              }
+            },
+            {
+              "value": "creative",
+              "label": {
+                "ru": "Творческий",
+                "en": "Creative"
+              }
+            },
+            {
+              "value": "adventure",
+              "label": {
+                "ru": "Приключение",
+                "en": "Adventure"
+              }
+            }
+          ]
+        },
+        {
+          "key": "force-gamemode",
+          "name": {
+            "ru": "Принудительный режим",
+            "en": "Force game mode"
+          },
+          "type": "boolean",
+          "default": "false",
+          "group": "general",
+          "description": {
+            "ru": "Возвращать игроков в режим сервера при входе",
+            "en": "Put players back into the server mode when they join"
+          }
+        },
+        {
+          "key": "difficulty",
+          "name": {
+            "ru": "Сложность",
+            "en": "Difficulty"
+          },
+          "type": "select",
+          "default": "easy",
+          "group": "general",
+          "options": [
+            {
+              "value": "peaceful",
+              "label": {
+                "ru": "Мирная",
+                "en": "Peaceful"
+              }
+            },
+            {
+              "value": "easy",
+              "label": {
+                "ru": "Лёгкая",
+                "en": "Easy"
+              }
+            },
+            {
+              "value": "normal",
+              "label": {
+                "ru": "Нормальная",
+                "en": "Normal"
+              }
+            },
+            {
+              "value": "hard",
+              "label": {
+                "ru": "Сложная",
+                "en": "Hard"
+              }
+            }
+          ]
+        },
+        {
+          "key": "allow-cheats",
+          "name": {
+            "ru": "Читы",
+            "en": "Cheats"
+          },
+          "type": "boolean",
+          "default": "false",
+          "group": "general",
+          "description": {
+            "ru": "Разрешить команды вроде /give и /gamemode",
+            "en": "Allow commands such as /give and /gamemode"
+          }
+        },
+        {
+          "key": "enable-lan-visibility",
+          "name": {
+            "ru": "Виден в LAN",
+            "en": "Visible on LAN"
+          },
+          "type": "boolean",
+          "default": "true",
+          "group": "general"
+        },
+        {
+          "key": "max-players",
+          "name": {
+            "ru": "Максимум игроков",
+            "en": "Max players"
+          },
+          "type": "number",
+          "default": "10",
+          "group": "players"
+        },
+        {
+          "key": "online-mode",
+          "name": {
+            "ru": "Вход через Xbox",
+            "en": "Xbox sign-in"
+          },
+          "type": "boolean",
+          "default": "true",
+          "group": "players",
+          "description": {
+            "ru": "Требовать аккаунт Microsoft у всех игроков",
+            "en": "Require a Microsoft account from every player"
+          }
+        },
+        {
+          "key": "default-player-permission-level",
+          "name": {
+            "ru": "Права новых игроков",
+            "en": "New player permissions"
+          },
+          "type": "select",
+          "default": "member",
+          "group": "players",
+          "options": [
+            {
+              "value": "visitor",
+              "label": {
+                "ru": "Посетитель",
+                "en": "Visitor"
+              }
+            },
+            {
+              "value": "member",
+              "label": {
+                "ru": "Участник",
+                "en": "Member"
+              }
+            },
+            {
+              "value": "operator",
+              "label": {
+                "ru": "Оператор",
+                "en": "Operator"
+              }
+            }
+          ]
+        },
+        {
+          "key": "player-idle-timeout",
+          "name": {
+            "ru": "Кик за бездействие, мин",
+            "en": "Idle kick, min"
+          },
+          "type": "number",
+          "default": "30",
+          "group": "players",
+          "description": {
+            "ru": "0 — не кикать",
+            "en": "0 turns it off"
+          }
+        },
+        {
+          "key": "chat-restriction",
+          "name": {
+            "ru": "Ограничение чата",
+            "en": "Chat restriction"
+          },
+          "type": "select",
+          "default": "None",
+          "group": "players",
+          "options": [
+            {
+              "value": "None",
+              "label": {
+                "ru": "Нет",
+                "en": "None"
+              }
+            },
+            {
+              "value": "Dropped",
+              "label": {
+                "ru": "Скрывать",
+                "en": "Dropped"
+              }
+            },
+            {
+              "value": "Disabled",
+              "label": {
+                "ru": "Отключён",
+                "en": "Disabled"
+              }
+            }
+          ]
+        },
+        {
+          "key": "texturepack-required",
+          "name": {
+            "ru": "Обязательные паки мира",
+            "en": "Required world packs"
+          },
+          "type": "boolean",
+          "default": "false",
+          "group": "players",
+          "description": {
+            "ru": "Игроки должны скачать ресурс-паки мира",
+            "en": "Players must download the world resource packs"
+          }
+        },
+        {
+          "key": "level-name",
+          "name": {
+            "ru": "Название мира",
+            "en": "World name"
+          },
+          "type": "string",
+          "default": "Bedrock level",
+          "group": "world",
+          "description": {
+            "ru": "Папка мира в worlds/",
+            "en": "World folder inside worlds/"
+          }
+        },
+        {
+          "key": "level-seed",
+          "name": {
+            "ru": "Сид",
+            "en": "Seed"
+          },
+          "type": "string",
+          "default": "",
+          "group": "world",
+          "description": {
+            "ru": "Применяется только к новому миру",
+            "en": "Only used for a new world"
+          }
+        },
+        {
+          "key": "view-distance",
+          "name": {
+            "ru": "Дальность прорисовки",
+            "en": "View distance"
+          },
+          "type": "number",
+          "default": "32",
+          "group": "performance",
+          "description": {
+            "ru": "В чанках, минимум 5",
+            "en": "In chunks, at least 5"
+          }
+        },
+        {
+          "key": "tick-distance",
+          "name": {
+            "ru": "Дальность симуляции",
+            "en": "Simulation distance"
+          },
+          "type": "number",
+          "default": "4",
+          "group": "performance",
+          "description": {
+            "ru": "От 4 до 12 чанков",
+            "en": "4 to 12 chunks"
+          }
+        },
+        {
+          "key": "max-threads",
+          "name": {
+            "ru": "Потоки",
+            "en": "Threads"
+          },
+          "type": "number",
+          "default": "8",
+          "group": "performance",
+          "description": {
+            "ru": "0 — столько, сколько сможет сервер",
+            "en": "0 lets the server use as many as it can"
+          }
+        }
+      ]
+    }
+  ]
+}

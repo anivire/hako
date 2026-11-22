@@ -4,7 +4,7 @@ import { loadGames } from '../games/registry'
 import { allows, requiredPermission } from './access'
 
 loadGames()
-const valheim = { id: 'x', name: 'v', game: 'valheim', memory: 4096, icon: null, variables: {}, ports: {}, ownerId: 1, createdAt: '' }
+const valheim = { id: 'x', name: 'v', game: 'valheim', memory: 4096, cpu: null, icon: null, variables: {}, ports: {}, ownerId: 1, createdAt: '' }
 
 test('each server action needs its own permission', () => {
   assert.equal(requiredPermission('GET', '', valheim, ''), null)

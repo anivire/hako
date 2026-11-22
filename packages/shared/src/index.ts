@@ -23,14 +23,39 @@ export const configFileSchema = z.object({
   description: textSchema.optional(),
   placeholder: textSchema.optional(),
   defaults: z.string().max(65536).optional(),
+  seed: z.boolean().optional(),
   groups: z.array(z.object({ id: z.string(), name: textSchema, description: textSchema.optional() })).default([]),
   name: textSchema,
   fields: z.array(configFieldSchema).default([]),
 })
 export type ConfigFile = z.infer<typeof configFileSchema>
 
-export const consoleSchema = z.object({ ready: z.string().optional(), exec: z.array(z.string().min(1)).min(1).optional(), version: z.string().optional(), players: z.object({ join: z.string(), leave: z.string() }).optional() })
+export const consoleSchema = z.object({ ready: z.string().optional(), exec: z.array(z.string().min(1)).min(1).optional(), version: z.string().optional(), players: z.object({ join: z.string(), leave: z.string() }).optional(), chat: z.object({ message: z.string(), command: z.string().optional(), server: z.string().optional(), say: z.string().optional() }).optional() })
 export const stopSchema = z.object({ command: z.string().optional(), timeout: z.number().int().min(1).max(600).default(60) })
+const playerListSchema = z.object({ config: z.string().optional(), add: z.string().optional(), remove: z.string().optional() })
+export const playersSchema = z.object({
+  name: z.string().optional(),
+  avatar: z.string().optional(),
+  known: z.string().optional(),
+  kick: z.string().optional(),
+  lists: z.object({ ops: playerListSchema.optional(), whitelist: playerListSchema.optional(), bans: playerListSchema.optional() }).default({}),
+})
+export type PlayersSpec = z.infer<typeof playersSchema>
+const whenSchema = z.record(z.string(), z.array(z.string()))
+export const mapProviderSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  name: textSchema,
+  description: textSchema.optional(),
+  icon: z.string().optional(),
+  url: z.string().url().optional(),
+  source: z.string().default('modrinth'),
+  project: z.string().min(1),
+  port: z.number().int().min(1).max(65535),
+  render: z.string().optional(),
+  when: whenSchema.optional(),
+  files: z.array(z.object({ path: z.string().min(1), when: whenSchema.optional(), create: z.string().optional(), replace: z.array(z.tuple([z.string(), z.string()])).default([]) })).default([]),
+})
+export type MapProvider = z.infer<typeof mapProviderSchema>
 export const addonSourcesSchema = z.array(z.object({ source: z.string(), params: z.record(z.string(), z.string()).default({}) }))
 
 export const volumesSchema = z.array(z.object({ path: z.string().startsWith('/'), folder: z.string().regex(/^[\w.-]+$/).refine((f) => f !== '.' && f !== '..') }))
@@ -43,6 +68,7 @@ export const templateOverrideSchema = z.object({
   configs: z.array(configFileSchema).optional(),
   addons: addonSourcesSchema.optional(),
   volumes: volumesSchema.optional(),
+  players: playersSchema.optional(),
 })
 
 export const variableSchema = z.object({
@@ -95,6 +121,9 @@ export const gameTemplateSchema = z.object({
   console: consoleSchema.default({}),
   volumes: volumesSchema.default([]),
   stop: stopSchema.default({ timeout: 60 }),
+  healthcheck: z.boolean().default(true),
+  players: playersSchema.optional(),
+  map: z.object({ providers: z.array(mapProviderSchema).min(1) }).optional(),
   addons: addonSourcesSchema.default([]),
   configs: z.array(configFileSchema).default([]),
   startup: z.string().optional(),
@@ -146,12 +175,14 @@ export interface Server {
   name: string
   game: string
   memory: number
+  cpu: number | null
   icon: string | null
   variables: Record<string, string>
   ports: ServerPort[]
   status: ServerStatus
   startedAt: string | null
   version: string | null
+  addons: 'mods' | 'plugins' | null
   access: ServerAccess
   ownerId: number
   createdAt: string
@@ -162,8 +193,16 @@ export interface ServerStats {
   cpu: number
   memory: number
   memoryLimit: number
+  cpuLimit: number
   rx: number
   tx: number
+}
+
+export interface QuickStats {
+  cpu: number
+  cpuLimit: number
+  memory: number
+  memoryLimit: number
 }
 
 export type ConsoleMessage =
@@ -184,6 +223,7 @@ export const serverCreateSchema = z.object({
   icon: serverIconSchema.optional(),
   game: z.string(),
   memory: z.number().int().min(64).max(1024 * 1024),
+  cpu: z.number().min(0.1).max(1024).nullable().optional(),
   variables: z.record(z.string(), z.string()).default({}),
   ports: z.record(z.string(), z.number().int().min(1).max(65535)).default({}),
 })
@@ -224,6 +264,7 @@ export interface AddonSourceInfo {
   name: string
   versions: boolean
   updates: boolean
+  missing?: string
 }
 
 export interface AddonProject {
@@ -239,6 +280,7 @@ export interface AddonProject {
 export interface AddonSearchResult {
   items: AddonProject[]
   total: number
+  pageSize: number
 }
 
 export interface AddonVersion {
@@ -262,6 +304,16 @@ export interface AddonEntry {
   version: string | null
   icon: string | null
   url: string | null
+  addedAt?: string | null
+}
+
+export interface ModpackStatus {
+  name: string | null
+  icon: string | null
+  url: string | null
+  current: string | null
+  latest: string | null
+  pinned: boolean
 }
 
 export interface AddonsOverview {

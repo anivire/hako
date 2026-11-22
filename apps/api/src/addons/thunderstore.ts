@@ -130,6 +130,7 @@ export const thunderstore: ManagedSource = {
     const skip = skipped(ctx)
     return {
       total: res.count,
+      pageSize: PAGE,
       items: res.results
         .filter((r) => !r.is_deprecated && !skip.has(`${r.namespace}-${r.name}`.toLowerCase()) && r.name !== 'r2modman')
         .map((r) => ({

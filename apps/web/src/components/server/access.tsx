@@ -4,6 +4,7 @@ import { type Member, PERMISSIONS, type Permission, type Server } from '@hako/sh
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ask } from '../../lib/confirm'
 import { api } from '../../lib/api'
 import { errorMessage } from '../../lib/queries'
 import { useDebounced } from '../../lib/use-debounced'
@@ -49,7 +50,7 @@ function MemberRow({ server, member, onChange }: { server: Server; member: Membe
           {open ? t('common.close') : t('access.edit')}
         </Button>
         <Tooltip content={t('access.remove')}>
-          <Button variant="ghost" size="icon-sm" aria-label={t('access.remove')} loading={remove.isPending} onClick={() => confirm(t('access.confirmRemove', { name: member.username })) && remove.mutate()}>
+          <Button variant="ghost" size="icon-sm" aria-label={t('access.remove')} loading={remove.isPending} onClick={() => void ask({ title: t('access.confirmRemove', { name: member.username }), confirm: t('access.remove'), danger: true }).then((ok) => ok && remove.mutate())}>
             <RiDeleteBin6Fill />
           </Button>
         </Tooltip>

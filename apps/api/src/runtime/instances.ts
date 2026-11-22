@@ -30,9 +30,18 @@ function containerName(id: string) {
   return `hako-${id}`
 }
 
-export function serverPorts(server: ServerRow, game: GameTemplate) {
-  return game.ports.map((p) => ({ name: p.name, container: p.container, protocol: p.protocol, host: server.ports[p.name] ?? p.container }))
+export function mapProvider(server: ServerRow, game: GameTemplate) {
+  const id = server.variables.MAP
+  return id ? game.map?.providers.find((p) => p.id === id && variableVisible(p, server.variables)) : undefined
 }
+
+export function serverPorts(server: ServerRow, game: GameTemplate) {
+  const ports = game.ports.map((p) => ({ name: p.name, container: p.container, protocol: p.protocol, host: server.ports[p.name] ?? p.container }))
+  const map = mapProvider(server, game)
+  return map && server.ports.map ? [...ports, { name: 'map', container: map.port, protocol: 'tcp' as const, host: server.ports.map }] : ports
+}
+
+const MAP_MARKER = '.hako-map-rendered'
 
 const ICON_DATA = /^data:image\/(png|jpeg|webp|gif);base64,(.+)$/
 
@@ -121,6 +130,9 @@ class Instance {
   private versionTail = ''
   private players: PlayerTracker | null = null
 
+  private render: { id: string; command: string } | null = null
+  private cpuCores: number | null = null
+
   constructor(readonly id: string) {}
 
   subscribe(listener: Listener) {
@@ -179,7 +191,9 @@ class Instance {
   async adopt(container: Docker.Container) {
     this.ready = null
     try {
-      this.startedAt = (await container.inspect()).State.StartedAt || null
+      const info = await container.inspect()
+      this.startedAt = info.State.StartedAt || null
+      this.cpuCores = info.HostConfig.NanoCpus ? info.HostConfig.NanoCpus / 1e9 : null
     } catch {}
     this.setStatus('running')
     await this.attach(container)
@@ -226,6 +240,12 @@ class Instance {
       if (this.ready.test(this.tail)) {
         this.tail = ''
         this.setStatus('running')
+        const render = this.render
+        this.render = null
+        if (render)
+          setTimeout(() => {
+            if (this.status === 'running' && this.command(render.command)) fs.writeFile(path.join(serverDir(this.id), MAP_MARKER), render.id, () => {})
+          }, 5000)
       }
     }
   }
@@ -264,6 +284,25 @@ class Instance {
       fs.mkdirSync(dir, { recursive: true })
       for (const v of game.volumes) fs.mkdirSync(path.join(dir, v.folder), { recursive: true })
       writeIcon(dir, server, game)
+      for (const f of mapProvider(server, game)?.files ?? []) {
+        if (!variableVisible(f, server.variables)) continue
+        const file = path.join(dir, f.path)
+        if (fs.existsSync(file)) {
+          const text = fs.readFileSync(file, 'utf8')
+          const next = f.replace.reduce((t, [from, to]) => t.replaceAll(from, to), text)
+          if (next !== text) fs.writeFileSync(file, next)
+        } else if (f.create) {
+          fs.mkdirSync(path.dirname(file), { recursive: true })
+          fs.writeFileSync(file, f.create)
+        }
+      }
+      for (const c of game.configs) {
+        if (!c.seed || !c.defaults) continue
+        const file = path.join(dir, c.path)
+        if (fs.existsSync(file)) continue
+        fs.mkdirSync(path.dirname(file), { recursive: true })
+        fs.writeFileSync(file, c.defaults)
+      }
       await ensureImage(image, this.log)
       await removeContainer(server.id)
       for (const p of ports) {
@@ -282,16 +321,28 @@ class Instance {
         AttachStderr: true,
         StdinOnce: false,
         Labels: { [LABEL]: server.id, 'hako.game': game.id },
+        Healthcheck: game.healthcheck ? undefined : { Test: ['NONE'] },
         ExposedPorts: Object.fromEntries(ports.map((p) => [`${p.container}/${p.protocol}`, {}])),
         HostConfig: {
           Binds: [`${dir}:${game.dataPath}`, ...game.volumes.map((v) => `${path.join(dir, v.folder)}:${v.path}`)],
           PortBindings: Object.fromEntries(ports.map((p) => [`${p.container}/${p.protocol}`, [{ HostPort: String(p.host) }]])),
           Memory: memory,
           MemorySwap: memory,
+          NanoCpus: server.cpu ? Math.round(server.cpu * 1e9) : undefined,
           RestartPolicy: { Name: 'no' },
         },
       })
       this.ready = game.console.ready ? new RegExp(game.console.ready) : null
+      this.cpuCores = server.cpu ?? null
+      const map = mapProvider(server, game)
+      const rendered = (() => {
+        try {
+          return fs.readFileSync(path.join(dir, MAP_MARKER), 'utf8')
+        } catch {
+          return ''
+        }
+      })()
+      this.render = map?.render && rendered !== map.id ? { id: map.id, command: map.render } : null
       this.tail = ''
       this.versionTail = ''
       await this.attach(container)
@@ -369,12 +420,46 @@ class Instance {
     const systemDelta = (s.cpu_stats.system_cpu_usage ?? 0) - (s.precpu_stats.system_cpu_usage ?? 0)
     const cpus = s.cpu_stats.online_cpus ?? s.cpu_stats.cpu_usage.percpu_usage?.length ?? 1
     const cpu = systemDelta > 0 && cpuDelta > 0 ? (cpuDelta / systemDelta) * cpus * 100 : 0
+    const cpuLimit = this.cpuCores ?? cpus
     const cache = (s.memory_stats.stats as Record<string, number> | undefined)?.inactive_file ?? 0
     const nets = Object.values(s.networks ?? {})
     const rx = nets.reduce((sum, n) => sum + n.rx_bytes, 0)
     const tx = nets.reduce((sum, n) => sum + n.tx_bytes, 0)
-    this.emit({ type: 'stats', stats: { at: Date.now(), cpu, memory: Math.max(0, (s.memory_stats.usage ?? 0) - cache), memoryLimit: s.memory_stats.limit ?? 0, rx, tx } })
+    this.emit({ type: 'stats', stats: { at: Date.now(), cpu, memory: Math.max(0, (s.memory_stats.usage ?? 0) - cache), memoryLimit: s.memory_stats.limit ?? 0, cpuLimit, rx, tx } })
   }
+}
+
+export interface QuickStats {
+  cpu: number
+  cpuLimit: number
+  memory: number
+  memoryLimit: number
+}
+
+const quick = new Map<string, { at: number; value: Promise<QuickStats | null> }>()
+
+export function quickStats(id: string, cores: number | null): Promise<QuickStats | null> {
+  const hit = quick.get(id)
+  if (hit && Date.now() - hit.at < 4000) return hit.value
+  const value = (async () => {
+    try {
+      const s = (await docker.getContainer(containerName(id)).stats({ stream: false })) as Docker.ContainerStats
+      const cpuDelta = s.cpu_stats.cpu_usage.total_usage - (s.precpu_stats.cpu_usage?.total_usage ?? 0)
+      const systemDelta = (s.cpu_stats.system_cpu_usage ?? 0) - (s.precpu_stats.system_cpu_usage ?? 0)
+      const cpus = s.cpu_stats.online_cpus ?? s.cpu_stats.cpu_usage.percpu_usage?.length ?? 1
+      const cache = (s.memory_stats.stats as Record<string, number> | undefined)?.inactive_file ?? 0
+      return {
+        cpu: systemDelta > 0 && cpuDelta > 0 ? (cpuDelta / systemDelta) * cpus * 100 : 0,
+        cpuLimit: cores ?? cpus,
+        memory: Math.max(0, (s.memory_stats.usage ?? 0) - cache),
+        memoryLimit: s.memory_stats.limit ?? 0,
+      }
+    } catch {
+      return null
+    }
+  })()
+  quick.set(id, { at: Date.now(), value })
+  return value
 }
 
 export function instance(id: string): Instance {
@@ -439,6 +524,14 @@ export function hostPortFree(port: number, protocol: 'tcp' | 'udp'): Promise<boo
     server.once('error', () => resolve(false))
     server.listen(port, '0.0.0.0', () => server.close(() => resolve(true)))
   })
+}
+
+export async function dockerCpus(): Promise<number | null> {
+  try {
+    return ((await docker.info()) as { NCPU?: number }).NCPU ?? null
+  } catch {
+    return null
+  }
 }
 
 export async function dockerAvailable(): Promise<boolean> {

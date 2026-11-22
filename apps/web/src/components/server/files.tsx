@@ -18,6 +18,7 @@ import { Badge, Button, Card, EmptyState, Input, Progress, Skeleton, Tooltip, cn
 import { type DragEvent, type FormEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
+import { ask } from '../../lib/confirm'
 import { api } from '../../lib/api'
 import { formatBytes, joinPath, parentPath } from '../../lib/format'
 import { errorMessage, keys } from '../../lib/queries'
@@ -45,7 +46,8 @@ function FileEditor({ server, path, onClose }: { server: Server; path: string; o
     if (draft !== null && dirty && !save.isPending) save.mutate(draft)
   }
   const close = () => {
-    if (!dirty || confirm(t('files.discard'))) onClose()
+    if (!dirty) return onClose()
+    void ask({ title: t('files.discard'), confirm: t('common.discardChanges'), danger: true }).then((ok) => ok && onClose())
   }
   return (
     <Card className="flex h-[calc(100dvh-15rem)] min-h-96 flex-col overflow-hidden">
@@ -357,7 +359,7 @@ export function ServerFiles({ server }: { server: Server }) {
                         size="icon-sm"
                         aria-label={t('common.delete')}
                         onClick={() => {
-                          if (confirm(t('files.confirmDelete', { name: entry.name }))) remove.mutate(entry)
+                          void ask({ title: t('files.confirmDelete', { name: entry.name }), confirm: t('common.delete'), danger: true }).then((ok) => ok && remove.mutate(entry))
                         }}
                       >
                         <RiDeleteBinFill />

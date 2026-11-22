@@ -3,10 +3,18 @@ const LINE = /^(\r?(?:\x1b\[K)?)(\[\d{2}:\d{2}:\d{2}(?:\.\d+)?)( |\] \[)([^\]]*?
 
 export type LogFilter = 'all' | 'error' | 'warn' | 'info'
 
-const LEVEL = /^\[\d{2}:\d{2}:\d{2}(?:\.\d+)?(?: |\] \[)[^\]]*?\/?(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|SEVERE|FATAL)\]/
-const GROUPS: Record<string, Exclude<LogFilter, 'all'> | 'debug'> = { TRACE: 'debug', DEBUG: 'debug', INFO: 'info', WARN: 'warn', WARNING: 'warn', ERROR: 'error', SEVERE: 'error', FATAL: 'error' }
+const SYSLOG = /^[A-Z][a-z]{2} +\d+ [\d:]+ \S+: /
+const LEVEL = /(?:^|[\s[\/(])(TRACE|DEBUG|VERBOSE|INFO|WARN|WARNING|ERROR|SEVERE|FATAL|Trace|Debug|Verbose|Info|Warn|Warning|Error|Severe|Fatal)(?=[\]\s:)]|$)/
+const GROUPS: Record<string, Exclude<LogFilter, 'all'> | 'debug'> = { TRACE: 'debug', DEBUG: 'debug', VERBOSE: 'debug', INFO: 'info', WARN: 'warn', WARNING: 'warn', ERROR: 'error', SEVERE: 'error', FATAL: 'error' }
 
-function plain(line: string): string {
+function levelOf(text: string) {
+  const head = text.replace(SYSLOG, '').slice(0, 80)
+  const match = LEVEL.exec(head)
+  if (!match || head.slice(0, match.index + 1).includes(': ')) return undefined
+  return GROUPS[match[1]!.toUpperCase()]
+}
+
+export function plain(line: string): string {
   const text = line.replace(/\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b[=>]/g, '').replace(/\r$/, '')
   return text.slice(text.lastIndexOf('\r') + 1)
 }
@@ -22,8 +30,8 @@ export function filterLog(chunk: string, filter: Exclude<LogFilter, 'all'>, stat
   const out: string[] = []
   for (const line of lines) {
     const text = plain(line)
-    const match = LEVEL.exec(text)
-    if (match) state.level = GROUPS[match[1]!] ?? null
+    const level = levelOf(text)
+    if (level) state.level = level
     else if (!text.trim()) continue
     if (state.level === filter) out.push(`${line.replace(/\r$/, '')}\r\n`)
   }

@@ -351,6 +351,17 @@
   animation: hako-fade-in 140ms ease-out;
 }
 
+@keyframes hako-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@utility animate-rise {
+  animation: hako-rise 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 @utility zoom-layer {
   transform: scale(var(--zoom, 1));
   backface-visibility: hidden;

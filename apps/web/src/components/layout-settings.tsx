@@ -116,7 +116,7 @@ function ServerOrder() {
     setServerOrder(arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id))))
   }
   return (
-    <div className="pb-1 pl-6">
+    <div className="pb-1 pl-11">
       <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVertical]} onDragEnd={onDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           {list.map((server) => {

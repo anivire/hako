@@ -1,7 +1,9 @@
 import { RiArrowDownSLine, RiArrowLeftSLine, RiArrowRightSLine, RiCheckFill, RiCheckboxCircleFill, RiErrorWarningFill } from '@remixicon/react'
+import { cpuSteps } from '../components/server/settings'
+import { MemoryPicker, sizeLabel } from '../components/memory-picker'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { GameTemplate, GameVariable, Server } from '@hako/shared'
-import { Button, Card, EmptyState, Field, Input, Segmented, Skeleton, cn } from '@hako/ui'
+import { Button, Card, EmptyState, Field, Input, Skeleton, StepSlider, cn } from '@hako/ui'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTransitionNavigate } from '../components/transition-link'
@@ -18,8 +20,6 @@ import { errorMessage, keys, useGames } from '../lib/queries'
 import { useDebounced } from '../lib/use-debounced'
 
 type Step = 'game' | 'setup' | 'settings' | 'review'
-
-const MEMORY_PRESETS = [1024, 2048, 4096, 6144, 8192, 12288, 16384]
 
 function Stepper({ steps, current, onSelect }: { steps: Step[]; current: number; onSelect: (index: number) => void }) {
   const { t } = useTranslation()
@@ -51,10 +51,6 @@ function Stepper({ steps, current, onSelect }: { steps: Step[]; current: number;
       })}
     </ol>
   )
-}
-
-function sizeLabel(mb: number) {
-  return mb >= 1024 ? `${Number((mb / 1024).toFixed(1))} GB` : `${mb} MB`
 }
 
 function hasMods(game: GameTemplate) {
@@ -192,6 +188,8 @@ function Wizard({ games }: { games: GameTemplate[] }) {
   const [name, setName] = useState('')
   const [pick, setPick] = useState<{ key: string; label: string; icon: string | null } | null>(null)
   const [memory, setMemory] = useState<number | null>(null)
+  const [cpu, setCpu] = useState<number | null>(2)
+  const system = useQuery({ queryKey: ['system'], queryFn: api.system, staleTime: 30_000 })
   const [variables, setVariables] = useState<Record<string, string>>({})
   const [ports, setPorts] = useState<Record<string, string>>({})
   const [files, setFiles] = useState<Record<string, File>>({})
@@ -218,6 +216,7 @@ function Wizard({ games }: { games: GameTemplate[] }) {
         icon: suggestion?.icon ?? null,
         game: game.id,
         memory: mem,
+        cpu,
         variables: withDefaults(game, variables),
         ports: Object.fromEntries(
           Object.entries(ports)
@@ -254,6 +253,7 @@ function Wizard({ games }: { games: GameTemplate[] }) {
     setPorts({})
     setFiles({})
     setMemory(null)
+    setCpu(2)
   }
   const stepErrors = step === 'setup' || step === 'settings' ? variableErrors(game, variables, step) : {}
   const fieldErrors: Record<string, string> = Object.fromEntries([
@@ -323,11 +323,14 @@ function Wizard({ games }: { games: GameTemplate[] }) {
               </div>
             </Field>
             <Field label={t('servers.memoryPick')} hint={t('servers.memoryMin', { size: sizeLabel(game.memory.min) })}>
-              <Segmented
-                value={String(mem)}
-                onChange={(value) => setMemory(Number(value))}
-                options={[...new Set([...MEMORY_PRESETS.filter((m) => m >= game.memory.min), mem])].sort((a, b) => a - b).map((m) => ({ value: String(m), label: sizeLabel(m) }))}
-                className="max-w-full"
+              <MemoryPicker value={mem} min={game.memory.min} onChange={setMemory} />
+            </Field>
+            <Field label={t('settings.cpu')} hint={cpu ? t('settings.cpuHint', { count: cpu }) : t('settings.cpuNone')}>
+              <StepSlider
+                value={cpu ? String(cpu) : 'none'}
+                onChange={(next) => setCpu(next === 'none' ? null : Number(next))}
+                label={t('settings.cpu')}
+                options={cpuSteps(system.data?.cpus ?? null, cpu).map((n) => ({ value: n ? String(n) : 'none', label: n ? String(n) : '∞' }))}
               />
             </Field>
           </WizardSection>

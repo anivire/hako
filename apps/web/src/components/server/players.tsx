@@ -1,15 +1,28 @@
 import { RiForbidFill, RiLogoutBoxRFill, RiSearchFill, RiShieldStarFill, RiUserFollowFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { type PlayerList, type PlayerRecord, type Server } from '@hako/shared'
+import { type PlayerList, type PlayerRecord, type PlayersSpec, type Server } from '@hako/shared'
 import { Badge, Button, Card, EmptyState, Input, Segmented, Skeleton, StatusDot, Tooltip, cn, toast } from '@hako/ui'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 import { errorMessage } from '../../lib/queries'
 
-const PLAYER_NAME = /^[A-Za-z0-9_]{1,16}$/
-
 type Row = PlayerRecord & { online: boolean }
+
+export function playerName(spec: PlayersSpec | undefined) {
+  return new RegExp(spec?.name ?? '^[^\\s/\\\\]{1,32}$')
+}
+
+export function PlayerHead({ serverId, name, avatar, className }: { serverId: string; name: string; avatar?: string; className?: string }) {
+  const [failed, setFailed] = useState(false)
+  if (!avatar || failed)
+    return (
+      <span aria-hidden className={cn('grid shrink-0 place-items-center bg-accent-soft font-semibold uppercase text-accent', className)}>
+        <span className="text-[0.625em]">{name.slice(0, 1)}</span>
+      </span>
+    )
+  return <img src={api.addonIcon(serverId, avatar.replaceAll('{{NAME}}', encodeURIComponent(name)))} alt="" loading="lazy" onError={() => setFailed(true)} className={cn('shrink-0 bg-field [image-rendering:pixelated]', className)} />
+}
 
 const FLAGS: { list: PlayerList; flag: 'op' | 'banned' | 'allowed'; icon: ReactNode; on: 'accent' | 'danger' | 'success' }[] = [
   { list: 'ops', flag: 'op', icon: <RiShieldStarFill />, on: 'accent' },
@@ -24,7 +37,7 @@ function rows(roster: PlayerRecord[], online: string[]): Row[] {
   return [...roster, ...extra].map((p) => ({ ...p, online: live.has(p.name.toLowerCase()) })).sort((a, b) => Number(b.online) - Number(a.online) || a.name.localeCompare(b.name))
 }
 
-function PlayerRow({ server, player, onDone }: { server: Server; player: Row; onDone: (via?: 'console' | 'file') => void }) {
+function PlayerRow({ server, spec, player, onDone }: { server: Server; spec: PlayersSpec; player: Row; onDone: (via?: 'console' | 'file') => void }) {
   const { t } = useTranslation()
   const toggle = useMutation({
     mutationFn: ({ list, on }: { list: PlayerList; on: boolean }) => (on ? api.addPlayer(server.id, list, player.name) : api.removePlayer(server.id, list, player.name)),
@@ -34,7 +47,7 @@ function PlayerRow({ server, player, onDone }: { server: Server; player: Row; on
   const kick = useMutation({ mutationFn: () => api.kickPlayer(server.id, player.name), onSuccess: () => onDone('console'), onError: (e) => toast.error(errorMessage(e, t)) })
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted">
-      <img src={api.addonIcon(server.id, `https://mc-heads.net/avatar/${player.uuid ?? encodeURIComponent(player.name)}/32`)} alt="" loading="lazy" className="size-8 shrink-0 rounded-md bg-field [image-rendering:pixelated]" />
+      <PlayerHead serverId={server.id} name={player.name} avatar={spec.avatar} className="size-8 rounded-md text-base" />
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
         <span className="truncate text-sm font-medium">{player.name}</span>
         {player.online ? (
@@ -50,7 +63,10 @@ function PlayerRow({ server, player, onDone }: { server: Server; player: Row; on
         ))}
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
-        {FLAGS.map((f) => {
+        {FLAGS.filter((f) => {
+          const list = spec.lists[f.list]
+          return list && (list.config || (server.status !== 'offline' && (player[f.flag] ? list.remove : list.add)))
+        }).map((f) => {
           const on = player[f.flag]
           const label = t(on ? `players.un.${f.flag}` : `players.do.${f.flag}`)
           return (
@@ -69,7 +85,7 @@ function PlayerRow({ server, player, onDone }: { server: Server; player: Row; on
             </Tooltip>
           )
         })}
-        {player.online ? (
+        {player.online && spec.kick ? (
           <Tooltip content={t('players.kick')}>
             <Button variant="ghost" size="icon-sm" aria-label={t('players.kick')} loading={kick.isPending} onClick={() => kick.mutate()}>
               <RiLogoutBoxRFill />
@@ -81,7 +97,7 @@ function PlayerRow({ server, player, onDone }: { server: Server; player: Row; on
   )
 }
 
-export function PlayerManager({ server, online }: { server: Server; online: string[] }) {
+export function PlayerManager({ server, spec, online }: { server: Server; spec: PlayersSpec; online: string[] }) {
   const { t } = useTranslation()
   const client = useQueryClient()
   const key = ['roster', server.id]
@@ -98,7 +114,7 @@ export function PlayerManager({ server, online }: { server: Server; online: stri
   const all = rows(roster.data ?? [], online)
   const shown = all.filter((p) => (filter === 'all' || p.online) && p.name.toLowerCase().includes(needle))
   const typed = query.trim()
-  const fresh = PLAYER_NAME.test(typed) && !all.some((p) => p.name.toLowerCase() === needle) ? { name: typed, uuid: null, op: false, banned: false, allowed: false, online: false } : null
+  const fresh = playerName(spec).test(typed) && !all.some((p) => p.name.toLowerCase() === needle) ? { name: typed, uuid: null, op: false, banned: false, allowed: false, online: false } : null
   return (
     <div className="flex flex-col gap-4">
       <p className="text-[0.8125rem] text-muted-foreground">{t('players.hint')}</p>
@@ -123,9 +139,9 @@ export function PlayerManager({ server, online }: { server: Server; online: stri
       ) : shown.length || fresh ? (
         <Card className="flex flex-col p-1.5">
           {shown.map((p) => (
-            <PlayerRow key={p.name} server={server} player={p} onDone={refresh} />
+            <PlayerRow key={p.name} server={server} spec={spec} player={p} onDone={refresh} />
           ))}
-          {fresh ? <PlayerRow key={`new:${fresh.name}`} server={server} player={fresh} onDone={refresh} /> : null}
+          {fresh ? <PlayerRow key={`new:${fresh.name}`} server={server} spec={spec} player={fresh} onDone={refresh} /> : null}
         </Card>
       ) : (
         <EmptyState title={t(filter === 'online' ? 'console.nobodyOnline' : 'players.empty')} />

@@ -1,7 +1,7 @@
-import { RiAddFill, RiDatabase2Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiSearchFill } from '@remixicon/react'
+import { RiAddFill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiSearchFill } from '@remixicon/react'
 import { useQuery } from '@tanstack/react-query'
-import type { GameTemplate, Server, ServerStatus } from '@hako/shared'
-import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton } from '@hako/ui'
+import type { GameTemplate, QuickStats, Server, ServerStatus } from '@hako/shared'
+import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, cn } from '@hako/ui'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
@@ -13,6 +13,7 @@ import { api } from '../lib/api'
 import { useText } from '../lib/i18n'
 import { keys, useGames } from '../lib/queries'
 import { readStorage, writeStorage } from '../lib/storage'
+import { formatBytes } from '../lib/format'
 import { ServerSummary } from './server'
 
 const GRID = 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'
@@ -23,6 +24,11 @@ const VIEW_KEY = 'hako:servers-view'
 
 function memoryLabel(memory: number) {
   return memory >= 1024 && memory % 1024 === 0 ? `${memory / 1024} GB` : `${memory} MB`
+}
+
+function useDisk(id: string) {
+  const usage = useQuery({ queryKey: ['usage', id], queryFn: () => api.usage(id), staleTime: 60_000 })
+  return usage.data ? formatBytes(usage.data.bytes) : '…'
 }
 
 function NewServerButton() {
@@ -46,8 +52,28 @@ function Chip({ icon, children, mono }: { icon?: ReactNode; children: ReactNode;
   )
 }
 
-function ServerCard({ server, game }: { server: Server; game: GameTemplate | undefined }) {
-  const text = useText()
+function Meter({ label, value, share }: { label: string; value: string; share: number | null }) {
+  return (
+    <div className="grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-3 text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="h-1.5 overflow-hidden rounded-full bg-foreground/[0.06]">
+        {share === null ? null : (
+          <span
+            className={cn('block h-full rounded-full transition-[width] duration-700', share > 0.9 ? 'bg-danger' : share > 0.7 ? 'bg-warning' : 'bg-accent')}
+            style={{ width: `${Math.max(2, Math.min(100, share * 100))}%` }}
+          />
+        )}
+      </span>
+      <span className="text-right font-mono font-medium tabular-nums">{value}</span>
+    </div>
+  )
+}
+
+function ServerCard({ server, game, stats }: { server: Server; game: GameTemplate | undefined; stats?: QuickStats }) {
+  const { t } = useTranslation()
+  const disk = useDisk(server.id)
+  const memoryLimit = stats?.memoryLimit || server.memory * 1024 * 1024
+  const cores = server.cpu ? t('servers.cores', { count: server.cpu }) : t('servers.coresUnlimited')
   return (
     <TLink to={`/servers/${server.id}`} className="group">
       <Card className="flex h-full min-h-40 flex-col gap-4 p-5 transition-colors [--avatar-ring:var(--color-surface)] group-hover:bg-muted group-hover:[--avatar-ring:var(--color-muted)]">
@@ -63,14 +89,23 @@ function ServerCard({ server, game }: { server: Server; game: GameTemplate | und
           </div>
           <StatusBadge status={server.status} />
         </div>
-        <div className="mt-auto flex flex-wrap gap-1.5">
-          <Chip icon={<GameIcon src={game?.icon} fallback={text(game?.name) || server.game} className="size-3.5 rounded-[3px]" />}>{text(game?.name) || server.game}</Chip>
-          <Chip icon={<RiLinkM />} mono>
-            {serverAddress(server)}
-          </Chip>
-          <Chip icon={<RiDatabase2Fill />} mono>
-            {memoryLabel(server.memory)}
-          </Chip>
+        <div className="mt-auto flex flex-col gap-2.5">
+          <Meter
+            label={t('servers.specMemory')}
+            share={stats ? stats.memory / memoryLimit : null}
+            value={stats ? `${formatBytes(stats.memory)} / ${memoryLabel(server.memory)}` : memoryLabel(server.memory)}
+          />
+          <Meter label={t('servers.specCpu')} share={stats ? stats.cpu / 100 / stats.cpuLimit : null} value={stats ? (server.cpu ? `${Math.round(stats.cpu)}% / ${server.cpu * 100}%` : `${Math.round(stats.cpu / stats.cpuLimit)}%`) : cores} />
+          <div className="flex items-center justify-between gap-3 pt-0.5 font-mono text-xs text-subtle-foreground">
+            <span className="flex min-w-0 items-center gap-1.5 [&_svg]:size-3.5 [&_svg]:shrink-0">
+              <RiHardDrive3Fill />
+              <span className="truncate">{t('servers.onDisk', { size: disk })}</span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1.5 [&_svg]:size-3.5" title={serverAddress(server)}>
+              <RiLinkM />
+              {server.ports[0] ? `:${server.ports[0].host}` : '—'}
+            </span>
+          </div>
         </div>
       </Card>
     </TLink>
@@ -79,6 +114,8 @@ function ServerCard({ server, game }: { server: Server; game: GameTemplate | und
 
 function ServerRow({ server, game }: { server: Server; game: GameTemplate | undefined }) {
   const text = useText()
+  const { t } = useTranslation()
+  const disk = useDisk(server.id)
   return (
     <TLink to={`/servers/${server.id}`} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors [--avatar-ring:var(--color-surface)] hover:bg-muted hover:[--avatar-ring:var(--color-muted)]">
       <ServerAvatar game={game} values={server.variables} icon={server.icon} size={36} ring="var(--color-surface)" />
@@ -95,6 +132,12 @@ function ServerRow({ server, game }: { server: Server; game: GameTemplate | unde
       </span>
       <span className="hidden w-44 shrink-0 truncate font-mono text-xs text-muted-foreground md:block">{serverAddress(server)}</span>
       <span className="hidden w-16 shrink-0 text-right font-mono text-xs text-muted-foreground sm:block">{memoryLabel(server.memory)}</span>
+      <span className="hidden w-12 shrink-0 text-right font-mono text-xs text-muted-foreground sm:block" title={t('servers.specCpu')}>
+        {server.cpu ? String(server.cpu) : '∞'}
+      </span>
+      <span className="hidden w-20 shrink-0 text-right font-mono text-xs text-muted-foreground sm:block" title={t('console.storage')}>
+        {disk}
+      </span>
       <span className="flex w-32 shrink-0 justify-end">
         <StatusBadge status={server.status} />
       </span>
@@ -117,6 +160,7 @@ export function ServersPage() {
     writeStorage(VIEW_KEY, next)
   }
   const servers = useQuery({ queryKey: keys.servers, queryFn: api.servers, refetchInterval: 10_000 })
+  const stats = useQuery({ queryKey: ['server-stats'], queryFn: api.serverStats, refetchInterval: 5000, enabled: Boolean(servers.data?.some((s) => s.status === 'running')) })
   const games = useGames()
   const query = params.get('q') ?? ''
   const gameFilter = params.get('game') ?? ''
@@ -188,7 +232,7 @@ export function ServersPage() {
           ) : (
             <div className={GRID}>
               {shown.map((s) => (
-                <ServerCard key={s.id} server={s} game={gameOf(s.game)} />
+                <ServerCard key={s.id} server={s} game={gameOf(s.game)} stats={stats.data?.[s.id]} />
               ))}
             </div>
           )}

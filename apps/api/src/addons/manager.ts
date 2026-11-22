@@ -1,18 +1,19 @@
 import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import type { AddonEntry, AddonSourceInfo, AddonUpdate, AddonsOverview } from '@hako/shared'
+import type { AddonEntry, AddonSourceInfo, AddonUpdate, AddonsOverview, ModpackStatus } from '@hako/shared'
 import { interpolate, serverGame } from '../games/registry'
-import { badRequest, notFound } from '../lib/http'
+import { badRequest, fetchJson, notFound } from '../lib/http'
 import type { ServerRow } from '../runtime/instances'
 import { resolveInside } from '../services/files'
 import { download } from './download'
+import { curseforge } from './curseforge'
 import { modrinth } from './modrinth'
 import { thunderstore } from './thunderstore'
 import type { AddonContext, AddonSource, IdentifiedFile, ManagedSource } from './types'
 import { workshop } from './workshop'
 
-const SOURCES: AddonSource[] = [modrinth]
+const SOURCES: AddonSource[] = [modrinth, curseforge]
 const MANAGED: ManagedSource[] = [thunderstore, workshop]
 
 function managed(server: ServerRow): { source: ManagedSource; ctx: AddonContext } | null {
@@ -34,6 +35,7 @@ interface ScannedFile {
   size: number
   enabled: boolean
   sha1: string
+  mtime: number
 }
 
 interface Prepared {
@@ -56,6 +58,12 @@ function configured(server: ServerRow): Prepared[] {
 }
 
 const UNLINKABLE = ['fabric', 'quilt', 'forge', 'neoforge']
+
+export function addonKind(server: ServerRow): 'mods' | 'plugins' | null {
+  if (!serverGame(server)?.addons.length) return null
+  if (managed(server) || linked(server)) return 'mods'
+  return configured(server).map((p) => p.source.kind(p.ctx)).find(Boolean) ?? null
+}
 
 function linked(server: ServerRow) {
   return server.variables.KIND === 'modpack'
@@ -80,7 +88,7 @@ async function scan(server: ServerRow, dirs: string[]): Promise<ScannedFile[]> {
       const file = path.join(full, e.name)
       const stat = await fs.stat(file)
       const enabled = !e.name.endsWith(DISABLED)
-      out.push({ path: path.posix.join(dir, e.name), fileName: enabled ? e.name : e.name.slice(0, -DISABLED.length), size: stat.size, enabled, sha1: await sha1(file, stat.size, stat.mtimeMs) })
+      out.push({ path: path.posix.join(dir, e.name), fileName: enabled ? e.name : e.name.slice(0, -DISABLED.length), size: stat.size, enabled, mtime: stat.mtimeMs, sha1: await sha1(file, stat.size, stat.mtimeMs) })
     }
   }
   return out.sort((a, b) => a.fileName.localeCompare(b.fileName))
@@ -122,11 +130,18 @@ export async function addonsOverview(server: ServerRow): Promise<AddonsOverview>
       version: k?.info.version ?? null,
       icon: k?.info.icon ?? null,
       url: k?.info.url ?? null,
+      addedAt: new Date(f.mtime).toISOString(),
     }
   })
   const first = prepared[0]
   return {
-    sources: prepared.map((p) => ({ id: p.source.id, name: p.source.name, versions: true, updates: true }) satisfies AddonSourceInfo),
+    sources: [
+      ...prepared.map((p) => ({ id: p.source.id, name: p.source.name, versions: true, updates: true }) satisfies AddonSourceInfo),
+      ...configured(server).flatMap((p) => {
+        const missing = p.available ? null : p.source.missing?.(p.ctx)
+        return missing && !prepared.some((x) => x.source === p.source) ? [{ id: p.source.id, name: p.source.name, versions: true, updates: false, missing } satisfies AddonSourceInfo] : []
+      }),
+    ],
     entries,
     modpack: linked(server),
     loader: first?.ctx.params.loader ?? null,
@@ -241,6 +256,27 @@ export async function removeAddon(server: ServerRow, relative: string) {
   const m = managed(server)
   if (m) return m.source.remove(server, m.ctx, relative)
   await fs.rm(await resolveInside(server.id, addonPath(relative), false), { force: true })
+}
+
+async function readEnv(server: ServerRow, file: string): Promise<Record<string, string>> {
+  const text = await fs.readFile(await resolveInside(server.id, file, false), 'utf8').catch(() => '')
+  return Object.fromEntries([...text.matchAll(/^([A-Z_]+)="?(.*?)"?$/gm)].map((m) => [m[1]!, m[2]!]))
+}
+
+export async function modpackStatus(server: ServerRow): Promise<ModpackStatus | null> {
+  if (!linked(server)) return null
+  const installed = { ...(await readEnv(server, '.install-curseforge.env')), ...(await readEnv(server, '.install-modrinth.env')) }
+  const base: ModpackStatus = { name: installed.MODPACK_NAME ?? null, icon: null, url: null, current: installed.MODPACK_VERSION ?? null, latest: null, pinned: Boolean(server.variables.MODRINTH_VERSION || server.variables.CF_FILE_ID) }
+  const slug = server.variables.MODRINTH_MODPACK
+  if (!slug || server.variables.PLATFORM !== 'MODRINTH') return base
+  try {
+    const project = await fetchJson<{ title: string; slug: string; icon_url: string | null }>(`https://api.modrinth.com/v2/project/${encodeURIComponent(slug)}`)
+    const versions = await fetchJson<{ version_number: string; version_type: string }[]>(`https://api.modrinth.com/v2/project/${encodeURIComponent(slug)}/version`)
+    const latest = versions.find((v) => v.version_type === 'release') ?? versions[0]
+    return { ...base, name: project.title, icon: project.icon_url, url: `https://modrinth.com/modpack/${project.slug}`, latest: latest?.version_number ?? null }
+  } catch {
+    return base
+  }
 }
 
 export async function modpackBase(server: ServerRow): Promise<Record<string, string>> {

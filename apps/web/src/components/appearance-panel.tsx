@@ -3,7 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger, StepSlider, cn } from '@hako/u
 import { type ReactElement, type ReactNode, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TLink } from './transition-link'
-import { useAppearance } from '../lib/appearance'
+import { PAGE_WIDTHS, useAppearance } from '../lib/appearance'
 import { NavPositionSettings } from './layout-settings'
 import { SchemePicker, ThemePicker } from './theme-picker'
 
@@ -18,8 +18,8 @@ function Section({ title, children, className }: { title: ReactNode; children: R
 
 export function PageWidthSlider() {
   const { t } = useTranslation()
-  const { pageWidth, setPageWidth, pageWidthOptions } = useAppearance()
-  return <StepSlider value={pageWidth} onChange={setPageWidth} label={t('appearance.pageWidth')} options={pageWidthOptions.map((w) => ({ value: w.value, label: w.label }))} />
+  const { pageWidth, setPageWidth } = useAppearance()
+  return <StepSlider value={pageWidth} onChange={setPageWidth} label={t('appearance.pageWidth')} options={PAGE_WIDTHS.map((w) => ({ value: w.value, label: w.label }))} />
 }
 
 let popoverOpen = false

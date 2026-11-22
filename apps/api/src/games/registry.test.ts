@@ -5,10 +5,11 @@ import factorio from './builtin/factorio.json'
 import minecraft from './builtin/minecraft.json'
 import terraria from './builtin/terraria.json'
 import valheim from './builtin/valheim.json'
+import bedrock from './builtin/minecraft-bedrock.json'
 import { containerEnv, interpolate, resolveVariables } from './registry'
 
 test('builtin templates are valid', () => {
-  for (const raw of [minecraft, factorio, terraria, valheim]) assert.equal(gameTemplateSchema.safeParse(raw).success, true)
+  for (const raw of [minecraft, bedrock, factorio, terraria, valheim]) assert.equal(gameTemplateSchema.safeParse(raw).success, true)
 })
 
 test('interpolate fills known keys and blanks unknown ones', () => {
@@ -171,6 +172,7 @@ test('Valheim needs a password of at least 5 characters', () => {
 test('versions are read from the startup log', () => {
   const read = (raw: unknown, line: string) => new RegExp(gameTemplateSchema.parse(raw).console.version!).exec(line)?.[1]
   assert.equal(read(valheim, '11/22/2026 00:10:01: Valheim version: l-0.220.5 (network version 35)'), '0.220.5')
+  assert.equal(read(bedrock, '[2026-11-22 12:00:00:123 INFO] Version: 1.21.124.2'), '1.21.124.2')
   assert.equal(read(factorio, '   0.000 2026-11-22 00:10:01; Factorio 2.1.24 (build 84123, linux64, headless, space-age)'), '2.1.24')
   assert.equal(read(minecraft, '[init] Starting minecraft server version 1.21.4'), '1.21.4')
 })

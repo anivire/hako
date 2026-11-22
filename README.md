@@ -45,6 +45,7 @@ hako (箱, "box") runs each game server in its own Docker container and gives yo
 | Game | Image | What you can run |
 |---|---|---|
 | Minecraft: Java Edition | [itzg/minecraft-server](https://github.com/itzg/docker-minecraft-server) | Vanilla, Paper, Purpur, Fabric, Quilt, Forge, NeoForge, modpacks from Modrinth and CurseForge |
+| Minecraft: Bedrock Edition | [itzg/minecraft-bedrock-server](https://github.com/itzg/docker-minecraft-bedrock-server) | Latest or Preview Bedrock Dedicated Server |
 | Factorio | [factoriotools/factorio](https://github.com/factoriotools/factorio-docker) | Stable or experimental, with or without Space Age |
 | Terraria | [ryshe/terraria](https://github.com/ryshe/terraria), [jacobsmile/tmodloader1.4](https://github.com/JACOBSMILE/tmodloader1.4) | Vanilla, TShock or tModLoader with Workshop mods |
 | Valheim | [community-valheim-tools/valheim-server](https://github.com/community-valheim-tools/valheim-server-docker) | Vanilla or BepInEx with Thunderstore mods |

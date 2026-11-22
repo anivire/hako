@@ -2,7 +2,7 @@ import { RiArrowDownSLine, RiLogoutBoxRFill, RiMenuFill, RiPaletteFill, RiSettin
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ServerStatus, User } from '@hako/shared'
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, Logo, LogoMark, Tooltip, cn, useSlidingIndicator } from '@hako/ui'
-import { Fragment, type ReactNode, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { Fragment, type ReactNode, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { matchPath, useLocation, useNavigate } from 'react-router'
 import { TLink, TNavLink } from './transition-link'
@@ -30,6 +30,9 @@ function useDesktop() {
     () => window.matchMedia(DESKTOP).matches,
   )
 }
+
+const SERVER_SLOT = 2.5
+const SLOT_GAP = 0.25
 
 const NAV_ITEM =
   'relative flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-3 text-sm font-medium outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-[1.125rem] [&_svg]:shrink-0'
@@ -350,22 +353,43 @@ function DesktopNav({ side }: { side: 'top' | 'bottom' }) {
   const servers = useQuery({ queryKey: keys.servers, queryFn: api.servers, refetchInterval: 10_000 })
   const games = useGames()
   const list = serverList ? orderServers(servers.data ?? [], serverOrder, hiddenServers) : []
-  const indicator = useSlidingIndicator(ref, '[aria-current="page"]', `${pathname}|${hiddenNav.join()}|${navOrder.join()}|${side}|${list.length}`)
+  const outer = useRef<HTMLDivElement>(null)
+  const [room, setRoom] = useState(Infinity)
+  useLayoutEffect(() => {
+    const box = outer.current
+    const nav = ref.current
+    if (!box || !nav) return
+    const measure = () => {
+      const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      const links = [...nav.querySelectorAll<HTMLElement>('[data-nav-link]')].reduce((w, el) => w + el.offsetWidth + SLOT_GAP * rem, 0)
+      setRoom(Math.max(0, Math.floor((box.clientWidth - links - rem) / (SERVER_SLOT * rem))))
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(box)
+    return () => observer.disconnect()
+  }, [nav.length])
+  const overflow = list.length > room
+  const fits = overflow ? list.slice(0, Math.max(0, room - 1)) : list
+  const active = list.find((srv) => pathname.startsWith(`/servers/${srv.id}`))
+  const shown = active && overflow && !fits.includes(active) && fits.length ? [...fits.slice(0, -1), active] : fits
+  const rest = list.filter((srv) => !shown.includes(srv))
+  const indicator = useSlidingIndicator(ref, '[aria-current="page"]', `${pathname}|${hiddenNav.join()}|${navOrder.join()}|${side}|${shown.map((s) => s.id).join()}`)
   return (
-    <div className="relative hidden min-w-0 flex-1 justify-center md:flex">
+    <div ref={outer} className="relative hidden min-w-0 flex-1 justify-center md:flex">
       <nav ref={ref} className="relative flex items-center gap-1">
         <span aria-hidden style={indicator} className="pointer-events-none absolute rounded-lg bg-muted duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
         {nav.map((n) => {
           const active = Boolean(matchPath({ path: n.to, end: n.end }, pathname))
           return (
-            <TNavLink key={n.to} to={n.to} end={n.end} className={cn(NAV_ITEM, active ? 'text-foreground [&_svg]:text-accent' : 'text-muted-foreground hover:text-foreground')}>
+            <TNavLink key={n.to} data-nav-link to={n.to} end={n.end} className={cn(NAV_ITEM, active ? 'text-foreground [&_svg]:text-accent' : 'text-muted-foreground hover:text-foreground')}>
               <n.icon />
               {t(`nav.${n.key}`)}
             </TNavLink>
           )
         })}
         {list.length ? <span aria-hidden className="mx-1.5 h-5 w-px shrink-0 bg-border" /> : null}
-        {list.map((srv) => {
+        {shown.map((srv) => {
           const game = games.data?.find((g) => g.id === srv.game)
           const busy = srv.status === 'starting' || srv.status === 'stopping'
           return (
@@ -379,6 +403,31 @@ function DesktopNav({ side }: { side: 'top' | 'bottom' }) {
             </Tooltip>
           )
         })}
+        {rest.length ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" aria-label={t('nav.moreServers', { count: rest.length })} className="grid h-9 min-w-9 shrink-0 cursor-pointer place-items-center rounded-lg px-1.5 text-[0.8125rem] font-semibold tabular-nums text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent data-[state=open]:bg-muted data-[state=open]:text-foreground">
+                +{rest.length}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side={side === 'top' ? 'bottom' : 'top'} className="max-h-80 overflow-y-auto">
+              {rest.map((srv) => {
+                const game = games.data?.find((g) => g.id === srv.game)
+                return (
+                  <DropdownMenuItem key={srv.id} asChild>
+                    <TLink to={`/servers/${srv.id}`} className="flex items-center gap-2.5">
+                      <span className="relative grid size-6 shrink-0 place-items-center">
+                        {srv.icon ? <img src={srv.icon} alt="" className="size-6 rounded-md object-cover" /> : <GameIcon src={game?.icon} fallback={text(game?.name) || srv.name} className="size-6 rounded-md" />}
+                        <span aria-hidden className={cn('absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-2 ring-popover', DOT_COLOR[srv.status])} />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{srv.name}</span>
+                    </TLink>
+                  </DropdownMenuItem>
+                )
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
       </nav>
     </div>
   )
@@ -438,7 +487,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         rail && (wide ? 'md:[--page-max:min(var(--page-max-setting),calc(100%-10.15rem))]' : 'md:[--page-max:min(var(--page-max-setting),calc(100%-2.65rem))]'),
         rail === 'left' && (wide ? 'md:[--rail-left:10.15rem]' : 'md:[--rail-left:2.65rem]'),
         rail === 'right' && (wide ? 'md:[--rail-right:10.15rem]' : 'md:[--rail-right:2.65rem]'),
-        dock && 'md:pb-20 md:[--page-top:1.5rem]',
+        !rail && !dock && 'md:[--page-top:1rem]',
+        dock && 'md:pb-20 md:[--page-top:1.5rem] md:[--page-bottom:1rem] md:[--overlay-bottom:5.5rem]',
       )}
     >
       {rail ? <SideRail position={rail} /> : null}
@@ -466,7 +516,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 export function Page({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('page-frame flex w-full flex-1 flex-col px-4 pb-8 pt-4 sm:px-6 sm:pt-(--page-top,2rem)', className)}>{children}</div>
+  return <div className={cn('page-frame flex w-full flex-1 flex-col px-4 pb-8 pt-4 sm:px-6 sm:pt-(--page-top,2rem) md:pb-(--page-bottom,2rem)', className)}>{children}</div>
 }
 
 export function PageHeader({ title, description, actions }: { title: ReactNode; description?: ReactNode; actions?: ReactNode }) {

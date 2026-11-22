@@ -94,6 +94,7 @@ export function StatCard({
   title,
   icon,
   value,
+  total,
   detail,
   series,
   max,
@@ -106,6 +107,7 @@ export function StatCard({
   title: string
   icon: ReactNode
   value: string
+  total?: string
   detail?: ReactNode
   series?: Series[]
   max?: number
@@ -119,7 +121,10 @@ export function StatCard({
       <Card className="flex min-w-0 items-center gap-2.5 px-4 py-3 text-muted-foreground">
         <span className="[&_svg]:size-4">{icon}</span>
         <span className="truncate text-sm">{title}</span>
-        {loading ? <Skeleton className="ml-auto h-5 w-16" /> : <span className="ml-auto shrink-0 text-lg font-semibold tabular-nums tracking-tight text-foreground">{value}</span>}
+        {loading ? <Skeleton className="ml-auto h-7 w-16" /> : <span className="ml-auto shrink-0 text-lg font-semibold tabular-nums tracking-tight text-foreground">
+            {value}
+            {total ? <span className="font-medium text-subtle-foreground"> / {total}</span> : null}
+          </span>}
       </Card>
     )
   return (

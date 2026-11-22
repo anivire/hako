@@ -11,7 +11,7 @@ import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
 import { type Member, type Permission, type PortCheck, type Server, type ServerAccess, memberSchema, serverInviteCreateSchema, addonInstallSchema, addonToggleSchema, addonUpdateSchema, powerSchema, serverCreateSchema, serverUpdateSchema } from '@hako/shared'
-import { addonSource, addonUpdates, addonsOverview, installAddon, modpackBase, removeAddon, setAddonEnabled, updateAddons } from '../addons/manager'
+import { addonKind, addonSource, modpackStatus, addonUpdates, addonsOverview, installAddon, modpackBase, removeAddon, setAddonEnabled, updateAddons } from '../addons/manager'
 import { accessOf, allows, requiredPermission } from '../lib/access'
 import { db, now } from '../db/client'
 import { createInvite, deleteInvite, listInvites } from '../services/invites'
@@ -23,16 +23,17 @@ import { optionSource } from '../options'
 import { type AppEnv, requireAuth } from '../lib/auth'
 import { badRequest, notFound } from '../lib/http'
 import { parseBody } from '../lib/validate'
-import { type ServerRow, dockerPublishedPorts, hostPortFree, instance, runningCommand, serverDir, serverPorts, startedAtOf, statusOf, versionOf } from '../runtime/instances'
+import { type ServerRow, dockerPublishedPorts, hostPortFree, instance, quickStats, runningCommand, serverDir, serverPorts, startedAtOf, statusOf, versionOf } from '../runtime/instances'
 import { addPlayer, kickPlayer, readPlayers, removePlayer, roster } from '../services/players'
 import { diskUsage } from '../services/usage'
+import { proxyMap, setMap, setMapShare, sharedServer } from '../services/map'
 import { MAX_EDIT_BYTES, listDir, makeDir, movePath, readText, removePath, resolveInside, writeFile } from '../services/files'
 
 type ServerEnv = AppEnv & { Variables: { server: ServerRow; access: ServerAccess } }
 
 const MAX_UPLOAD = 512 * 1024 * 1024
 const MAX_ICON = 5 * 1024 * 1024
-const ICON_HOSTS = new Set(['cdn.modrinth.com', 'gcdn.thunderstore.io', 'ccdn.thunderstore.io', 'images.steamusercontent.com', 'steamuserimages-a.akamaihd.net', 'mc-heads.net'])
+const ICON_HOSTS = new Set(['cdn.modrinth.com', 'gcdn.thunderstore.io', 'ccdn.thunderstore.io', 'images.steamusercontent.com', 'steamuserimages-a.akamaihd.net', 'mc-heads.net', 'minotar.net', 'media.forgecdn.net'])
 
 function iconUrl(raw: string): URL {
   let url: URL
@@ -48,7 +49,7 @@ function iconUrl(raw: string): URL {
 
 function toServer(row: ServerRow, access: ServerAccess): Server {
   const game = requireGame(row.game)
-  return { id: row.id, name: row.name, game: row.game, memory: row.memory, icon: row.icon, variables: row.variables, ports: serverPorts(row, game), status: statusOf(row.id), startedAt: startedAtOf(row.id), version: versionOf(row.id), access, ownerId: row.ownerId, createdAt: row.createdAt }
+  return { id: row.id, name: row.name, game: row.game, memory: row.memory, cpu: row.cpu ?? null, icon: row.icon, variables: row.variables, ports: serverPorts(row, game), status: statusOf(row.id), startedAt: startedAtOf(row.id), version: versionOf(row.id), addons: addonKind(row), access, ownerId: row.ownerId, createdAt: row.createdAt }
 }
 
 async function checkPorts(requested: Record<string, number>, game: ReturnType<typeof requireGame>): Promise<PortCheck[]> {
@@ -138,13 +139,19 @@ export const serverRoutes = new Hono<ServerEnv>()
       return access ? [toServer(row, access)] : []
     }))
   })
+  .get('/stats', async (c) => {
+    const user = c.get('user')
+    const rows = db.select().from(servers).all().filter((row) => accessOf(row, user) && statusOf(row.id) === 'running')
+    const entries = await Promise.all(rows.map(async (row) => [row.id, await quickStats(row.id, row.cpu ?? null)] as const))
+    return c.json(Object.fromEntries(entries.filter(([, s]) => s)))
+  })
   .post('/', async (c) => {
     const input = await parseBody(c, serverCreateSchema)
     const game = requireGame(input.game)
     if (input.memory < game.memory.min) badRequest('MEMORY_TOO_LOW')
     const row = db
       .insert(servers)
-      .values({ id: randomBytes(4).toString('hex'), name: input.name, game: game.id, memory: input.memory, icon: input.icon ?? null, variables: resolveVariables(game, input.variables), ports: await allocatePorts(input.ports, game), ownerId: c.get('user').id, createdAt: now() })
+      .values({ id: randomBytes(4).toString('hex'), name: input.name, game: game.id, memory: input.memory, cpu: input.cpu ?? null, icon: input.icon ?? null, variables: resolveVariables(game, input.variables), ports: await allocatePorts(input.ports, game), ownerId: c.get('user').id, createdAt: now() })
       .returning()
       .get()
     await fs.mkdir(serverDir(row.id), { recursive: true })
@@ -160,7 +167,7 @@ export const serverRoutes = new Hono<ServerEnv>()
     if (input.memory !== undefined && input.memory < game.memory.min) badRequest('MEMORY_TOO_LOW')
     const row = db
       .update(servers)
-      .set({ name: input.name, memory: input.memory, icon: input.icon, variables: input.variables ? resolveVariables(game, input.variables, server.variables) : undefined })
+      .set({ name: input.name, memory: input.memory, cpu: input.cpu, icon: input.icon, variables: input.variables ? resolveVariables(game, input.variables, server.variables) : undefined })
       .where(eq(servers.id, server.id))
       .returning()
       .get()
@@ -285,6 +292,7 @@ export const serverRoutes = new Hono<ServerEnv>()
     })
   })
   .get('/:id/addons', async (c) => c.json(await addonsOverview(c.get('server'))))
+  .get('/:id/addons/modpack', async (c) => c.json(await modpackStatus(c.get('server'))))
   .post('/:id/addons/unlink', async (c) => {
     const server = c.get('server')
     const game = requireGame(server.game)
@@ -292,18 +300,28 @@ export const serverRoutes = new Hono<ServerEnv>()
     const row = db.update(servers).set({ variables }).where(eq(servers.id, server.id)).returning().get()
     return c.json(toServer(row, c.get('access')))
   })
-  .get('/:id/players', async (c) => c.json(await roster(c.get('server').id)))
+  .put('/:id/map', async (c) => {
+    const { provider } = await parseBody(c, z.object({ provider: z.string().max(64).nullable() }))
+    return c.json(toServer(await setMap(c.get('server'), provider), c.get('access')))
+  })
+  .post('/:id/map/share', async (c) => {
+    const { on } = await parseBody(c, z.object({ on: z.boolean() }))
+    return c.json(toServer(setMapShare(c.get('server'), on), c.get('access')))
+  })
+  .get('/:id/map', (c) => c.redirect(`${c.req.path}/`))
+  .get('/:id/map/*', (c) => proxyMap(c.get('server'), c.req.path.slice(`/api/servers/${c.get('server').id}/map`.length), new URL(c.req.url).search, c.req.header('accept-language')))
+  .get('/:id/players', async (c) => c.json(await roster(c.get('server'))))
   .post('/:id/players/kick', async (c) => {
     const { name } = await parseBody(c, z.object({ name: z.string().min(1).max(32) }))
-    kickPlayer(c.get('server').id, name)
+    kickPlayer(c.get('server'), name)
     return c.json({ ok: true })
   })
-  .get('/:id/players/:list', async (c) => c.json(await readPlayers(c.get('server').id, c.req.param('list'))))
+  .get('/:id/players/:list', async (c) => c.json(await readPlayers(c.get('server'), c.req.param('list'))))
   .post('/:id/players/:list', async (c) => {
     const { name } = await parseBody(c, z.object({ name: z.string().min(1).max(32) }))
-    return c.json(await addPlayer(c.get('server').id, c.req.param('list'), name))
+    return c.json(await addPlayer(c.get('server'), c.req.param('list'), name))
   })
-  .delete('/:id/players/:list', async (c) => c.json(await removePlayer(c.get('server').id, c.req.param('list'), c.req.query('name') ?? '')))
+  .delete('/:id/players/:list', async (c) => c.json(await removePlayer(c.get('server'), c.req.param('list'), c.req.query('name') ?? '')))
   .get('/:id/addons/icon', async (c) => {
     const res = await fetch(iconUrl(c.req.query('url') ?? ''), { headers: { 'User-Agent': env.userAgent }, redirect: 'error', signal: AbortSignal.timeout(15_000) }).catch(() => null)
     const type = res?.headers.get('content-type') ?? ''
@@ -338,4 +356,11 @@ export const serverRoutes = new Hono<ServerEnv>()
   .post('/:id/addons', async (c) => {
     const input = await parseBody(c, addonInstallSchema)
     return c.json({ installed: await installAddon(c.get('server'), input.source, input.projectId, input.versionId) })
+  })
+
+export const shareRoutes = new Hono<AppEnv>()
+  .get('/map/:token', (c) => c.redirect(`${c.req.path}/`))
+  .get('/map/:token/*', (c) => {
+    const token = c.req.param('token')
+    return proxyMap(sharedServer(token), c.req.path.slice(`/api/share/map/${token}`.length), new URL(c.req.url).search, c.req.header('accept-language'))
   })

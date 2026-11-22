@@ -30,7 +30,7 @@ interface MrVersion {
 
 let latestRelease: { value: string; at: number } | null = null
 
-async function gameVersion(ctx: AddonContext): Promise<string> {
+export async function gameVersion(ctx: AddonContext): Promise<string> {
   const raw = ctx.params.gameVersion ?? ''
   if (raw && raw.toUpperCase() !== 'LATEST') return raw
   if (latestRelease && Date.now() - latestRelease.at < 3_600_000) return latestRelease.value
@@ -75,6 +75,7 @@ export const modrinth: AddonSource = {
   id: 'modrinth',
   name: 'Modrinth',
   available: (ctx) => Boolean(loaderOf(ctx)),
+  kind: (ctx) => (loaderOf(ctx)?.type === 'plugin' ? 'plugins' : loaderOf(ctx) ? 'mods' : null),
   dir: (ctx) => loaderOf(ctx)?.dir ?? null,
   async identify(hashes) {
     const missing = [...new Set(hashes)].filter((h) => !identified.has(h))
@@ -124,6 +125,7 @@ export const modrinth: AddonSource = {
     const res = await fetchJson<{ hits: { project_id: string; slug: string; title: string; description: string; author: string; icon_url: string | null; downloads: number; project_type: string }[]; total_hits: number }>(`${API}/search?${q}`)
     return {
       total: res.total_hits,
+      pageSize: 20,
       items: res.hits.map((h) => ({ id: h.project_id, name: h.title, description: h.description, author: h.author, icon: h.icon_url || null, downloads: h.downloads, url: `https://modrinth.com/${h.project_type}/${h.slug}` })),
     }
   },

@@ -27,6 +27,7 @@ export const env = {
   adminUsername: str('ADMIN_USERNAME'),
   adminPassword: str('ADMIN_PASSWORD'),
   userAgent: str('USER_AGENT', 'hako'),
+  mapHost: str('MAP_HOST', '127.0.0.1'),
   curseforgeApiKey: str('CURSEFORGE_API_KEY'),
 }
 

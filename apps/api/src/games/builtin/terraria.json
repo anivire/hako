@@ -32,11 +32,24 @@
     "players": {
       "join": "(?:^|: )([^:]+?)(?: \\([^)]*\\))? has joined\\.",
       "leave": "(?:^|: )([^:]+?) has left\\."
+    },
+    "chat": {
+      "message": "(?:^|: )<([^>]+)> (.*)$",
+      "say": "say {{MESSAGE}}"
     }
   },
   "stop": {
     "command": "exit",
     "timeout": 30
+  },
+  "players": {
+    "name": "^[^\\s].{0,19}$",
+    "kick": "kick {{NAME}}",
+    "lists": {
+      "bans": {
+        "add": "ban {{NAME}}"
+      }
+    }
   },
   "configs": [
     {
@@ -859,7 +872,17 @@
                 "path": "/plugins",
                 "folder": "plugins"
               }
-            ]
+            ],
+            "players": {
+              "name": "^[^\\s].{0,19}$",
+              "kick": "/kick \"{{NAME}}\"",
+              "lists": {
+                "bans": {
+                  "add": "/ban add \"{{NAME}}\"",
+                  "remove": "/ban del \"{{NAME}}\""
+                }
+              }
+            }
           }
         },
         {
@@ -913,6 +936,10 @@
               "players": {
                 "join": "(?:^|: )([^:]+?)(?: \\([^)]*\\))? has joined\\.",
                 "leave": "(?:^|: )([^:]+?) has left\\."
+              },
+              "chat": {
+                "message": "(?:^|: )<([^>]+)> (.*)$",
+                "say": "say {{MESSAGE}}"
               }
             },
             "stop": {

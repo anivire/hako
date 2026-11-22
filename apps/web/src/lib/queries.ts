@@ -71,6 +71,7 @@ export function errorMessage(error: unknown, t: TFunction): string {
     PLAYER_NAME_INVALID: 'errors.playerName',
     FILE_TOO_LARGE: 'errors.fileTooLarge',
     FILE_BINARY: 'errors.fileBinary',
+    MAP_UNSUPPORTED: 'errors.mapUnsupported',
     NOT_A_FILE: 'errors.path',
     MODPACK_LINKED: 'errors.modpackLinked',
     MODPACK_NOT_LINKED: 'errors.modpackLinked',

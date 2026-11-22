@@ -1,16 +1,18 @@
 import { RiAddFill, RiArrowDownSLine, RiArrowGoBackFill, RiDeleteBinFill, RiExternalLinkFill, RiInformationFill, RiSearchFill, RiUserFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type BepinexEntry, type ConfigField, type ConfigFile, type GameTemplate, type Server, parseBepinex, parseIdList, parseJsonConfig, parseJsonList, parseProperties, updateBepinex, updateJsonConfig, updateProperties, writeIdList, writeJsonList } from '@hako/shared'
-import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
+import { Button, Card, EmptyState, Input, SaveBar as UiSaveBar, Segmented, Select, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
 import { type FormEvent, type ReactNode, useState } from 'react'
 import { type TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router'
 import { GroupIcon } from '../../lib/group-icons'
 import { ApiError, api } from '../../lib/api'
 import { useText } from '../../lib/i18n'
 import { errorMessage, keys } from '../../lib/queries'
+import { useUnsavedGuard } from '../../lib/unsaved'
 import { MotdEditor } from './motd-editor'
-import { PlayerManager } from './players'
+import { PlayerHead, PlayerManager } from './players'
 
 type MotdContext = { name: string; players: string; icon?: string }
 
@@ -84,19 +86,12 @@ function Section({ icon, title, description, children, action }: { icon?: string
 
 function SaveBar({ count, saving, onCancel, onSave }: { count: number; saving: boolean; onCancel: () => void; onSave: () => void }) {
   const { t } = useTranslation()
-  if (!count) return null
+  const guard = useUnsavedGuard(count > 0)
   return (
-    <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-xl bg-raised px-4 py-3 shadow-lg animate-pop">
-      <span className="text-sm text-muted-foreground">{t('config.unsaved', { count })}</span>
-      <div className="flex gap-2">
-        <Button variant="ghost" onClick={onCancel}>
-          {t('common.cancel')}
-        </Button>
-        <Button variant="accent" loading={saving} onClick={onSave}>
-          {t('common.save')}
-        </Button>
-      </div>
-    </div>
+    <>
+      {guard}
+      {count ? <UiSaveBar message={t('config.unsaved', { count })} cancelLabel={t('common.cancel')} saveLabel={t('common.save')} saving={saving} onCancel={onCancel} onSave={onSave} /> : null}
+    </>
   )
 }
 
@@ -273,11 +268,11 @@ function ListEditor({ server, config }: { server: Server; config: ConfigFile }) 
   )
 }
 
-const PLAYERS_TAB = ':players'
+export const PLAYERS_TAB = ':players'
 
 const PLAYER_NAME = /^[A-Za-z0-9_]{1,16}$/
 
-function PlayersEditor({ server, config }: { server: Server; config: ConfigFile }) {
+function PlayersEditor({ server, config, avatar }: { server: Server; config: ConfigFile; avatar?: string }) {
   const { t } = useTranslation()
   const text = useText()
   const client = useQueryClient()
@@ -324,7 +319,7 @@ function PlayersEditor({ server, config }: { server: Server; config: ConfigFile 
         <Card className="flex flex-col p-1.5">
           {players.data.map((p) => (
             <div key={p.uuid ?? p.name} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted">
-              <img src={api.addonIcon(server.id, `https://mc-heads.net/avatar/${p.uuid ?? p.name}/32`)} alt="" loading="lazy" className="size-8 shrink-0 rounded-md bg-field [image-rendering:pixelated]" />
+              <PlayerHead serverId={server.id} name={p.name} avatar={avatar} className="size-8 rounded-md text-base" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{p.name}</div>
                 <div className="truncate font-mono text-xs text-subtle-foreground">{[p.uuid, p.reason, p.level !== null ? t('config.opLevel', { level: p.level }) : null].filter(Boolean).join(' · ')}</div>
@@ -485,21 +480,24 @@ function PropertiesEditor({ server, config, icon }: { server: Server; config: Co
 export function ServerConfig({ server, game, online }: { server: Server; game: GameTemplate; online: string[] }) {
   const { t } = useTranslation()
   const text = useText()
-  const managed = game.configs.some((c) => c.format === 'players')
-  const [path, setPath] = useState(game.configs[0]!.path)
+  const managed = Boolean(game.players)
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('config')
+  const path = requested && (game.configs.some((c) => c.path === requested) || (managed && requested === PLAYERS_TAB)) ? requested : game.configs[0]!.path
+  const setPath = (next: string) => setParams((p) => ({ ...Object.fromEntries(p), config: next }), { replace: true })
   const config = game.configs.find((c) => c.path === path)
   const tabs = [...game.configs.map((c) => ({ value: c.path, label: text(c.name) })), ...(managed ? [{ value: PLAYERS_TAB, label: t('players.tab') }] : [])]
   return (
     <div className="flex flex-col gap-4">
       {tabs.length > 1 ? <Segmented size="sm" value={config ? config.path : PLAYERS_TAB} onChange={setPath} options={tabs} /> : null}
       {!config ? (
-        <PlayerManager server={server} online={online} />
+        <PlayerManager server={server} spec={game.players!} online={online} />
       ) : config.format === 'bepinex' ? (
         <BepinexEditor key={config.path} server={server} config={config} context={{ name: server.name, players: '', icon: server.icon ?? game.icon }} />
       ) : config.format === 'list' ? (
         <ListEditor key={config.path} server={server} config={config} />
       ) : config.format === 'players' ? (
-        <PlayersEditor key={config.path} server={server} config={config} />
+        <PlayersEditor key={config.path} server={server} config={config} avatar={game.players?.avatar} />
       ) : (
         <PropertiesEditor key={config.path} server={server} config={config} icon={server.icon ?? game.icon} />
       )}

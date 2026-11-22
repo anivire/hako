@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -38,6 +38,7 @@ export const servers = sqliteTable('servers', {
   name: text('name').notNull(),
   game: text('game').notNull(),
   memory: integer('memory').notNull(),
+  cpu: real('cpu'),
   icon: text('icon'),
   variables: text('variables', { mode: 'json' }).$type<Record<string, string>>().notNull().default({}),
   ports: text('ports', { mode: 'json' }).$type<Record<string, number>>().notNull().default({}),

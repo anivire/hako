@@ -2,12 +2,12 @@ import {
   RiArrowDownFill,
   RiTeamFill,
   RiArrowUpDownFill,
-  RiContractUpDownFill,
   RiCpuFill,
-  RiExpandUpDownFill,
+  RiTerminalBoxFill,
   RiDatabase2Fill,
   RiHardDrive3Fill,
   RiArrowDownSLine,
+  RiArrowRightSLine,
   RiArrowUpSLine,
   RiDownload2Fill,
   RiEraserFill,
@@ -21,19 +21,24 @@ import {
 } from '@remixicon/react'
 import type { Server, ServerStats } from '@hako/shared'
 import { Button, Card, Spinner, StatusDot, Tooltip, cn, toast } from '@hako/ui'
-import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react'
+import { type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import { formatBytes } from '../../lib/format'
 import { type ServerSocket, SAMPLES } from '../../lib/server-socket'
 import { readStorage, writeStorage } from '../../lib/storage'
 import { StatCard } from './metric-chart'
+import { PlayerHead } from './players'
+import { PLAYERS_TAB } from './config'
 import { CONSOLE_BACKGROUND, ConsoleTerminal, type TerminalHandle } from './terminal'
 import type { LogFilter } from '../../lib/log-highlight'
 
 const FONT_KEY = 'hako:console-font'
-const COMPACT_KEY = 'hako:compact-metrics'
+const SHUT_KEY = 'hako:console-collapsed'
+const HEIGHT_KEY = 'hako:console-height'
+const MIN_HEIGHT = 320
 const FILTERS: LogFilter[] = ['all', 'error', 'warn', 'info']
 const FONT_SIZES = [11, 12, 13, 14, 16, 18]
 
@@ -50,7 +55,8 @@ function Metrics({ server, stats, compact }: { server: Server; stats: ServerStat
   const last = stats.at(-1)
   const live = server.status !== 'offline' && last
   const memoryLimit = last?.memoryLimit || server.memory * 1024 * 1024
-  const cpu = stats.map((s) => s.cpu)
+  const share = (s: ServerStats) => (s.cpuLimit ? s.cpu / s.cpuLimit : s.cpu)
+  const cpu = stats.map(share)
   const rx = rates(stats, 'rx')
   const tx = rates(stats, 'tx')
   const netMax = Math.max(1024, ...rx, ...tx) * 1.2
@@ -62,13 +68,15 @@ function Metrics({ server, stats, compact }: { server: Server; stats: ServerStat
   const outColor = 'var(--color-muted-foreground)'
   const warming = server.status !== 'offline' && stats.length < 2
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
+    <div className="@container">
+    <div className={cn('grid grid-cols-1', compact ? 'gap-2 @md:grid-cols-2 @3xl:grid-cols-4' : 'gap-3 @lg:grid-cols-2 @5xl:grid-cols-4')}>
       <StatCard
         compact={compact}
         title={t('console.cpu')}
         icon={<RiCpuFill />}
-        value={live ? percent(last.cpu) : '—'}
-        detail={live ? null : idle}
+        value={live ? (compact && server.cpu ? percent(last.cpu) : percent(share(last))) : '—'}
+        total={live && compact && server.cpu ? `${server.cpu * 100}%` : undefined}
+        detail={live ? (server.cpu ? t('console.cpuCores', { used: percent(last.cpu), limit: `${server.cpu * 100}%` }) : null) : idle}
         series={live ? [{ label: t('console.cpu'), color: 'var(--color-accent)', points: cpu }] : undefined}
         max={Math.max(100, ...cpu)}
         format={percent}
@@ -79,7 +87,8 @@ function Metrics({ server, stats, compact }: { server: Server; stats: ServerStat
         compact={compact}
         title={t('console.memory')}
         icon={<RiDatabase2Fill />}
-        value={live ? percent((last.memory / memoryLimit) * 100) : '—'}
+        value={live ? (compact ? formatBytes(last.memory) : percent((last.memory / memoryLimit) * 100)) : '—'}
+        total={live && compact ? formatBytes(memoryLimit) : undefined}
         detail={live ? `${formatBytes(last.memory)} / ${formatBytes(memoryLimit)}` : idle}
         series={live ? [{ label: t('console.memory'), color: 'var(--color-accent)', points: memoryPoints }] : undefined}
         max={100}
@@ -121,29 +130,33 @@ function Metrics({ server, stats, compact }: { server: Server; stats: ServerStat
       />
       <StatCard compact={compact} title={t('console.storage')} icon={<RiHardDrive3Fill />} value={usage.data ? formatBytes(usage.data.bytes) : '—'} detail={t('console.storageHint')} loading={usage.isPending} />
     </div>
+    </div>
   )
 }
 
-function Players({ server, players, heads }: { server: Server; players: string[]; heads: boolean }) {
+function Players({ server, players, avatar, link, compact }: { server: Server; players: string[]; avatar?: string; link: boolean; compact: boolean }) {
   const { t } = useTranslation()
   return (
-    <Card className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-      <span className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
-        <RiTeamFill />
-        {t('console.online')}
-        <span className="font-semibold tabular-nums text-foreground">{players.length}</span>
-      </span>
+    <Card className={cn('flex flex-wrap items-center gap-x-4 gap-y-2 px-4', compact ? 'py-2' : 'py-3')}>
+      {link ? (
+        <Link to={{ search: `?tab=config&config=${encodeURIComponent(PLAYERS_TAB)}` }} className="-mx-2 flex shrink-0 items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground [&_svg]:size-4">
+          <RiTeamFill />
+          {t('console.online')}
+          <span className="font-semibold tabular-nums text-foreground">{players.length}</span>
+          <RiArrowRightSLine className="text-subtle-foreground" />
+        </Link>
+      ) : (
+        <span className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
+          <RiTeamFill />
+          {t('console.online')}
+          <span className="font-semibold tabular-nums text-foreground">{players.length}</span>
+        </span>
+      )}
       {players.length ? (
         <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
           {players.map((name) => (
             <span key={name} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-foreground/[0.05] pl-1 pr-2.5 text-[0.8125rem]">
-              {heads ? (
-                <img src={api.addonIcon(server.id, `https://mc-heads.net/avatar/${encodeURIComponent(name)}/32`)} alt="" loading="lazy" className="size-5 rounded-full bg-field [image-rendering:pixelated]" />
-              ) : (
-                <span aria-hidden className="grid size-5 place-items-center rounded-full bg-accent-soft text-[0.6875rem] font-semibold uppercase text-accent">
-                  {name.slice(0, 1)}
-                </span>
-              )}
+              <PlayerHead serverId={server.id} name={name} avatar={avatar} className="size-5 rounded-full text-[1.1rem]" />
               {name}
             </span>
           ))}
@@ -183,7 +196,7 @@ function useCommandHistory(id: string) {
   return { items, push }
 }
 
-export function ServerConsole({ server, socket, playerList }: { server: Server; socket: ServerSocket; playerList: 'minecraft' | 'plain' | null }) {
+export function ServerConsole({ server, socket, playerList, playersLink, compact, chat }: { server: Server; socket: ServerSocket; playerList: { avatar?: string } | null; playersLink: boolean; compact: boolean; chat?: ReactNode }) {
   const { t } = useTranslation()
   const terminal = useRef<TerminalHandle>(null)
   const input = useRef<HTMLInputElement>(null)
@@ -200,7 +213,41 @@ export function ServerConsole({ server, socket, playerList }: { server: Server; 
     const stored = Number(readStorage(FONT_KEY))
     return FONT_SIZES.includes(stored) ? stored : 13
   })
-  const [compact, setCompact] = useState(() => readStorage(COMPACT_KEY) === 'true')
+  const [shut, setShut] = useState(() => readStorage(SHUT_KEY) === 'true')
+  const toggleShut = (next: boolean) => {
+    setShut(next)
+    writeStorage(SHUT_KEY, String(next))
+  }
+  const card = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(() => {
+    const stored = Number(readStorage(HEIGHT_KEY))
+    return Number.isFinite(stored) && stored >= MIN_HEIGHT ? stored : 0
+  })
+  const saveHeight = (next: number) => {
+    setHeight(next)
+    writeStorage(HEIGHT_KEY, String(next))
+  }
+  const startResize = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const box = card.current
+    if (!box) return
+    e.preventDefault()
+    const handle = e.currentTarget
+    handle.setPointerCapture(e.pointerId)
+    const startY = e.clientY
+    const startHeight = box.getBoundingClientRect().height
+    let next = startHeight
+    const move = (ev: PointerEvent) => {
+      next = Math.round(Math.max(MIN_HEIGHT, startHeight + ev.clientY - startY))
+      setHeight(next)
+    }
+    const up = () => {
+      handle.removeEventListener('pointermove', move)
+      handle.removeEventListener('pointerup', up)
+      writeStorage(HEIGHT_KEY, String(next))
+    }
+    handle.addEventListener('pointermove', move)
+    handle.addEventListener('pointerup', up)
+  }
   const allowed = server.access.manage || server.access.permissions.includes('console')
   const offline = server.status === 'offline' || !allowed
 
@@ -252,11 +299,17 @@ export function ServerConsole({ server, socket, playerList }: { server: Server; 
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-3">
+    <div className={cn('flex flex-1 flex-col', compact ? 'gap-2' : 'gap-3')}>
       <Metrics server={server} stats={socket.stats} compact={compact} />
-      {playerList && server.status !== 'offline' ? <Players server={server} players={socket.players} heads={playerList === 'minecraft'} /> : null}
-      <Card className={cn('flex flex-1 flex-col overflow-hidden', fullscreen && 'fixed inset-0 z-50 rounded-none')}>
-        <div className="flex flex-wrap items-center gap-2 p-2.5 lg:grid lg:grid-cols-[1fr_minmax(16rem,26rem)_1fr]">
+      {playerList && server.status !== 'offline' ? <Players server={server} players={socket.players} avatar={playerList.avatar} link={playersLink} compact={compact} /> : null}
+      <Card ref={card} style={!shut && !fullscreen && height ? { height } : undefined} className={cn('flex flex-col overflow-hidden', !shut && !height && 'min-h-[52rem] flex-1', !shut && height && 'shrink-0', fullscreen && 'fixed inset-0 z-50 rounded-none')}>
+        <button type="button" aria-expanded={!shut} onClick={() => toggleShut(!shut)} className={cn('flex w-full shrink-0 cursor-pointer items-center gap-2 px-4 pt-3 text-left text-sm text-muted-foreground [&_svg]:size-4', shut && 'pb-3')}>
+          <RiTerminalBoxFill />
+          <span className="font-medium text-foreground">{t('console.title')}</span>
+          <RiArrowDownSLine className={cn('ml-auto transition-transform', shut && '-rotate-90')} />
+        </button>
+        <div className={cn('flex min-h-0 flex-1 flex-col', shut && 'hidden')}>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 px-2.5 pb-2.5 pt-2 lg:grid lg:grid-cols-[1fr_minmax(16rem,26rem)_1fr]">
           <div className="flex flex-wrap items-center gap-1.5 lg:justify-self-start">
             <span className={cn('flex h-7 items-center gap-2 shrink-0 rounded-full px-3 text-[0.8125rem] font-medium', socket.connected ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning')}>
               <StatusDot tone={socket.connected ? 'success' : 'warning'} pulse={!socket.connected} />
@@ -328,22 +381,13 @@ export function ServerConsole({ server, socket, playerList }: { server: Server; 
               <ToolButton label={t('console.clear')} onClick={() => terminal.current?.clear()}>
                 <RiEraserFill />
               </ToolButton>
-              <ToolButton
-                label={compact ? t('console.shrinkConsole') : t('console.expandConsole')}
-                onClick={() => {
-                  setCompact(!compact)
-                  writeStorage(COMPACT_KEY, String(!compact))
-                }}
-              >
-                {compact ? <RiContractUpDownFill /> : <RiExpandUpDownFill />}
-              </ToolButton>
               <ToolButton label={fullscreen ? t('console.exitFullscreen') : t('console.fullscreen')} onClick={() => setFullscreen(!fullscreen)}>
                 {fullscreen ? <RiFullscreenExitFill /> : <RiFullscreenFill />}
               </ToolButton>
             </div>
           </div>
         </div>
-        <div className="relative min-h-80 flex-1 overflow-hidden" style={{ background: CONSOLE_BACKGROUND }} onClick={() => input.current?.focus({ preventScroll: true })}>
+        <div className="relative min-h-32 flex-1 overflow-hidden" style={{ background: CONSOLE_BACKGROUND }} onClick={() => input.current?.focus({ preventScroll: true })}>
           <ConsoleTerminal ref={terminal} socket={socket} fontSize={fontSize} filter={filter} onScrolledUp={setScrolledUp} onEmptyChange={setFilteredEmpty} />
           {socket.loaded ? null : (
             <div role="status" className="pointer-events-none absolute inset-0 z-10 grid place-items-center">
@@ -367,7 +411,7 @@ export function ServerConsole({ server, socket, playerList }: { server: Server; 
             </Button>
           ) : null}
         </div>
-        <form onSubmit={submit} className="flex items-center gap-2 p-2">
+        <form onSubmit={submit} className="flex shrink-0 items-center gap-2 p-2">
           <div className={cn('flex h-9 flex-1 items-center gap-2 rounded-lg bg-foreground/[0.05] px-3 font-mono text-sm focus-within:bg-foreground/[0.08]', offline && 'opacity-50')}>
             <span className="text-accent">&gt;</span>
             <input
@@ -401,7 +445,22 @@ export function ServerConsole({ server, socket, playerList }: { server: Server; 
             <RiSendPlaneFill />
           </Button>
         </form>
+        {fullscreen ? null : (
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label={t('console.resize')}
+            title={t('console.resizeHint')}
+            onPointerDown={startResize}
+            onDoubleClick={() => saveHeight(0)}
+            className="group flex h-3 shrink-0 cursor-row-resize touch-none items-center justify-center"
+          >
+            <span className="h-1 w-10 rounded-full bg-foreground/15 transition-colors group-hover:bg-foreground/30" />
+          </div>
+        )}
+        </div>
       </Card>
+      {chat}
     </div>
   )
 }

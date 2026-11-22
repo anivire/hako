@@ -5,6 +5,7 @@ import { env } from '../env'
 import { badRequest } from '../lib/http'
 import factorio from './builtin/factorio.json'
 import minecraft from './builtin/minecraft.json'
+import bedrock from './builtin/minecraft-bedrock.json'
 import terraria from './builtin/terraria.json'
 import valheim from './builtin/valheim.json'
 
@@ -22,6 +23,7 @@ function register(raw: unknown, origin: string) {
 export function loadGames() {
   templates.clear()
   register(minecraft, 'builtin/minecraft.json')
+  register(bedrock, 'builtin/minecraft-bedrock.json')
   register(factorio, 'builtin/factorio.json')
   register(terraria, 'builtin/terraria.json')
   register(valheim, 'builtin/valheim.json')

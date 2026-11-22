@@ -1,7 +1,7 @@
-import { RiCheckFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
+import { RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type GameVariable, type PowerAction, resolveTemplate, variableVisible } from '@hako/shared'
-import { Badge, Button, EmptyState, Segmented, Skeleton, Tooltip, toast } from '@hako/ui'
+import { Badge, Button, EmptyState, Segmented, Skeleton, Tooltip, cn, toast } from '@hako/ui'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router'
@@ -10,6 +10,8 @@ import { StatusBadge, serverAddress } from '../components/server-bits'
 import { ServerAddons } from '../components/server/addons'
 import { ServerConfig } from '../components/server/config'
 import { ServerConsole } from '../components/server/console'
+import { ServerChat } from '../components/server/chat'
+import { ServerMap, mapProviders } from '../components/server/map'
 import { DockerWarning } from '../components/docker-warning'
 import { useVariableValue, withDefaults } from '../components/variables-form'
 import { ServerAvatar } from '../components/game-icon'
@@ -21,11 +23,15 @@ import { errorMessage, keys, useGames } from '../lib/queries'
 import { useServerSocket } from '../lib/server-socket'
 import { can } from '../lib/access'
 import { ServerAccess } from '../components/server/access'
+import { readStorage, writeStorage } from '../lib/storage'
 
-type Tab = 'overview' | 'config' | 'files' | 'addons' | 'settings' | 'access'
+const COMPACT_KEY = 'hako:compact-metrics'
+
+type Tab = 'overview' | 'map' | 'config' | 'files' | 'addons' | 'settings' | 'access'
 
 const TAB_ICONS: Record<Tab, ReactNode> = {
   overview: <RiDashboard3Fill />,
+  map: <RiMap2Fill />,
   config: <RiFileSettingsFill />,
   files: <RiFolder3Fill />,
   addons: <RiPuzzle2Fill />,
@@ -86,6 +92,7 @@ function ServerView({ id }: { id: string }) {
   const client = useQueryClient()
   const server = useQuery({ queryKey: keys.server(id), queryFn: () => api.server(id) })
   const [copied, setCopied] = useState(false)
+  const [compact, setCompact] = useState(() => readStorage(COMPACT_KEY) === 'true')
   const games = useGames()
   const socket = useServerSocket(id)
   const power = useMutation({
@@ -96,20 +103,22 @@ function ServerView({ id }: { id: string }) {
   if (server.isPending || games.isPending)
     return (
       <Page>
-        <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-4">
-          <Skeleton className="size-[72px] rounded-[22%]" />
-          <div className="flex min-w-0 flex-1 flex-col justify-between gap-1 self-stretch">
-            <Skeleton className="h-8 w-56 max-w-full" />
-            <Skeleton className="h-6 w-80 max-w-full" />
+        <div className={cn('flex flex-wrap items-center gap-y-4', compact ? 'mb-3 gap-x-3' : 'mb-6 gap-x-4')}>
+          <Skeleton className={cn('rounded-[22%]', compact ? 'size-11' : 'size-[72px]')} />
+          <div className={cn('flex min-w-0 flex-1 flex-col justify-between self-stretch', !compact && 'gap-1')}>
+            <Skeleton className={cn('w-56 max-w-full', compact ? 'h-6' : 'h-8')} />
+            <Skeleton className={cn('w-80 max-w-full', compact ? 'h-5' : 'h-6')} />
           </div>
           <Skeleton className="h-9 w-28" />
         </div>
-        <Skeleton className="mb-4 h-10 w-96 max-w-full rounded-xl" />
-        <div className="flex flex-1 flex-col gap-3">
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="min-h-[9.75rem]" />
-            ))}
+        <Skeleton className={cn('w-96 max-w-full rounded-xl', compact ? 'mb-2 h-9' : 'mb-4 h-10')} />
+        <div className={cn('flex flex-1 flex-col', compact ? 'gap-2' : 'gap-3')}>
+          <div className="@container">
+            <div className={cn('grid grid-cols-1', compact ? 'gap-2 @md:grid-cols-2 @3xl:grid-cols-4' : 'gap-3 @lg:grid-cols-2 @5xl:grid-cols-4')}>
+              {[0, 1, 2, 3].map((i) => (
+                <Skeleton key={i} className={compact ? 'h-[3.25rem]' : 'min-h-[9.75rem]'} />
+              ))}
+            </div>
           </div>
           <Skeleton className="min-h-80 flex-1" />
         </div>
@@ -132,9 +141,10 @@ function ServerView({ id }: { id: string }) {
     )
   const tabs: Tab[] = [
     'overview',
+    ...(mapProviders(game, s).length && (s.variables.MAP || can(s, 'settings')) ? (['map'] as const) : []),
     ...(game.configs.length && (can(s, 'config') || can(s, 'files')) ? (['config'] as const) : []),
     ...(can(s, 'files') ? (['files'] as const) : []),
-    ...(game.addons.length && can(s, 'addons') ? (['addons'] as const) : []),
+    ...(s.addons && can(s, 'addons') ? (['addons'] as const) : []),
     ...(can(s, 'settings') ? (['settings'] as const) : []),
     ...(can(s, 'manage') ? (['access'] as const) : []),
   ]
@@ -145,14 +155,14 @@ function ServerView({ id }: { id: string }) {
   return (
     <Page>
       <DockerWarning />
-      <header className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-4">
-        <ServerAvatar game={game} values={s.variables} icon={s.icon} size={72} ring="var(--color-background)" />
-        <div className="flex min-w-0 flex-1 flex-col justify-between gap-1 self-stretch">
-          <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xl font-semibold tracking-tight">
+      <header className={cn('flex flex-wrap items-center gap-y-4', compact ? 'mb-3 gap-x-3' : 'mb-6 gap-x-4')}>
+        <ServerAvatar game={game} values={s.variables} icon={s.icon} size={compact ? 44 : 72} ring="var(--color-background)" />
+        <div className={cn('flex min-w-0 flex-1 flex-col justify-between self-stretch', !compact && 'gap-1')}>
+          <h1 className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 font-semibold tracking-tight', compact ? 'text-lg leading-6' : 'text-2xl')}>
             <span className="break-words">{s.name}</span>
             <StatusBadge status={s.status} />
           </h1>
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 [&>*]:min-h-6 text-[0.9375rem] text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0">
+          <div className={cn('flex flex-wrap items-center gap-x-2.5 gap-y-1 text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0', compact ? 'text-sm [&>*]:min-h-5' : 'text-[0.9375rem] [&>*]:min-h-6')}>
             <span className="flex items-center gap-1.5">
               <RiPriceTag3Fill />
               <ServerSummary game={game} values={s.variables} version={s.version} />
@@ -218,16 +228,34 @@ function ServerView({ id }: { id: string }) {
           )}
         </div>
       </header>
-      <Segmented
-        className="mb-4"
-        value={tab}
-        onChange={(next) => setParams({ tab: next }, { replace: true })}
-        options={tabs.map((value) => ({ value, label: t(`server.tabs.${value}`), icon: TAB_ICONS[value] }))}
-      />
-      {tab === 'overview' ? <ServerConsole server={s} socket={socket} playerList={game.console.players ? (game.id === 'minecraft' ? 'minecraft' : 'plain') : null} /> : null}
+      <div className={cn('flex items-center gap-2', compact ? 'mb-2' : 'mb-4')}>
+        <Segmented
+          size={compact ? 'sm' : 'md'}
+          value={tab}
+          onChange={(next) => setParams({ tab: next }, { replace: true })}
+          options={tabs.map((value) => ({ value, label: t(`server.tabs.${value === 'addons' ? s.addons! : value}`), icon: TAB_ICONS[value] }))}
+        />
+        <Tooltip content={compact ? t('console.fullView') : t('console.compactView')}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="ml-auto shrink-0"
+            aria-label={compact ? t('console.fullView') : t('console.compactView')}
+            aria-pressed={compact}
+            onClick={() => {
+              setCompact(!compact)
+              writeStorage(COMPACT_KEY, String(!compact))
+            }}
+          >
+            {compact ? <RiExpandUpDownFill /> : <RiContractUpDownFill />}
+          </Button>
+        </Tooltip>
+      </div>
+      {tab === 'overview' ? <ServerConsole server={s} socket={socket} playerList={game.console.players ? { avatar: game.players?.avatar } : null} playersLink={Boolean(game.players && game.configs.length) && (can(s, 'config') || can(s, 'files'))} compact={compact} chat={game.console.chat ? <ServerChat server={s} socket={socket} chat={game.console.chat} players={game.console.players} avatar={game.players?.avatar} compact={compact} /> : null} /> : null}
+      {tab === 'map' ? <ServerMap server={s} game={game} send={socket.send} /> : null}
       {tab === 'config' ? <ServerConfig server={s} game={game} online={socket.players} /> : null}
       {tab === 'files' ? <ServerFiles server={s} /> : null}
-      {tab === 'addons' ? <ServerAddons server={s} /> : null}
+      {tab === 'addons' ? <ServerAddons server={s} game={game} /> : null}
       {tab === 'settings' ? <ServerSettings key={s.id} server={s} game={game} /> : null}
       {tab === 'access' ? <ServerAccess server={s} /> : null}
       <UploadManager server={s} />

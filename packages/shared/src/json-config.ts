@@ -46,12 +46,12 @@ export function updateJsonConfig(text: string, changes: Record<string, string>):
   return `${JSON.stringify(root, null, 2)}\n`
 }
 
-type ListItem = string | { username?: string; [key: string]: Json | undefined }
+type ListItem = string | { username?: string; name?: string; [key: string]: Json | undefined }
 
 export function parseJsonList(text: string): string[] {
   try {
     const list = JSON.parse(text || '[]') as ListItem[]
-    return Array.isArray(list) ? list.map((item) => (typeof item === 'string' ? item : (item?.username ?? ''))).filter(Boolean) : []
+    return Array.isArray(list) ? list.map((item) => (typeof item === 'string' ? item : (item?.username ?? item?.name ?? ''))).filter(Boolean) : []
   } catch {
     return []
   }
@@ -63,7 +63,7 @@ export function writeJsonList(text: string, ids: string[]): string {
     const parsed = JSON.parse(text || '[]') as ListItem[]
     if (Array.isArray(parsed)) previous = parsed
   } catch {}
-  const kept = new Map(previous.map((item) => [typeof item === 'string' ? item : (item?.username ?? ''), item]))
+  const kept = new Map(previous.map((item) => [typeof item === 'string' ? item : (item?.username ?? item?.name ?? ''), item]))
   return `${JSON.stringify(
     ids.map((id) => kept.get(id) ?? id),
     null,

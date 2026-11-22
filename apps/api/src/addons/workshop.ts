@@ -98,7 +98,7 @@ export const workshop: ManagedSource = {
       if (!d || String(d.consumer_app_id) !== appId) return []
       return [{ id, name: d.title ?? id, description: plain(d.description), author: '', icon: d.preview_url || null, downloads: d.subscriptions ?? 0, url: url(id) }]
     })
-    return { items, total: offset + items.length + (ids.length >= PAGE ? PAGE : 0) }
+    return { items, total: offset + items.length + (ids.length >= PAGE ? PAGE : 0), pageSize: PAGE }
   },
   async versions() {
     return []

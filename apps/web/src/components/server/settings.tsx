@@ -1,14 +1,16 @@
 import { RiArrowGoBackFill, RiUploadFill } from '@remixicon/react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { GameTemplate, Server } from '@hako/shared'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, DialogClose, DialogContent, DialogTrigger, Field, Input, Tooltip, toast } from '@hako/ui'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, DialogClose, DialogContent, DialogTrigger, Field, Input, SaveBar, StepSlider, Tooltip, toast } from '@hako/ui'
 import { type FormEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GroupIcon } from '../../lib/group-icons'
 import { useNavigate } from 'react-router'
 import { ApiError, api } from '../../lib/api'
+import { useUnsavedGuard } from '../../lib/unsaved'
 import { errorMessage, keys } from '../../lib/queries'
 import { ServerAvatar } from '../game-icon'
+import { MemoryPicker } from '../memory-picker'
 import { StartupPreview } from '../startup-preview'
 import { VariablesForm, focusVariable, groupOf, variableErrors, visibleVariables, withDefaults } from '../variables-form'
 import { useText } from '../../lib/i18n'
@@ -28,6 +30,12 @@ function Section({ icon, title, description, children }: { icon?: string; title:
   )
 }
 
+export function cpuSteps(cores: number | null, current: number | null): number[] {
+  const max = cores ?? 8
+  const steps = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64].filter((n) => n < max)
+  return [...[...new Set([...steps, max, ...(current ? [current] : [])])].sort((a, b) => a - b), 0]
+}
+
 export function ServerSettings({ server, game }: { server: Server; game: GameTemplate }) {
   const { t } = useTranslation()
   const text = useText()
@@ -38,10 +46,12 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
   const navigate = useNavigate()
   const [name, setName] = useState(server.name)
   const [memory, setMemory] = useState(server.memory)
+  const [cpu, setCpu] = useState<number | null>(server.cpu)
+  const system = useQuery({ queryKey: ['system'], queryFn: api.system, staleTime: 30_000 })
   const [variables, setVariables] = useState(server.variables)
   const [checked, setChecked] = useState(false)
   const save = useMutation({
-    mutationFn: () => api.updateServer(server.id, { name, memory, variables }),
+    mutationFn: () => api.updateServer(server.id, { name, memory, cpu, variables }),
     onSuccess: (updated) => {
       client.setQueryData(keys.server(server.id), updated)
       client.invalidateQueries({ queryKey: keys.servers })
@@ -76,6 +86,7 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
   const reset = () => {
     setName(server.name)
     setMemory(server.memory)
+    setCpu(server.cpu)
     setVariables(server.variables)
   }
   const upload = async (key: string, file: File) => {
@@ -88,7 +99,8 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
       toast.error(errorMessage(e, t))
     }
   }
-  const dirty = name !== server.name || memory !== server.memory || JSON.stringify(withDefaults(game, variables)) !== JSON.stringify(withDefaults(game, server.variables))
+  const dirty = name !== server.name || memory !== server.memory || cpu !== server.cpu || JSON.stringify(withDefaults(game, variables)) !== JSON.stringify(withDefaults(game, server.variables))
+  const guard = useUnsavedGuard(dirty)
   const groups = [...game.groups, { id: '', name: t('settings.other'), description: undefined }].filter((g) => visibleVariables(game, variables, undefined, g.id).length || (g.id === startupGroup && game.startup))
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -98,7 +110,15 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
             <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={64} required />
           </Field>
           <Field label={t('servers.memory')} hint={t('servers.memoryHint', { min: game.memory.min })} htmlFor="settings-memory">
-            <Input id="settings-memory" type="number" min={game.memory.min} step={256} value={memory} onChange={(e) => setMemory(Number(e.target.value))} required />
+            <MemoryPicker id="settings-memory" value={memory} min={game.memory.min} onChange={setMemory} />
+          </Field>
+          <Field label={t('settings.cpu')} hint={cpu ? t('settings.cpuHint', { count: cpu }) : t('settings.cpuNone')}>
+            <StepSlider
+              value={cpu ? String(cpu) : 'none'}
+              onChange={(next) => setCpu(next === 'none' ? null : Number(next))}
+              label={t('settings.cpu')}
+              options={cpuSteps(system.data?.cpus ?? null, server.cpu).map((n) => ({ value: n ? String(n) : 'none', label: n ? String(n) : '∞' }))}
+            />
           </Field>
         </Section>
         {groups.map((g) => (
@@ -120,18 +140,9 @@ export function ServerSettings({ server, game }: { server: Server; game: GameTem
           </Section>
         ))}
         {save.error && code !== 'VARIABLE_INVALID' ? <p className="text-sm text-danger">{errorMessage(save.error, t)}</p> : null}
+        {guard}
         {dirty ? (
-          <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-xl bg-raised px-4 py-3 shadow-lg animate-pop">
-            <span className="text-sm text-muted-foreground">{t('settings.unsaved')}</span>
-            <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={reset}>
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" variant="accent" loading={save.isPending}>
-                {t('common.save')}
-              </Button>
-            </div>
-          </div>
+          <SaveBar message={t('settings.unsaved')} cancelLabel={t('common.cancel')} saveLabel={t('common.save')} saving={save.isPending} onCancel={reset} />
         ) : null}
       </form>
       <div className="flex flex-col gap-4 self-start">

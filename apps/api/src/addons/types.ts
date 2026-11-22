@@ -32,6 +32,8 @@ export interface AddonSource {
   id: string
   name: string
   available(ctx: AddonContext): boolean
+  missing?(ctx: AddonContext): string | null
+  kind(ctx: AddonContext): 'mods' | 'plugins' | null
   dir(ctx: AddonContext): string | null
   search(ctx: AddonContext, query: string, offset: number): Promise<AddonSearchResult>
   versions(ctx: AddonContext, projectId: string): Promise<AddonVersion[]>
