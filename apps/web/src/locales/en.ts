@@ -285,6 +285,7 @@ export const en: Messages = {
     title: 'Console',
     online: 'Online',
     nobodyOnline: 'Nobody is playing right now',
+    managePlayers: 'Manage players',
     noAccess: 'No access to the console',
     cpu: 'CPU',
     memory: 'Memory',

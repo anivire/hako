@@ -1,13 +1,11 @@
 import {
   RiArrowDownFill,
-  RiTeamFill,
   RiArrowUpDownFill,
   RiCpuFill,
   RiTerminalBoxFill,
   RiDatabase2Fill,
   RiHardDrive3Fill,
   RiArrowDownSLine,
-  RiArrowRightSLine,
   RiArrowUpSLine,
   RiDownload2Fill,
   RiEraserFill,
@@ -23,15 +21,12 @@ import type { Server, ServerStats } from '@hako/shared'
 import { Button, Card, Spinner, StatusDot, Tooltip, cn, toast } from '@hako/ui'
 import { type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import { formatBytes } from '../../lib/format'
 import { type ServerSocket, SAMPLES } from '../../lib/server-socket'
 import { readStorage, writeStorage } from '../../lib/storage'
 import { StatCard } from './metric-chart'
-import { PlayerHead } from './players'
-import { PLAYERS_TAB } from './config'
 import { CONSOLE_BACKGROUND, ConsoleTerminal, type TerminalHandle } from './terminal'
 import type { LogFilter } from '../../lib/log-highlight'
 
@@ -134,40 +129,6 @@ function Metrics({ server, stats, compact }: { server: Server; stats: ServerStat
   )
 }
 
-function Players({ server, players, avatar, link, compact }: { server: Server; players: string[]; avatar?: string; link: boolean; compact: boolean }) {
-  const { t } = useTranslation()
-  return (
-    <Card className={cn('flex flex-wrap items-center gap-x-4 gap-y-2 px-4', compact ? 'py-2' : 'py-3')}>
-      {link ? (
-        <Link to={{ search: `?tab=config&config=${encodeURIComponent(PLAYERS_TAB)}` }} className="-mx-2 flex shrink-0 items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground [&_svg]:size-4">
-          <RiTeamFill />
-          {t('console.online')}
-          <span className="font-semibold tabular-nums text-foreground">{players.length}</span>
-          <RiArrowRightSLine className="text-subtle-foreground" />
-        </Link>
-      ) : (
-        <span className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
-          <RiTeamFill />
-          {t('console.online')}
-          <span className="font-semibold tabular-nums text-foreground">{players.length}</span>
-        </span>
-      )}
-      {players.length ? (
-        <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-          {players.map((name) => (
-            <span key={name} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-foreground/[0.05] pl-1 pr-2.5 text-[0.8125rem]">
-              <PlayerHead serverId={server.id} name={name} avatar={avatar} className="size-5 rounded-full text-[1.1rem]" />
-              {name}
-            </span>
-          ))}
-        </div>
-      ) : (
-        <span className="text-sm text-subtle-foreground">{t('console.nobodyOnline')}</span>
-      )}
-    </Card>
-  )
-}
-
 function ToolButton({ label, onClick, children, disabled }: { label: string; onClick: () => void; children: ReactNode; disabled?: boolean }) {
   return (
     <Tooltip content={label}>
@@ -196,7 +157,7 @@ function useCommandHistory(id: string) {
   return { items, push }
 }
 
-export function ServerConsole({ server, socket, playerList, playersLink, compact, chat }: { server: Server; socket: ServerSocket; playerList: { avatar?: string } | null; playersLink: boolean; compact: boolean; chat?: ReactNode }) {
+export function ServerConsole({ server, socket, compact, chat }: { server: Server; socket: ServerSocket; compact: boolean; chat?: ReactNode }) {
   const { t } = useTranslation()
   const terminal = useRef<TerminalHandle>(null)
   const input = useRef<HTMLInputElement>(null)
@@ -301,7 +262,6 @@ export function ServerConsole({ server, socket, playerList, playersLink, compact
   return (
     <div className={cn('flex flex-1 flex-col', compact ? 'gap-2' : 'gap-3')}>
       <Metrics server={server} stats={socket.stats} compact={compact} />
-      {playerList && server.status !== 'offline' ? <Players server={server} players={socket.players} avatar={playerList.avatar} link={playersLink} compact={compact} /> : null}
       <Card className={cn('flex flex-col overflow-hidden', !shut && !height && 'min-h-[52rem] flex-1', !shut && height && 'shrink-0', fullscreen && 'fixed inset-0 z-50 rounded-none')}>
         <button type="button" aria-expanded={!shut} onClick={() => toggleShut(!shut)} className={cn('flex w-full shrink-0 cursor-pointer items-center gap-2 px-4 pt-3 text-left text-sm text-muted-foreground [&_svg]:size-4', shut && 'pb-3')}>
           <RiTerminalBoxFill />

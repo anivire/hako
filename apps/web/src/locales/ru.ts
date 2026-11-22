@@ -283,6 +283,7 @@ export const ru = {
     title: 'Консоль',
     online: 'Онлайн',
     nobodyOnline: 'Сейчас никто не играет',
+    managePlayers: 'Управление игроками',
     noAccess: 'Нет доступа к консоли',
     cpu: 'Процессор',
     memory: 'Память',

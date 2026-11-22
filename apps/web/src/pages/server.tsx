@@ -1,14 +1,14 @@
-import { RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
+import { RiArrowRightSLine, RiMap2Fill, RiCheckFill, RiContractUpDownFill, RiExpandUpDownFill, RiTeamFill, RiDashboard3Fill, RiFileSettingsFill, RiFolder3Fill, RiLinkM, RiPlayFill, RiPriceTag3Fill, RiPuzzle2Fill, RiRestartFill, RiSettings3Fill, RiSkullFill, RiStopFill, RiTimerFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type GameVariable, type PowerAction, resolveTemplate, variableVisible } from '@hako/shared'
-import { Badge, Button, EmptyState, Segmented, Skeleton, Tooltip, cn, toast } from '@hako/ui'
+import { Badge, Button, EmptyState, Popover, PopoverContent, PopoverTrigger, Segmented, Skeleton, Tooltip, cn, toast } from '@hako/ui'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useSearchParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { Page } from '../components/app-shell'
 import { StatusBadge, serverAddress } from '../components/server-bits'
 import { ServerAddons } from '../components/server/addons'
-import { ServerConfig } from '../components/server/config'
+import { PLAYERS_TAB, ServerConfig } from '../components/server/config'
 import { ServerConsole } from '../components/server/console'
 import { ServerChat } from '../components/server/chat'
 import { ServerMap, mapProviders } from '../components/server/map'
@@ -23,6 +23,7 @@ import { errorMessage, keys, useGames } from '../lib/queries'
 import { useServerSocket } from '../lib/server-socket'
 import { can } from '../lib/access'
 import { ServerAccess } from '../components/server/access'
+import { PlayerHead } from '../components/server/players'
 import { readStorage, writeStorage } from '../lib/storage'
 
 const COMPACT_KEY = 'hako:compact-metrics'
@@ -201,6 +202,12 @@ function ServerView({ id }: { id: string }) {
                 </span>
               </>
             ) : null}
+            {game.console.players && !offline ? (
+              <>
+                <span className="text-subtle-foreground">·</span>
+                <OnlinePlayers serverId={s.id} players={socket.players} avatar={game.players?.avatar} link={Boolean(game.players && game.configs.length) && (can(s, 'config') || can(s, 'files'))} />
+              </>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -251,7 +258,7 @@ function ServerView({ id }: { id: string }) {
           </Button>
         </Tooltip>
       </div>
-      {tab === 'overview' ? <ServerConsole server={s} socket={socket} playerList={game.console.players ? { avatar: game.players?.avatar } : null} playersLink={Boolean(game.players && game.configs.length) && (can(s, 'config') || can(s, 'files'))} compact={compact} chat={game.console.chat ? <ServerChat server={s} socket={socket} chat={game.console.chat} players={game.console.players} avatar={game.players?.avatar} compact={compact} /> : null} /> : null}
+      {tab === 'overview' ? <ServerConsole server={s} socket={socket} compact={compact} chat={game.console.chat ? <ServerChat server={s} socket={socket} chat={game.console.chat} players={game.console.players} avatar={game.players?.avatar} compact={compact} /> : null} /> : null}
       {tab === 'map' ? <ServerMap server={s} game={game} send={socket.send} /> : null}
       {tab === 'config' ? <ServerConfig server={s} game={game} online={socket.players} /> : null}
       {tab === 'files' ? <ServerFiles server={s} /> : null}
@@ -260,5 +267,46 @@ function ServerView({ id }: { id: string }) {
       {tab === 'access' ? <ServerAccess server={s} /> : null}
       <UploadManager server={s} />
     </Page>
+  )
+}
+
+function OnlinePlayers({ serverId, players, avatar, link }: { serverId: string; players: string[]; avatar?: string; link: boolean }) {
+  const { t } = useTranslation()
+  return (
+    <Popover>
+      <PopoverTrigger className="flex cursor-pointer items-center gap-1.5 hover:text-foreground">
+        <RiTeamFill />
+        {players.length ? (
+          <span className="flex">
+            {players.slice(0, 3).map((name) => (
+              <PlayerHead key={name} serverId={serverId} name={name} avatar={avatar} className="-ml-1 size-5 rounded-[5px] text-[1.1rem] outline-2 outline-background first:ml-0" />
+            ))}
+          </span>
+        ) : null}
+        <span>
+          {t('console.online')} <span className="font-semibold tabular-nums text-foreground">{players.length}</span>
+        </span>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-1.5">
+        {players.length ? (
+          <ul className="max-h-72 overflow-y-auto">
+            {players.map((name) => (
+              <li key={name} className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm">
+                <PlayerHead serverId={serverId} name={name} avatar={avatar} className="size-6 rounded-md text-[1.3rem]" />
+                <span className="truncate">{name}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="px-2 py-1.5 text-sm text-muted-foreground">{t('console.nobodyOnline')}</p>
+        )}
+        {link ? (
+          <Link to={{ search: `?tab=config&config=${encodeURIComponent(PLAYERS_TAB)}` }} className="mt-1 flex items-center justify-between rounded-md border-t border-border px-2 py-1.5 text-sm text-accent hover:bg-foreground/[0.05]">
+            {t('console.managePlayers')}
+            <RiArrowRightSLine className="size-4" />
+          </Link>
+        ) : null}
+      </PopoverContent>
+    </Popover>
   )
 }
