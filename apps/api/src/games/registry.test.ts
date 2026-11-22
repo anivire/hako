@@ -6,10 +6,21 @@ import minecraft from './builtin/minecraft.json'
 import terraria from './builtin/terraria.json'
 import valheim from './builtin/valheim.json'
 import bedrock from './builtin/minecraft-bedrock.json'
+import projectZomboid from './builtin/project-zomboid.json'
+import dontStarve from './builtin/dont-starve-together.json'
+import coreKeeper from './builtin/core-keeper.json'
+import satisfactory from './builtin/satisfactory.json'
 import { autoVariables, containerEnv, interpolate, resolveVariables } from './registry'
 
 test('builtin templates are valid', () => {
-  for (const raw of [minecraft, bedrock, factorio, terraria, valheim]) assert.equal(gameTemplateSchema.safeParse(raw).success, true)
+  for (const raw of [minecraft, bedrock, factorio, terraria, valheim, projectZomboid, dontStarve, coreKeeper, satisfactory]) assert.equal(gameTemplateSchema.safeParse(raw).success, true, JSON.stringify(gameTemplateSchema.safeParse(raw).error?.issues))
+})
+
+test('core keeper passes a port only for direct connect', () => {
+  const game = gameTemplateSchema.parse(coreKeeper)
+  const sdr = containerEnv(game, resolveVariables(game, {}))
+  assert.ok(sdr.includes('SERVER_PORT='))
+  assert.ok(containerEnv(game, resolveVariables(game, { DIRECT: 'true' })).includes('SERVER_PORT=27015'))
 })
 
 test('interpolate fills known keys and blanks unknown ones', () => {

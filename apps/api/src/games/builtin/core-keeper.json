@@ -1,0 +1,265 @@
+{
+  "id": "core-keeper",
+  "name": "Core Keeper",
+  "description": {
+    "ru": "Выделенный сервер Core Keeper. Подключение по Game ID из файла .server/GameID.txt или напрямую по адресу",
+    "en": "Core Keeper dedicated server. Join with the Game ID from .server/GameID.txt or directly by address"
+  },
+  "image": "escaping/core-keeper-dedicated:latest",
+  "dataPath": "/home/steam/core-keeper-data",
+  "volumes": [
+    {
+      "path": "/home/steam/core-keeper-dedicated",
+      "folder": ".server"
+    }
+  ],
+  "ports": [
+    {
+      "name": "game",
+      "container": 27015,
+      "protocol": "udp"
+    }
+  ],
+  "memory": {
+    "default": 2048,
+    "min": 1024
+  },
+  "env": {
+    "WORLD_NAME": "{{SERVER_NAME}}",
+    "WORLD_INDEX": "{{WORLD_INDEX}}",
+    "WORLD_SEED": "{{SEED}}",
+    "WORLD_MODE": "{{MODE}}",
+    "GAME_ID": "{{GAME_ID}}",
+    "MAX_PLAYERS": "{{MAX_PLAYERS}}",
+    "SEASON": "{{SEASON}}",
+    "SERVER_PORT": "{{#DIRECT}}27015{{/DIRECT}}",
+    "PASSWORD": "{{PASSWORD}}"
+  },
+  "console": {
+    "ready": "Started session with info"
+  },
+  "stop": {
+    "timeout": 120
+  },
+  "groups": [
+    {
+      "id": "world",
+      "name": {
+        "ru": "Мир",
+        "en": "World"
+      }
+    },
+    {
+      "id": "network",
+      "name": {
+        "ru": "Подключение",
+        "en": "Connection"
+      }
+    }
+  ],
+  "variables": [
+    {
+      "key": "WORLD_INDEX",
+      "name": {
+        "ru": "Слот мира",
+        "en": "World slot"
+      },
+      "type": "select",
+      "default": "0",
+      "options": [
+        {
+          "value": "0"
+        },
+        {
+          "value": "1"
+        },
+        {
+          "value": "2"
+        },
+        {
+          "value": "3"
+        },
+        {
+          "value": "4"
+        },
+        {
+          "value": "5"
+        },
+        {
+          "value": "6"
+        },
+        {
+          "value": "7"
+        },
+        {
+          "value": "8"
+        },
+        {
+          "value": "9"
+        }
+      ],
+      "editable": false,
+      "group": "world"
+    },
+    {
+      "key": "MODE",
+      "name": {
+        "ru": "Режим",
+        "en": "Mode"
+      },
+      "type": "select",
+      "default": "0",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "ru": "Обычный",
+            "en": "Normal"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "ru": "Сложный",
+            "en": "Hard"
+          }
+        },
+        {
+          "value": "2",
+          "label": {
+            "ru": "Творческий",
+            "en": "Creative"
+          }
+        },
+        {
+          "value": "4",
+          "label": {
+            "ru": "Казуальный",
+            "en": "Casual"
+          }
+        }
+      ],
+      "group": "world"
+    },
+    {
+      "key": "SEED",
+      "name": {
+        "ru": "Сид",
+        "en": "Seed"
+      },
+      "description": {
+        "ru": "Пусто — случайный, применяется к новому миру",
+        "en": "Empty means random, used for a new world"
+      },
+      "pattern": "^[0-9]{0,10}$",
+      "group": "world"
+    },
+    {
+      "key": "SEASON",
+      "name": {
+        "ru": "Сезон",
+        "en": "Season"
+      },
+      "type": "select",
+      "default": "",
+      "options": [
+        {
+          "value": "",
+          "label": {
+            "ru": "По дате",
+            "en": "By date"
+          }
+        },
+        {
+          "value": "0",
+          "label": {
+            "ru": "Нет",
+            "en": "None"
+          }
+        },
+        {
+          "value": "1",
+          "label": "Easter"
+        },
+        {
+          "value": "2",
+          "label": "Halloween"
+        },
+        {
+          "value": "3",
+          "label": "Christmas"
+        },
+        {
+          "value": "4",
+          "label": "Valentine"
+        },
+        {
+          "value": "5",
+          "label": "Anniversary"
+        },
+        {
+          "value": "6",
+          "label": "Cherry Blossom"
+        },
+        {
+          "value": "7",
+          "label": "Lunar New Year"
+        }
+      ],
+      "group": "world"
+    },
+    {
+      "key": "MAX_PLAYERS",
+      "name": {
+        "ru": "Максимум игроков",
+        "en": "Max players"
+      },
+      "type": "number",
+      "default": "10",
+      "pattern": "^([1-9]|[1-9][0-9])$",
+      "group": "network"
+    },
+    {
+      "key": "GAME_ID",
+      "name": "Game ID",
+      "description": {
+        "ru": "Пусто — сервер создаст свой. 15–28 букв и цифр",
+        "en": "Empty lets the server make one. 15 to 28 letters and digits"
+      },
+      "pattern": "^([A-Za-z0-9]{15,28})?$",
+      "group": "network"
+    },
+    {
+      "key": "DIRECT",
+      "name": {
+        "ru": "Прямое подключение",
+        "en": "Direct connect"
+      },
+      "description": {
+        "ru": "Подключаться по адресу и порту вместо Game ID через Steam",
+        "en": "Join by address and port instead of a Game ID through Steam"
+      },
+      "type": "boolean",
+      "default": "false",
+      "group": "network"
+    },
+    {
+      "key": "PASSWORD",
+      "name": {
+        "ru": "Пароль",
+        "en": "Password"
+      },
+      "description": {
+        "ru": "Пусто — сервер создаст случайный",
+        "en": "Empty makes the server pick a random one"
+      },
+      "pattern": "^[^\\s\"']{0,28}$",
+      "when": {
+        "DIRECT": [
+          "true"
+        ]
+      },
+      "group": "network"
+    }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "id": "dont-starve-together",
+  "name": "Don't Starve Together",
+  "description": {
+    "ru": "Выделенный сервер Don't Starve Together, наземный мир",
+    "en": "Don't Starve Together dedicated server, overworld shard"
+  },
+  "image": "superjump22/dontstarvetogether:latest",
+  "command": [
+    "-console",
+    "-persistent_storage_root",
+    "/home/steam/dst",
+    "-conf_dir",
+    "save",
+    "-cluster",
+    "Cluster_1",
+    "-shard",
+    "Master",
+    "-ugc_directory",
+    "/home/steam/dst/game/ugc_mods"
+  ],
+  "dataPath": "/home/steam/dst/save",
+  "volumes": [
+    {
+      "path": "/home/steam/dst/game/mods",
+      "folder": ".mods"
+    },
+    {
+      "path": "/home/steam/dst/game/ugc_mods",
+      "folder": ".ugc_mods"
+    }
+  ],
+  "ports": [
+    {
+      "name": "game",
+      "container": 10999,
+      "protocol": "udp"
+    },
+    {
+      "name": "steam",
+      "container": 27016,
+      "protocol": "udp"
+    }
+  ],
+  "memory": {
+    "default": 2048,
+    "min": 1024
+  },
+  "files": [
+    {
+      "path": "Cluster_1/cluster_token.txt",
+      "content": "{{TOKEN}}"
+    },
+    {
+      "path": "Cluster_1/cluster.ini",
+      "create": "[GAMEPLAY]\ngame_mode = survival\nmax_players = 6\npvp = false\npause_when_empty = true\n\n[NETWORK]\ncluster_name = {{SERVER_NAME}}\ncluster_description =\ncluster_password =\ncluster_intention = cooperative\nlan_only_cluster = false\noffline_cluster = false\n\n[MISC]\nconsole_enabled = true\n\n[SHARD]\nshard_enabled = false\n"
+    },
+    {
+      "path": "Cluster_1/Master/server.ini",
+      "create": "[NETWORK]\nserver_port = 10999\n\n[SHARD]\nis_master = true\n\n[STEAM]\nmaster_server_port = 27016\nauthentication_port = 8766\n"
+    },
+    {
+      "path": ".mods/dedicated_server_mods_setup.lua",
+      "create": "-- ServerModSetup(\"workshop id\")\n"
+    }
+  ],
+  "console": {
+    "ready": "Sim paused|Server registered via geo DNS",
+    "players": {
+      "join": "\\[Join Announcement\\] (.+)$",
+      "leave": "\\[Leave Announcement\\] (.+)$"
+    },
+    "chat": {
+      "message": "\\[Say\\] \\([^)]*\\) ([^:]+): (.*)$",
+      "server": "\\[Announcement\\] (.*)$",
+      "say": "c_announce(\"{{MESSAGE}}\")"
+    }
+  },
+  "stop": {
+    "command": "c_shutdown(true)",
+    "timeout": 120
+  },
+  "configs": [
+    {
+      "path": "Cluster_1/cluster.ini",
+      "format": "ini",
+      "name": "cluster.ini",
+      "groups": [
+        {
+          "id": "gameplay",
+          "name": {
+            "ru": "Игра",
+            "en": "Gameplay"
+          }
+        },
+        {
+          "id": "network",
+          "name": {
+            "ru": "Сеть",
+            "en": "Network"
+          }
+        }
+      ],
+      "fields": [
+        {
+          "key": "game_mode",
+          "name": {
+            "ru": "Режим",
+            "en": "Game mode"
+          },
+          "type": "select",
+          "group": "gameplay",
+          "options": [
+            {
+              "value": "survival",
+              "label": {
+                "ru": "Выживание",
+                "en": "Survival"
+              }
+            },
+            {
+              "value": "endless",
+              "label": {
+                "ru": "Бесконечный",
+                "en": "Endless"
+              }
+            },
+            {
+              "value": "wilderness",
+              "label": {
+                "ru": "Дикая местность",
+                "en": "Wilderness"
+              }
+            }
+          ]
+        },
+        {
+          "key": "max_players",
+          "name": {
+            "ru": "Максимум игроков",
+            "en": "Max players"
+          },
+          "type": "number",
+          "group": "gameplay"
+        },
+        {
+          "key": "pvp",
+          "name": "PvP",
+          "type": "boolean",
+          "group": "gameplay"
+        },
+        {
+          "key": "pause_when_empty",
+          "name": {
+            "ru": "Пауза без игроков",
+            "en": "Pause when empty"
+          },
+          "type": "boolean",
+          "group": "gameplay"
+        },
+        {
+          "key": "cluster_name",
+          "name": {
+            "ru": "Название в списке",
+            "en": "Listed name"
+          },
+          "group": "network"
+        },
+        {
+          "key": "cluster_description",
+          "name": {
+            "ru": "Описание",
+            "en": "Description"
+          },
+          "group": "network"
+        },
+        {
+          "key": "cluster_password",
+          "name": {
+            "ru": "Пароль",
+            "en": "Password"
+          },
+          "group": "network"
+        },
+        {
+          "key": "cluster_intention",
+          "name": {
+            "ru": "Стиль игры",
+            "en": "Play style"
+          },
+          "type": "select",
+          "group": "network",
+          "options": [
+            {
+              "value": "cooperative",
+              "label": {
+                "ru": "Кооператив",
+                "en": "Cooperative"
+              }
+            },
+            {
+              "value": "social",
+              "label": {
+                "ru": "Общение",
+                "en": "Social"
+              }
+            },
+            {
+              "value": "competitive",
+              "label": {
+                "ru": "Соревнование",
+                "en": "Competitive"
+              }
+            },
+            {
+              "value": "madness",
+              "label": {
+                "ru": "Безумие",
+                "en": "Madness"
+              }
+            }
+          ]
+        },
+        {
+          "key": "lan_only_cluster",
+          "name": {
+            "ru": "Только локальная сеть",
+            "en": "LAN only"
+          },
+          "type": "boolean",
+          "group": "network"
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "key": "TOKEN",
+      "name": {
+        "ru": "Токен кластера",
+        "en": "Cluster token"
+      },
+      "description": {
+        "ru": "Создайте сервер в аккаунте Klei и вставьте его токен",
+        "en": "Create a server in your Klei account and paste its token"
+      },
+      "link": {
+        "url": "https://accounts.klei.com/account/game/servers?game=DontStarveTogether",
+        "text": {
+          "ru": "Серверы в аккаунте Klei",
+          "en": "Klei account servers"
+        }
+      },
+      "required": true,
+      "pattern": "^pds-[A-Za-z0-9^=+/_-]{10,200}$"
+    }
+  ]
+}

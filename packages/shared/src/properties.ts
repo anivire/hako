@@ -22,7 +22,7 @@ function escape(value: string, key = false): string {
 
 function splitLine(line: string): { key: string; value: string } | null {
   const trimmed = line.replace(/^\s+/, '')
-  if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!')) return null
+  if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!') || trimmed.startsWith(';') || /^\[[^\]]*\]\s*$/.test(trimmed)) return null
   let i = 0
   while (i < trimmed.length) {
     const ch = trimmed[i]!
@@ -47,16 +47,17 @@ export function parseProperties(text: string): Record<string, string> {
   return out
 }
 
-export function updateProperties(text: string, changes: Record<string, string>): string {
+export function updateProperties(text: string, changes: Record<string, string>, raw = false): string {
+  const write = (key: string, value: string) => (raw ? `${key}=${value.replace(/[\r\n]+/g, ' ')}` : `${escape(key, true)}=${escape(value)}`)
   const pending = new Map(Object.entries(changes))
   const lines = text.split(/\r?\n/).map((line) => {
     const entry = splitLine(line)
     if (!entry || !pending.has(entry.key)) return line
     const value = pending.get(entry.key)!
     pending.delete(entry.key)
-    return `${escape(entry.key, true)}=${escape(value)}`
+    return write(entry.key, value)
   })
   while (lines.length && lines[lines.length - 1] === '') lines.pop()
-  for (const [key, value] of pending) lines.push(`${escape(key, true)}=${escape(value)}`)
+  for (const [key, value] of pending) lines.push(write(key, value))
   return `${lines.join('\n')}\n`
 }

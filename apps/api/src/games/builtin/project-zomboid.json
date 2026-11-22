@@ -1,0 +1,204 @@
+{
+  "id": "project-zomboid",
+  "name": "Project Zomboid",
+  "description": {
+    "ru": "Выделенный сервер Project Zomboid, Build 42",
+    "en": "Project Zomboid dedicated server, Build 42"
+  },
+  "image": "danixu86/project-zomboid-dedicated-server:latest",
+  "dataPath": "/home/steam/Zomboid",
+  "ports": [
+    {
+      "name": "game",
+      "container": 16261,
+      "protocol": "udp"
+    },
+    {
+      "name": "direct",
+      "container": 16262,
+      "protocol": "udp"
+    }
+  ],
+  "memory": {
+    "default": 6144,
+    "min": 3072
+  },
+  "env": {
+    "SERVERNAME": "{{WORLD}}",
+    "DISPLAYNAME": "{{SERVER_NAME}}",
+    "ADMINUSERNAME": "{{ADMIN_USER}}",
+    "ADMINPASSWORD": "{{ADMIN_PASSWORD}}",
+    "PASSWORD": "{{PASSWORD}}",
+    "PUBLIC": "{{PUBLIC}}",
+    "MEMORY": "{{SERVER_HEAP}}m",
+    "SERVERPRESET": "{{PRESET}}",
+    "WORKSHOP_IDS": "{{WORKSHOP_IDS}}",
+    "MOD_IDS": "{{MOD_IDS}}"
+  },
+  "console": {
+    "ready": "SERVER STARTED|LuaNet: Initialization \\[DONE\\]",
+    "exec": [
+      "sh",
+      "-c",
+      "printf '%s\\n' \"$1\" > /tmp/pz-console",
+      "sh"
+    ],
+    "players": {
+      "join": "\\[fully-connected\\].*username=\"([^\"]+)\"",
+      "leave": "\\[disconnect\\].*username=\"([^\"]+)\""
+    }
+  },
+  "stop": {
+    "command": "quit",
+    "timeout": 120
+  },
+  "players": {
+    "name": "^[A-Za-z0-9_.-]{1,32}$",
+    "kick": "kickuser \"{{NAME}}\""
+  },
+  "groups": [
+    {
+      "id": "server",
+      "name": {
+        "ru": "Сервер",
+        "en": "Server"
+      }
+    },
+    {
+      "id": "access",
+      "name": {
+        "ru": "Доступ",
+        "en": "Access"
+      }
+    },
+    {
+      "id": "mods",
+      "name": {
+        "ru": "Моды",
+        "en": "Mods"
+      },
+      "description": {
+        "ru": "ID из Steam Workshop и ID модов через точку с запятой. В Build 42 перед ID мода ставится \\",
+        "en": "Steam Workshop ids and mod ids separated by semicolons. Build 42 needs a \\ before each mod id"
+      }
+    }
+  ],
+  "variables": [
+    {
+      "key": "WORLD",
+      "name": {
+        "ru": "Имя сохранения",
+        "en": "Save name"
+      },
+      "description": {
+        "ru": "Имя файлов сервера и мира. Без пробелов, при смене создаётся новый мир",
+        "en": "Name of the server and world files. No spaces, changing it starts a new world"
+      },
+      "default": "servertest",
+      "pattern": "^[A-Za-z0-9_-]{1,32}$",
+      "editable": false,
+      "group": "server"
+    },
+    {
+      "key": "PRESET",
+      "name": {
+        "ru": "Пресет песочницы",
+        "en": "Sandbox preset"
+      },
+      "description": {
+        "ru": "Применяется к новому миру",
+        "en": "Used for a new world"
+      },
+      "type": "select",
+      "default": "Apocalypse",
+      "options": [
+        {
+          "value": "Apocalypse"
+        },
+        {
+          "value": "Survivor"
+        },
+        {
+          "value": "Builder"
+        },
+        {
+          "value": "Beginner"
+        },
+        {
+          "value": "FirstWeek"
+        },
+        {
+          "value": "SixMonthsLater"
+        },
+        {
+          "value": "Survival"
+        }
+      ],
+      "group": "server"
+    },
+    {
+      "key": "PUBLIC",
+      "name": {
+        "ru": "Показывать в списке серверов",
+        "en": "Show in the server browser"
+      },
+      "type": "boolean",
+      "default": "false",
+      "group": "server"
+    },
+    {
+      "key": "ADMIN_USER",
+      "name": {
+        "ru": "Имя администратора",
+        "en": "Admin name"
+      },
+      "default": "admin",
+      "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+      "group": "access"
+    },
+    {
+      "key": "ADMIN_PASSWORD",
+      "name": {
+        "ru": "Пароль администратора",
+        "en": "Admin password"
+      },
+      "description": {
+        "ru": "Нужен при первом запуске, сервер пишет его в лог",
+        "en": "Needed on the first start, the server prints it to the log"
+      },
+      "required": true,
+      "pattern": "^[^\\s\"']{4,64}$",
+      "group": "access"
+    },
+    {
+      "key": "PASSWORD",
+      "name": {
+        "ru": "Пароль сервера",
+        "en": "Server password"
+      },
+      "description": {
+        "ru": "Пусто — без пароля",
+        "en": "Empty means no password"
+      },
+      "pattern": "^[^\\s\"']{0,64}$",
+      "group": "access"
+    },
+    {
+      "key": "WORKSHOP_IDS",
+      "name": "Workshop IDs",
+      "default": "",
+      "pattern": "^[0-9;]*$",
+      "group": "mods"
+    },
+    {
+      "key": "MOD_IDS",
+      "name": {
+        "ru": "ID модов",
+        "en": "Mod ids"
+      },
+      "default": "",
+      "pattern": "^[\\w\\\\;.\\- ]*$",
+      "group": "mods"
+    }
+  ]
+}

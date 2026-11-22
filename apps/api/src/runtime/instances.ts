@@ -284,16 +284,18 @@ class Instance {
       fs.mkdirSync(dir, { recursive: true })
       for (const v of game.volumes) fs.mkdirSync(path.join(dir, v.folder), { recursive: true })
       writeIcon(dir, server, game)
-      for (const f of mapProvider(server, game)?.files ?? []) {
+      for (const f of [...game.files, ...(mapProvider(server, game)?.files ?? [])]) {
         if (!variableVisible(f, server.variables)) continue
         const file = path.join(dir, f.path)
-        if (fs.existsSync(file)) {
-          const text = fs.readFileSync(file, 'utf8')
-          const next = f.replace.reduce((t, [from, to]) => t.replaceAll(from, to), text)
-          if (next !== text) fs.writeFileSync(file, next)
-        } else if (f.create) {
+        if (!file.startsWith(dir + path.sep)) continue
+        const exists = fs.existsSync(file)
+        if (f.content !== undefined || (!exists && f.create !== undefined)) {
           fs.mkdirSync(path.dirname(file), { recursive: true })
-          fs.writeFileSync(file, f.create)
+          fs.writeFileSync(file, interpolate(f.content ?? f.create!, vars))
+        } else if (exists) {
+          const text = fs.readFileSync(file, 'utf8')
+          const next = f.replace.reduce((t, [from, to]) => t.replaceAll(from, interpolate(to, vars)), text)
+          if (next !== text) fs.writeFileSync(file, next)
         }
       }
       for (const c of game.configs) {

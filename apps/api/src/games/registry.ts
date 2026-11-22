@@ -8,6 +8,10 @@ import minecraft from './builtin/minecraft.json'
 import bedrock from './builtin/minecraft-bedrock.json'
 import terraria from './builtin/terraria.json'
 import valheim from './builtin/valheim.json'
+import projectZomboid from './builtin/project-zomboid.json'
+import dontStarve from './builtin/dont-starve-together.json'
+import coreKeeper from './builtin/core-keeper.json'
+import satisfactory from './builtin/satisfactory.json'
 
 const templates = new Map<string, GameTemplate>()
 
@@ -27,6 +31,10 @@ export function loadGames() {
   register(factorio, 'builtin/factorio.json')
   register(terraria, 'builtin/terraria.json')
   register(valheim, 'builtin/valheim.json')
+  register(projectZomboid, 'builtin/project-zomboid.json')
+  register(dontStarve, 'builtin/dont-starve-together.json')
+  register(coreKeeper, 'builtin/core-keeper.json')
+  register(satisfactory, 'builtin/satisfactory.json')
   if (!fs.existsSync(env.gamesDir)) return
   for (const file of fs.readdirSync(env.gamesDir).filter((f) => f.endsWith('.json')).sort()) {
     const full = path.join(env.gamesDir, file)

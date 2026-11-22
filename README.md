@@ -49,6 +49,10 @@ hako (箱, "box") runs each game server in its own Docker container and gives yo
 | Factorio | [factoriotools/factorio](https://github.com/factoriotools/factorio-docker) | Stable or experimental, with or without Space Age |
 | Terraria | [ryshe/terraria](https://github.com/ryshe/terraria), [jacobsmile/tmodloader1.4](https://github.com/JACOBSMILE/tmodloader1.4) | Vanilla, TShock or tModLoader with Workshop mods |
 | Valheim | [community-valheim-tools/valheim-server](https://github.com/community-valheim-tools/valheim-server-docker) | Vanilla or BepInEx with Thunderstore mods |
+| Project Zomboid | [danixu86/project-zomboid-dedicated-server](https://github.com/Danixu/project-zomboid-server-docker) | Build 42 with Workshop mods by id |
+| Don't Starve Together | [superjump22/dontstarvetogether](https://github.com/superjump22/dontstarve-server-docker) | Overworld shard, needs a Klei cluster token |
+| Core Keeper | [escaping/core-keeper-dedicated](https://github.com/escapingnetwork/core-keeper-dedicated) | Steam relay with a Game ID or direct connect |
+| Satisfactory | [wolveix/satisfactory-server](https://github.com/wolveix/satisfactory-server) | Stable or experimental |
 
 To add another game, drop a JSON template into the games folder. [docs/games.md](docs/games.md) describes the format.
 

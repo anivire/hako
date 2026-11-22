@@ -18,7 +18,7 @@ export type ConfigField = z.infer<typeof configFieldSchema>
 
 export const configFileSchema = z.object({
   path: z.string().min(1).max(256),
-  format: z.enum(['properties', 'json', 'bepinex', 'list', 'players']),
+  format: z.enum(['properties', 'ini', 'json', 'bepinex', 'list', 'players']),
   list: z.enum(['ops', 'whitelist', 'bans']).optional(),
   description: textSchema.optional(),
   placeholder: textSchema.optional(),
@@ -42,6 +42,7 @@ export const playersSchema = z.object({
 })
 export type PlayersSpec = z.infer<typeof playersSchema>
 const whenSchema = z.record(z.string(), z.array(z.string()))
+export const fileRuleSchema = z.object({ path: z.string().min(1), when: whenSchema.optional(), create: z.string().optional(), content: z.string().optional(), replace: z.array(z.tuple([z.string(), z.string()])).default([]) })
 export const mapProviderSchema = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/),
   name: textSchema,
@@ -53,7 +54,7 @@ export const mapProviderSchema = z.object({
   port: z.number().int().min(1).max(65535),
   render: z.string().optional(),
   when: whenSchema.optional(),
-  files: z.array(z.object({ path: z.string().min(1), when: whenSchema.optional(), create: z.string().optional(), replace: z.array(z.tuple([z.string(), z.string()])).default([]) })).default([]),
+  files: z.array(fileRuleSchema).default([]),
 })
 export type MapProvider = z.infer<typeof mapProviderSchema>
 export const addonSourcesSchema = z.array(z.object({ source: z.string(), params: z.record(z.string(), z.string()).default({}) }))
@@ -127,6 +128,7 @@ export const gameTemplateSchema = z.object({
   map: z.object({ providers: z.array(mapProviderSchema).min(1) }).optional(),
   addons: addonSourcesSchema.default([]),
   configs: z.array(configFileSchema).default([]),
+  files: z.array(fileRuleSchema).default([]),
   startup: z.string().optional(),
   groups: z.array(z.object({ id: z.string(), name: textSchema, description: textSchema.optional(), collapsed: z.boolean().optional() })).default([]),
 })

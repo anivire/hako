@@ -24,3 +24,9 @@ test('updates in place, keeps comments and appends new keys', () => {
   assert.equal(back.pvp, 'false')
   assert.ok(next.endsWith('\n') && !next.endsWith('\n\n'))
 })
+
+test('ini sections are skipped and raw values are written as is', () => {
+  const ini = '[NETWORK]\ncluster_name = Мой сервер\n; comment\n'
+  assert.deepEqual(parseProperties(ini), { cluster_name: 'Мой сервер' })
+  assert.match(updateProperties(ini, { cluster_name: 'a:b' }, true), /^cluster_name=a:b$/m)
+})

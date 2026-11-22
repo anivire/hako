@@ -1,0 +1,91 @@
+{
+  "id": "satisfactory",
+  "name": "Satisfactory",
+  "description": {
+    "ru": "Выделенный сервер Satisfactory. Сервер забирается в игре через «Менеджер серверов»",
+    "en": "Satisfactory dedicated server. Claim it in game through the Server Manager"
+  },
+  "image": "wolveix/satisfactory-server:latest",
+  "dataPath": "/config",
+  "ports": [
+    {
+      "name": "game",
+      "container": 7777,
+      "protocol": "udp"
+    },
+    {
+      "name": "game-tcp",
+      "container": 7777,
+      "protocol": "tcp"
+    },
+    {
+      "name": "messaging",
+      "container": 8888,
+      "protocol": "tcp"
+    }
+  ],
+  "memory": {
+    "default": 8192,
+    "min": 4096
+  },
+  "env": {
+    "MAXPLAYERS": "{{MAX_PLAYERS}}",
+    "AUTOSAVENUM": "{{AUTOSAVES}}",
+    "STEAMBETA": "{{BETA}}",
+    "DISABLESEASONALEVENTS": "{{NO_EVENTS}}"
+  },
+  "stop": {
+    "timeout": 120
+  },
+  "variables": [
+    {
+      "key": "BETA",
+      "step": "setup",
+      "name": {
+        "ru": "Ветка",
+        "en": "Branch"
+      },
+      "type": "select",
+      "default": "false",
+      "options": [
+        {
+          "value": "false",
+          "label": "Stable"
+        },
+        {
+          "value": "true",
+          "label": "Experimental"
+        }
+      ]
+    },
+    {
+      "key": "MAX_PLAYERS",
+      "name": {
+        "ru": "Максимум игроков",
+        "en": "Max players"
+      },
+      "type": "number",
+      "default": "4",
+      "pattern": "^([1-9]|[1-9][0-9])$"
+    },
+    {
+      "key": "AUTOSAVES",
+      "name": {
+        "ru": "Автосохранений",
+        "en": "Autosaves kept"
+      },
+      "type": "number",
+      "default": "5",
+      "pattern": "^([1-9]|[1-9][0-9])$"
+    },
+    {
+      "key": "NO_EVENTS",
+      "name": {
+        "ru": "Отключить сезонные события",
+        "en": "Disable seasonal events"
+      },
+      "type": "boolean",
+      "default": "false"
+    }
+  ]
+}

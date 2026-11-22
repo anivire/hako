@@ -388,7 +388,7 @@ function PropertiesEditor({ server, config, icon }: { server: Server; config: Co
   })
   const base = file.data?.missing ? (config.defaults ?? '') : (file.data?.content ?? '')
   const save = useMutation({
-    mutationFn: () => api.writeFile(server.id, config.path, (config.format === 'json' ? updateJsonConfig : updateProperties)(base, changes)),
+    mutationFn: () => api.writeFile(server.id, config.path, config.format === 'json' ? updateJsonConfig(base, changes) : updateProperties(base, changes, config.format === 'ini')),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: keys.file(server.id, config.path) })
       setChanges({})
