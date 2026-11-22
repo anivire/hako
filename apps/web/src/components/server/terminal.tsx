@@ -42,6 +42,12 @@ function theme(): ITheme {
   }
 }
 
+function fill(terminal: Terminal, addon: FitAddon) {
+  const size = addon.proposeDimensions()
+  if (!size || !Number.isFinite(size.cols) || !Number.isFinite(size.rows)) return
+  if (terminal.cols !== size.cols || terminal.rows !== size.rows + 1) terminal.resize(size.cols, size.rows + 1)
+}
+
 export interface TerminalHandle {
   search: (query: string, direction: 'next' | 'previous') => boolean
   clearSearch: () => void
@@ -115,13 +121,13 @@ export const ConsoleTerminal = forwardRef<TerminalHandle, { socket: ServerSocket
     let off = () => {}
     const observer = new ResizeObserver(() => {
       try {
-        fitAddon.fit()
+        fill(terminal, fitAddon)
       } catch {}
     })
     void document.fonts.load(`12px ${FONT}`).finally(() => {
       if (disposed) return
       terminal.open(el)
-      fitAddon.fit()
+      fill(terminal, fitAddon)
       observer.observe(el)
       filterState.current = { pending: '', level: null }
       written.current = false
@@ -169,7 +175,7 @@ export const ConsoleTerminal = forwardRef<TerminalHandle, { socket: ServerSocket
     if (!terminal) return
     terminal.options.fontSize = fontSize
     try {
-      fit.current?.fit()
+      if (fit.current) fill(terminal, fit.current)
     } catch {}
   }, [fontSize])
 
