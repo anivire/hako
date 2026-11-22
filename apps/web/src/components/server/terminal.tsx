@@ -61,6 +61,13 @@ export const ConsoleTerminal = forwardRef<TerminalHandle, { socket: ServerSocket
   const filterRef = useRef(filter)
   const filterState = useRef<FilterState>({ pending: '', level: null })
   const written = useRef(false)
+  const held = useRef('')
+  const print = (terminal: Terminal, text: string) => {
+    const full = held.current + text
+    const tail = /(\r?\n)+$/.exec(full)?.[0] ?? ''
+    held.current = tail
+    terminal.write(full.slice(0, full.length - tail.length))
+  }
   const empty = useRef(onEmptyChange)
   empty.current = onEmptyChange
   const render = (chunk: string) => {
@@ -118,13 +125,15 @@ export const ConsoleTerminal = forwardRef<TerminalHandle, { socket: ServerSocket
       observer.observe(el)
       filterState.current = { pending: '', level: null }
       written.current = false
-      terminal.write(render(socket.buffer()))
+      held.current = ''
+      print(terminal, render(socket.buffer()))
       off = socket.onLog((chunk, reset) => {
         if (reset) {
           filterState.current = { pending: '', level: null }
           written.current = false
         }
-        terminal.write((reset ? RESET : '') + render(chunk))
+        if (reset) held.current = ''
+        print(terminal, (reset ? RESET : '') + render(chunk))
       })
       terminal.onScroll(() => {
         const buffer = terminal.buffer.active
@@ -151,7 +160,8 @@ export const ConsoleTerminal = forwardRef<TerminalHandle, { socket: ServerSocket
     if (!terminal) return
     filterState.current = { pending: '', level: null }
     written.current = false
-    terminal.write(RESET + render(socket.buffer()))
+    held.current = ''
+    print(terminal, RESET + render(socket.buffer()))
   }, [filter])
 
   useEffect(() => {
@@ -170,5 +180,5 @@ export const ConsoleTerminal = forwardRef<TerminalHandle, { socket: ServerSocket
     return () => cancelAnimationFrame(frame)
   }, [preset, scheme])
 
-  return <div ref={host} className="absolute inset-x-3 inset-y-2 overflow-hidden [&_.xterm-viewport]:!bg-transparent" />
+  return <div ref={host} className="absolute inset-x-3 inset-y-2 flex flex-col justify-end overflow-hidden [&_.xterm-viewport]:!bg-transparent" />
 })
