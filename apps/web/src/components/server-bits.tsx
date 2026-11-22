@@ -21,6 +21,7 @@ export function StatusBadge({ status }: { status: ServerStatus }) {
 }
 
 export function serverAddress(server: Server) {
+  if (server.address) return server.address
   const port = server.ports[0]
   return port ? `${location.hostname}:${port.host}` : location.hostname
 }

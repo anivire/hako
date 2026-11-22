@@ -53,7 +53,7 @@ function iconUrl(raw: string): URL {
 
 function toServer(row: ServerRow, access: ServerAccess): Server {
   const game = requireGame(row.game)
-  return { id: row.id, name: row.name, game: row.game, memory: row.memory, cpu: row.cpu ?? null, icon: row.icon, variables: row.variables, ports: serverPorts(row, game), status: statusOf(row.id), startedAt: startedAtOf(row.id), version: versionOf(row.id), addons: addonKind(row), updates: updatesOf(row.id), access, ownerId: row.ownerId, createdAt: row.createdAt }
+  return { id: row.id, name: row.name, game: row.game, memory: row.memory, cpu: row.cpu ?? null, icon: row.icon, variables: row.variables, ports: serverPorts(row, game), status: statusOf(row.id), startedAt: startedAtOf(row.id), version: versionOf(row.id), addons: addonKind(row), address: game.address ? interpolate(game.address, { ...Object.fromEntries(game.variables.map((v) => [v.key, v.default])), ...row.variables }).trim() || null : null, updates: updatesOf(row.id), access, ownerId: row.ownerId, createdAt: row.createdAt }
 }
 
 async function checkPorts(requested: Record<string, number>, game: ReturnType<typeof requireGame>): Promise<PortCheck[]> {

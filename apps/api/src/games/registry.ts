@@ -68,7 +68,7 @@ export function requireGame(id: string): GameTemplate {
 
 export function interpolate(value: string, vars: Record<string, string>): string {
   return value
-    .replace(/\{\{#\s*([A-Z][A-Z0-9_]*)\s*\}\}([\s\S]*?)\{\{\/\s*\1\s*\}\}/g, (_, key: string, inner: string) => (vars[key] && vars[key] !== 'false' ? inner : ''))
+    .replace(/\{\{([#^])\s*([A-Z][A-Z0-9_]*)\s*\}\}([\s\S]*?)\{\{\/\s*\2\s*\}\}/g, (_, mark: string, key: string, inner: string) => (Boolean(vars[key] && vars[key] !== 'false') === (mark === '#') ? inner : ''))
     .replace(/\{\{\s*([A-Z][A-Z0-9_]*)\s*\}\}/g, (_, key: string) => vars[key] ?? '')
 }
 

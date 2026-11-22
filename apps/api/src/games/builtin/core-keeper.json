@@ -21,6 +21,7 @@
       "protocol": "udp"
     }
   ],
+  "address": "{{^DIRECT}}{{GAME_ID}}{{/DIRECT}}",
   "memory": {
     "default": 2048,
     "min": 1024

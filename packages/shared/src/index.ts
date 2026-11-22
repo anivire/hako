@@ -156,6 +156,7 @@ export const gameTemplateSchema = z.object({
   addons: addonSourcesSchema.default([]),
   configs: z.array(configFileSchema).default([]),
   files: z.array(fileRuleSchema).default([]),
+  address: z.string().max(256).optional(),
   worlds: worldsSchema.optional(),
   backup: backupSpecSchema.default({ before: [], after: [], wait: 5, exclude: [] }),
   startup: z.string().optional(),
@@ -221,6 +222,7 @@ export interface Server {
   startedAt: string | null
   version: string | null
   addons: 'mods' | 'plugins' | null
+  address: string | null
   updates: ServerUpdates
   access: ServerAccess
   ownerId: number

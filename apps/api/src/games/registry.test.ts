@@ -37,6 +37,9 @@ test('random variables are filled once and kept', () => {
 test('interpolate fills known keys and blanks unknown ones', () => {
   assert.equal(interpolate('itzg/minecraft-server:{{JAVA}}', { JAVA: 'java21' }), 'itzg/minecraft-server:java21')
   assert.equal(interpolate('{{ A }}-{{MISSING}}', { A: 'x' }), 'x-')
+  assert.equal(interpolate('{{#ON}}yes{{/ON}}{{^ON}}no{{/ON}}', { ON: 'false' }), 'no')
+  assert.equal(interpolate('{{#ON}}yes{{/ON}}{{^ON}}no{{/ON}}', { ON: 'true' }), 'yes')
+  assert.equal(interpolate('{{^ON}}no{{/ON}}', {}), 'no')
 })
 
 test('resolveVariables applies defaults and validates', () => {
