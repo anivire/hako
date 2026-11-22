@@ -106,7 +106,7 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
           <Meter
             label={t('servers.specMemory')}
             share={stats ? stats.memory / memoryLimit : null}
-            value={stats ? `${formatBytes(stats.memory)} / ${memoryLabel(server.memory)}` : memoryLabel(server.memory)}
+            value={stats ? `${formatBytes(stats.memory, 2)} / ${formatBytes(memoryLimit, 2)}` : memoryLabel(server.memory)}
           />
           <Meter label={t('servers.specCpu')} share={stats ? stats.cpu / 100 / stats.cpuLimit : null} value={stats ? (server.cpu ? `${Math.round(stats.cpu)}% / ${server.cpu * 100}%` : `${Math.round(stats.cpu / stats.cpuLimit)}%`) : cores} />
           <div className="flex items-center justify-between gap-3 pt-0.5 font-mono text-xs text-subtle-foreground">
@@ -116,7 +116,7 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
             </span>
             <span className="flex shrink-0 items-center gap-1.5 [&_svg]:size-3.5" title={serverAddress(server)}>
               <RiLinkM />
-              {server.ports[0] ? `:${server.ports[0].host}` : '—'}
+              <span className="max-w-40 truncate">{server.address ?? (server.ports[0] ? `:${server.ports[0].host}` : '—')}</span>
             </span>
           </div>
         </div>

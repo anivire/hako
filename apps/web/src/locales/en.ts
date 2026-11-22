@@ -201,7 +201,7 @@ export const en: Messages = {
     onDisk: '{{size}} on disk',
     mb: 'MB',
     specMemory: 'Memory',
-    specCpu: 'Cores',
+    specCpu: 'CPU',
     specDisk: 'Disk',
     specPort: 'Port',
     memoryPick: 'Memory',

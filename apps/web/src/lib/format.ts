@@ -1,4 +1,4 @@
-export function formatBytes(bytes: number): string {
+export function formatBytes(bytes: number, digits?: number): string {
   if (bytes < 1024) return `${Math.round(bytes)} B`
   const units = ['KB', 'MB', 'GB', 'TB']
   let value = bytes / 1024
@@ -7,7 +7,7 @@ export function formatBytes(bytes: number): string {
     value /= 1024
     unit += 1
   }
-  return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`
+  return `${value.toFixed(digits ?? (value < 10 ? 1 : 0))} ${units[unit]}`
 }
 
 export function joinPath(dir: string, name: string): string {

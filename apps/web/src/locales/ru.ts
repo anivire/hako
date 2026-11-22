@@ -199,7 +199,7 @@ export const ru = {
     onDisk: '{{size}} на диске',
     mb: 'МБ',
     specMemory: 'Память',
-    specCpu: 'Ядра',
+    specCpu: 'CPU',
     specDisk: 'Диск',
     specPort: 'Порт',
     memoryPick: 'Память',
