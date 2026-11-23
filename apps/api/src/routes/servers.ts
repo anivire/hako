@@ -10,7 +10,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
-import { type Member, type Permission, type PortCheck, type Server, type ServerAccess, backupLimitSchema, memberSchema, scheduleSchema, serverInviteCreateSchema, addonInstallSchema, addonToggleSchema, addonUpdateSchema, powerSchema, serverCreateSchema, serverUpdateSchema } from '@hako/shared'
+import { type Member, type Permission, type PortCheck, type QuickStats, type Server, type ServerAccess, backupLimitSchema, memberSchema, scheduleSchema, serverInviteCreateSchema, addonInstallSchema, addonToggleSchema, addonUpdateSchema, powerSchema, serverCreateSchema, serverUpdateSchema } from '@hako/shared'
 import { addonKind, addonSource, modpackStatus, addonUpdates, addonsOverview, installAddon, modpackBase, removeAddon, setAddonEnabled, updateAddons } from '../addons/manager'
 import { accessOf, allows, requiredPermission } from '../lib/access'
 import { db, now } from '../db/client'
@@ -153,7 +153,7 @@ export const serverRoutes = new Hono<ServerEnv>()
     const user = c.get('user')
     const rows = db.select().from(servers).all().filter((row) => accessOf(row, user) && statusOf(row.id) === 'running')
     const entries = await Promise.all(rows.map(async (row) => [row.id, await quickStats(row.id, row.cpu ?? null)] as const))
-    return c.json(Object.fromEntries(entries.filter(([, s]) => s)))
+    return c.json(Object.fromEntries(entries.flatMap(([id, s]) => (s ? [[id, { ...s, players: instance(id).playerCount } satisfies QuickStats]] : []))))
   })
   .post('/', async (c) => {
     const input = await parseBody(c, serverCreateSchema)

@@ -443,6 +443,10 @@ class Instance {
     }
   }
 
+  get playerCount(): number | null {
+    return this.players ? this.players.list.length : null
+  }
+
   private emitStats(s: Docker.ContainerStats) {
     const cpuDelta = s.cpu_stats.cpu_usage.total_usage - (s.precpu_stats.cpu_usage?.total_usage ?? 0)
     const systemDelta = (s.cpu_stats.system_cpu_usage ?? 0) - (s.precpu_stats.system_cpu_usage ?? 0)
@@ -462,9 +466,21 @@ export interface QuickStats {
   cpuLimit: number
   memory: number
   memoryLimit: number
+  rxRate: number
+  txRate: number
 }
 
 const quick = new Map<string, { at: number; value: Promise<QuickStats | null> }>()
+const lastNet = new Map<string, { at: number; rx: number; tx: number }>()
+
+function netRates(id: string, rx: number, tx: number) {
+  const prev = lastNet.get(id)
+  const at = Date.now()
+  lastNet.set(id, { at, rx, tx })
+  const seconds = prev ? (at - prev.at) / 1000 : 0
+  if (!prev || seconds <= 0 || rx < prev.rx || tx < prev.tx) return { rxRate: 0, txRate: 0 }
+  return { rxRate: (rx - prev.rx) / seconds, txRate: (tx - prev.tx) / seconds }
+}
 
 export function quickStats(id: string, cores: number | null): Promise<QuickStats | null> {
   const hit = quick.get(id)
@@ -476,7 +492,13 @@ export function quickStats(id: string, cores: number | null): Promise<QuickStats
       const systemDelta = (s.cpu_stats.system_cpu_usage ?? 0) - (s.precpu_stats.system_cpu_usage ?? 0)
       const cpus = s.cpu_stats.online_cpus ?? s.cpu_stats.cpu_usage.percpu_usage?.length ?? 1
       const cache = (s.memory_stats.stats as Record<string, number> | undefined)?.inactive_file ?? 0
+      const nets = Object.values(s.networks ?? {})
       return {
+        ...netRates(
+          id,
+          nets.reduce((sum, n) => sum + n.rx_bytes, 0),
+          nets.reduce((sum, n) => sum + n.tx_bytes, 0),
+        ),
         cpu: systemDelta > 0 && cpuDelta > 0 ? (cpuDelta / systemDelta) * cpus * 100 : 0,
         cpuLimit: cores ?? cpus,
         memory: Math.max(0, (s.memory_stats.usage ?? 0) - cache),

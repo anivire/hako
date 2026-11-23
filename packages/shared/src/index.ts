@@ -244,6 +244,9 @@ export interface QuickStats {
   cpuLimit: number
   memory: number
   memoryLimit: number
+  rxRate: number
+  txRate: number
+  players: number | null
 }
 
 export type ConsoleMessage =

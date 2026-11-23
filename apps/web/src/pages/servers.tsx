@@ -1,4 +1,4 @@
-import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiPulseFill, RiSearchFill } from '@remixicon/react'
+import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiPulseFill, RiGroupFill, RiArrowDownLine, RiArrowUpLine, RiArrowUpDownLine, RiPieChart2Fill, RiSearchFill } from '@remixicon/react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import type { GameTemplate, QuickStats, Server, ServerStatus } from '@hako/shared'
 import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, Tooltip, cn } from '@hako/ui'
@@ -99,6 +99,16 @@ function StackedBar({ label, value, total, parts }: { label: string; value: stri
   )
 }
 
+function UsageChip({ icon, label, title, accent, children }: { icon: ReactNode; label: string; title?: string; accent?: boolean; children: ReactNode }) {
+  return (
+    <span title={title} className={cn('inline-flex h-8 items-center gap-2 rounded-lg bg-field px-2.5 text-xs [&>svg]:size-4 [&>svg]:shrink-0', accent ? '[&>svg]:text-accent' : '[&>svg]:text-muted-foreground')}>
+      {icon}
+      <span className="text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-2 font-mono font-medium tabular-nums">{children}</span>
+    </span>
+  )
+}
+
 function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string, QuickStats> | undefined }) {
   const { t } = useTranslation()
   const system = useQuery({ queryKey: ['system'], queryFn: api.system, staleTime: 30_000 })
@@ -115,6 +125,12 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
   const disk = usage.reduce((sum, u) => sum + (u.data?.bytes ?? 0), 0)
   const hostDisk = system.data?.disk
   const loading = system.isPending || (running.length > 0 && !stats)
+  const tracked = live.filter((e) => e.stats.players !== null)
+  const players = tracked.reduce((sum, e) => sum + (e.stats.players ?? 0), 0)
+  const rxRate = live.reduce((sum, e) => sum + e.stats.rxRate, 0)
+  const txRate = live.reduce((sum, e) => sum + e.stats.txRate, 0)
+  const allocated = servers.reduce((sum, s) => sum + s.memory, 0) * 1024 * 1024
+  const updates = servers.filter((s) => s.updates.image || s.updates.addons).length
   return (
     <Card className="flex flex-col gap-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -166,6 +182,33 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
               ))}
             </div>
           ) : null}
+          <div className="flex flex-wrap gap-2">
+            {tracked.length ? (
+              <UsageChip icon={<RiGroupFill />} label={t('servers.players')}>
+                {players}
+              </UsageChip>
+            ) : null}
+            {live.length ? (
+              <UsageChip icon={<RiArrowUpDownLine />} label={t('servers.network')}>
+                <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
+                  <RiArrowDownLine className="text-success" />
+                  {formatBytes(rxRate, 1)}/s
+                </span>
+                <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
+                  <RiArrowUpLine className="text-info" />
+                  {formatBytes(txRate, 1)}/s
+                </span>
+              </UsageChip>
+            ) : null}
+            <UsageChip icon={<RiPieChart2Fill />} label={t('servers.allocated')} title={t('servers.allocatedHint')}>
+              {hostMemory ? `${formatBytes(allocated, 1)} / ${formatBytes(hostMemory, 1)}` : formatBytes(allocated, 1)}
+            </UsageChip>
+            {updates ? (
+              <UsageChip icon={<RiDownloadCloud2Fill />} label={t('servers.updates')} accent>
+                {t('servers.updatesValue', { count: updates })}
+              </UsageChip>
+            ) : null}
+          </div>
         </>
       )}
     </Card>
