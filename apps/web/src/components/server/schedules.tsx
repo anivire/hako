@@ -202,7 +202,7 @@ function StepChip({ action }: { action: ScheduleAction }) {
           ? new Intl.NumberFormat(i18n.language, { style: 'unit', unit: action.seconds % 60 ? 'second' : 'minute', unitDisplay: 'short' }).format(action.seconds % 60 ? action.seconds : action.seconds / 60)
           : t(`schedules.actions.${action.type}`)
   return (
-    <span title={label(action)} className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-xs">
+    <span title={label(action)} className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-field px-2.5 py-1 text-xs">
       <Icon className="size-3.5 shrink-0 text-muted-foreground" />
       <span className={cn('truncate', action.type === 'command' && 'font-mono')}>{text}</span>
     </span>
@@ -223,7 +223,7 @@ function ScheduleRow({ server, schedule, onEdit }: { server: Server; schedule: S
   const date = (iso: string) => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso))
   const when = cronText(schedule.cron)
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-foreground/[0.04] p-3 sm:px-4">
+    <div className="flex flex-col gap-2 p-3 sm:px-4 rounded-xl bg-inset dark:bg-raised [--field:var(--surface)] [--field-hover:var(--raised-field-hover)] [--muted:var(--surface)] dark:[--field:var(--raised-field)] dark:[--muted:var(--raised-field)]">
       <div className="flex items-center gap-3">
         <Switch checked={schedule.enabled} disabled={!manage || toggle.isPending} onCheckedChange={(on) => toggle.mutate(on)} aria-label={schedule.name} />
         <span className={cn('min-w-0 flex-1 truncate text-sm font-semibold', !schedule.enabled && 'text-muted-foreground')}>{schedule.name}</span>

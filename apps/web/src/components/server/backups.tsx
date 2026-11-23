@@ -22,7 +22,7 @@ function BackupTile({ server, backup, busy }: { server: Server; backup: Backup; 
   const remove = useMutation({ mutationFn: () => api.deleteBackup(server.id, backup.name), onSuccess: (data) => client.setQueryData(keys.backups(server.id), data), onError: (e) => toast.error(errorMessage(e, t)) })
   const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(backup.createdAt))
   return (
-    <div className="flex flex-col gap-3 rounded-xl bg-foreground/[0.04] p-4">
+    <div className="flex flex-col gap-3 p-4 rounded-xl bg-inset dark:bg-raised [--field:var(--surface)] [--field-hover:var(--raised-field-hover)] [--muted:var(--surface)] dark:[--field:var(--raised-field)] dark:[--muted:var(--raised-field)]">
       <div className="flex items-center gap-3">
         <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
           <RiArchiveStackFill className="size-5" />
