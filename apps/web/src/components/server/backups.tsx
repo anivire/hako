@@ -1,7 +1,7 @@
 import { RiArchiveStackFill, RiDeleteBin6Fill, RiDownload2Fill, RiHistoryFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Backup, Server } from '@hako/shared'
-import { Button, Card, CardDescription, CardTitle, Input, Mascot, Skeleton, Tooltip, toast } from '@hako/ui'
+import { Button, Card, CardDescription, CardTitle, EmptyState, Input, Skeleton, Tooltip, toast } from '@hako/ui'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 import { ask } from '../../lib/confirm'
@@ -113,13 +113,7 @@ export function ServerBackups({ server }: { server: Server }) {
           ))}
         </div>
       ) : (
-        <Card className="flex items-center justify-center gap-3 px-5 py-4 text-sm">
-          <Mascot mood="sleepy" size={32} className="shrink-0 opacity-80" />
-          <div>
-            <span className="font-medium">{t('backups.empty')}</span>
-            <span className="text-muted-foreground"> · {t('backups.emptyHint')}</span>
-          </div>
-        </Card>
+        <EmptyState title={t('backups.empty')} description={t('backups.emptyHint')} />
       )}
     </div>
   )
