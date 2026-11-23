@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { RiAddFill, RiArchiveStackFill, RiArrowRightSLine, RiChat3Fill, RiCloseFill, RiDraggable, RiDeleteBin6Fill, RiEditFill, RiErrorWarningFill, RiPlayFill, RiRestartFill, RiStopFill, RiTerminalBoxFill, RiTimerFill, type RemixiconComponentType } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type Schedule, type ScheduleAction, type ScheduleInput, type SchedulesOverview, type Server, nextCronRun } from '@hako/shared'
-import { Badge, Button, Card, CardDescription, CardTitle, Dialog, DialogContent, EmptyState, Field, Input, Select, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
+import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, Dialog, DialogContent, EmptyState, Field, Input, Select, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
@@ -202,7 +202,7 @@ function StepChip({ action }: { action: ScheduleAction }) {
           ? new Intl.NumberFormat(i18n.language, { style: 'unit', unit: action.seconds % 60 ? 'second' : 'minute', unitDisplay: 'short' }).format(action.seconds % 60 ? action.seconds : action.seconds / 60)
           : t(`schedules.actions.${action.type}`)
   return (
-    <span title={label(action)} className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-field px-2.5 py-1 text-xs">
+    <span title={label(action)} className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-xs">
       <Icon className="size-3.5 shrink-0 text-muted-foreground" />
       <span className={cn('truncate', action.type === 'command' && 'font-mono')}>{text}</span>
     </span>
@@ -223,7 +223,7 @@ function ScheduleRow({ server, schedule, onEdit }: { server: Server; schedule: S
   const date = (iso: string) => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso))
   const when = cronText(schedule.cron)
   return (
-    <Card className="flex flex-col gap-2 p-4">
+    <div className="flex flex-col gap-2 rounded-xl bg-foreground/[0.04] p-3 sm:px-4">
       <div className="flex items-center gap-3">
         <Switch checked={schedule.enabled} disabled={!manage || toggle.isPending} onCheckedChange={(on) => toggle.mutate(on)} aria-label={schedule.name} />
         <span className={cn('min-w-0 flex-1 truncate text-sm font-semibold', !schedule.enabled && 'text-muted-foreground')}>{schedule.name}</span>
@@ -271,7 +271,7 @@ function ScheduleRow({ server, schedule, onEdit }: { server: Server; schedule: S
           </Fragment>
         ))}
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -280,8 +280,8 @@ export function ServerSchedules({ server, game }: { server: Server; game: GameTe
   const overview = useQuery({ queryKey: keys.schedules(server.id), queryFn: () => api.schedules(server.id), refetchInterval: (q) => (q.state.data?.schedules.some((s) => s.running) ? 3000 : 60_000) })
   const [editing, setEditing] = useState<Schedule | 'new' | null>(null)
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-3">
+    <Card>
+      <CardHeader className="flex-wrap gap-3">
         <div className="min-w-0 flex-1">
           <CardTitle>{t('schedules.title')}</CardTitle>
           <CardDescription>{t('schedules.hint', { zone: overview.data?.timeZone ?? 'UTC' })}</CardDescription>
@@ -292,17 +292,21 @@ export function ServerSchedules({ server, game }: { server: Server; game: GameTe
             {t('schedules.add')}
           </Button>
         ) : null}
+      </CardHeader>
+      <div className="flex flex-col gap-2 px-4 pb-4 pt-2 sm:px-5 sm:pb-5">
+        {overview.isPending ? (
+          <Skeleton className="h-24 rounded-xl" />
+        ) : overview.data?.schedules.length ? (
+          overview.data.schedules.map((s) => <ScheduleRow key={s.id} server={server} schedule={s} onEdit={() => setEditing(s)} />)
+        ) : (
+          <div>
+            <EmptyState title={t('schedules.empty')} description={t('schedules.emptyHint')} />
+          </div>
+        )}
       </div>
-      {overview.isPending ? (
-        <Skeleton className="h-24 rounded-xl" />
-      ) : overview.data?.schedules.length ? (
-        overview.data.schedules.map((s) => <ScheduleRow key={s.id} server={server} schedule={s} onEdit={() => setEditing(s)} />)
-      ) : (
-        <EmptyState title={t('schedules.empty')} description={t('schedules.emptyHint')} />
-      )}
       <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
         {editing ? <ScheduleDialog key={editing === 'new' ? 'new' : editing.id} server={server} game={game} initial={editing === 'new' ? null : editing} onClose={() => setEditing(null)} /> : null}
       </Dialog>
-    </div>
+    </Card>
   )
 }

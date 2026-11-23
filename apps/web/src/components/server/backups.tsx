@@ -1,7 +1,7 @@
 import { RiArchiveStackFill, RiDeleteBin6Fill, RiDownload2Fill, RiHistoryFill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Backup, Server } from '@hako/shared'
-import { Button, Card, CardDescription, CardTitle, EmptyState, Input, Skeleton, Tooltip, toast } from '@hako/ui'
+import { Button, Card, CardDescription, CardHeader, CardTitle, EmptyState, Input, Skeleton, Tooltip, toast } from '@hako/ui'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 import { ask } from '../../lib/confirm'
@@ -22,7 +22,7 @@ function BackupTile({ server, backup, busy }: { server: Server; backup: Backup; 
   const remove = useMutation({ mutationFn: () => api.deleteBackup(server.id, backup.name), onSuccess: (data) => client.setQueryData(keys.backups(server.id), data), onError: (e) => toast.error(errorMessage(e, t)) })
   const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(backup.createdAt))
   return (
-    <Card className="flex flex-col gap-3 p-4">
+    <div className="flex flex-col gap-3 rounded-xl bg-foreground/[0.04] p-4">
       <div className="flex items-center gap-3">
         <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
           <RiArchiveStackFill className="size-5" />
@@ -59,7 +59,7 @@ function BackupTile({ server, backup, busy }: { server: Server; backup: Backup; 
           </Button>
         </Tooltip>
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -76,8 +76,8 @@ export function ServerBackups({ server }: { server: Server }) {
   const limit = useMutation({ mutationFn: (value: number) => api.setBackupLimit(server.id, value), onSuccess: (data) => client.setQueryData(key, data), onError: (e) => toast.error(errorMessage(e, t)) })
   const running = Boolean(overview.data?.running)
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-3">
+    <Card>
+      <CardHeader className="flex-wrap gap-3">
         <div className="min-w-0 flex-1">
           <CardTitle>{t('backups.title')}</CardTitle>
           <CardDescription>{t('backups.hint')}</CardDescription>
@@ -103,18 +103,20 @@ export function ServerBackups({ server }: { server: Server }) {
           <RiArchiveStackFill />
           {running ? t('backups.creating') : t('backups.create')}
         </Button>
+      </CardHeader>
+      <div className="px-4 pb-4 pt-2 sm:px-5 sm:pb-5">
+        {overview.isPending ? (
+          <Skeleton className="h-28 rounded-xl" />
+        ) : overview.data?.backups.length ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-3">
+            {overview.data.backups.map((b) => (
+              <BackupTile key={b.name} server={server} backup={b} busy={running} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState title={t('backups.empty')} description={t('backups.emptyHint')} />
+        )}
       </div>
-      {overview.isPending ? (
-        <Skeleton className="h-28 rounded-xl" />
-      ) : overview.data?.backups.length ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))] gap-3">
-          {overview.data.backups.map((b) => (
-            <BackupTile key={b.name} server={server} backup={b} busy={running} />
-          ))}
-        </div>
-      ) : (
-        <EmptyState title={t('backups.empty')} description={t('backups.emptyHint')} />
-      )}
-    </div>
+    </Card>
   )
 }
