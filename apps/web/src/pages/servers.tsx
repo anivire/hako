@@ -62,11 +62,11 @@ function Chip({ icon, children, mono }: { icon?: ReactNode; children: ReactNode;
   )
 }
 
-function Meter({ label, value, share }: { label: string; value: string; share: number | null }) {
+function Meter({ label, value, share, loading }: { label: string; value: string; share: number | null; loading: boolean }) {
   return (
     <div className="grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-3 text-xs">
       <span className="text-muted-foreground">{label}</span>
-      <span className="h-1.5 overflow-hidden rounded-full bg-foreground/[0.06]">
+      <span className={cn('h-1.5 overflow-hidden rounded-full bg-foreground/[0.06]', loading && 'animate-pulse bg-foreground/[0.1]')}>
         {share === null ? null : (
           <span
             className={cn('block h-full rounded-full transition-[width] duration-700', share > 0.9 ? 'bg-danger' : share > 0.7 ? 'bg-warning' : 'bg-accent')}
@@ -74,7 +74,7 @@ function Meter({ label, value, share }: { label: string; value: string; share: n
           />
         )}
       </span>
-      <span className="text-right font-mono font-medium tabular-nums">{value}</span>
+      {loading ? <Skeleton className="h-3 w-24" /> : <span className="text-right font-mono font-medium tabular-nums">{value}</span>}
     </div>
   )
 }
@@ -83,6 +83,7 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
   const { t } = useTranslation()
   const disk = useDisk(server.id)
   const memoryLimit = stats?.memoryLimit || server.memory * 1024 * 1024
+  const loading = server.status === 'running' && !stats
   const cores = server.cpu ? t('servers.cores', { count: server.cpu }) : t('servers.coresUnlimited')
   return (
     <TLink to={`/servers/${server.id}`} className="group">
@@ -106,9 +107,10 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
           <Meter
             label={t('servers.specMemory')}
             share={stats ? stats.memory / memoryLimit : null}
+            loading={loading}
             value={stats ? `${formatBytes(stats.memory, 2)} / ${formatBytes(memoryLimit, 2)}` : memoryLabel(server.memory)}
           />
-          <Meter label={t('servers.specCpu')} share={stats ? stats.cpu / 100 / stats.cpuLimit : null} value={stats ? (server.cpu ? `${stats.cpu.toFixed(2)}% / ${server.cpu * 100}%` : `${(stats.cpu / stats.cpuLimit).toFixed(2)}%`) : cores} />
+          <Meter label={t('servers.specCpu')} share={stats ? stats.cpu / 100 / stats.cpuLimit : null} loading={loading} value={stats ? `${(stats.cpu / stats.cpuLimit).toFixed(2)}%` : cores} />
           <div className="flex items-center justify-between gap-3 pt-0.5 font-mono text-xs text-subtle-foreground">
             <span className="flex min-w-0 items-center gap-1.5 [&_svg]:size-3.5 [&_svg]:shrink-0">
               <RiHardDrive3Fill />
