@@ -196,7 +196,7 @@ export const ru = {
   servers: {
     coresUnlimited: 'без лимита',
     usage: 'Нагрузка',
-    usageHint: 'Сумма по запущенным серверам: {{count}} из {{total}}',
+    usageHint: '{{count}} из {{total}} запущено',
     mine: 'Мои серверы',
     unknownOwner: 'Без владельца',
     onDisk: '{{size}} на диске',

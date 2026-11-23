@@ -198,7 +198,7 @@ export const en: Messages = {
   servers: {
     coresUnlimited: 'no limit',
     usage: 'Load',
-    usageHint: 'Total of running servers: {{count}} of {{total}}',
+    usageHint: '{{count}} of {{total}} running',
     mine: 'My servers',
     unknownOwner: 'No owner',
     onDisk: '{{size}} on disk',

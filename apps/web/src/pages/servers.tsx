@@ -1,4 +1,4 @@
-import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiSearchFill } from '@remixicon/react'
+import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiPulseFill, RiSearchFill } from '@remixicon/react'
 import { useQuery } from '@tanstack/react-query'
 import type { GameTemplate, QuickStats, Server, ServerStatus } from '@hako/shared'
 import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, Tooltip, cn } from '@hako/ui'
@@ -79,26 +79,82 @@ function Meter({ label, value, share, loading }: { label: string; value: string;
   )
 }
 
+function segmentColor(index: number) {
+  return `oklch(from var(--color-accent) l max(c, 0.1) calc(h + ${index * 67}))`
+}
+
+function StackedBar({ label, value, total, parts }: { label: string; value: string; total: number; parts: { id: string; amount: number; color: string }[] }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-mono font-medium tabular-nums">{value}</span>
+      </div>
+      <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-foreground/[0.06]">
+        {total
+          ? parts.map((part) => <span key={part.id} className="h-full transition-[width] duration-700" style={{ width: `${Math.min(100, (part.amount / total) * 100)}%`, background: part.color }} />)
+          : null}
+      </div>
+    </div>
+  )
+}
+
 function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string, QuickStats> | undefined }) {
   const { t } = useTranslation()
   const system = useQuery({ queryKey: ['system'], queryFn: api.system, staleTime: 30_000 })
   const running = servers.filter((s) => s.status === 'running')
-  const live = running.flatMap((s) => (stats?.[s.id] ? [stats[s.id]!] : []))
-  const memory = live.reduce((sum, s) => sum + s.memory, 0)
-  const cpu = live.reduce((sum, s) => sum + s.cpu, 0)
+  const live = running
+    .flatMap((s) => (stats?.[s.id] ? [{ server: s, stats: stats[s.id]! }] : []))
+    .sort((a, b) => b.stats.memory - a.stats.memory)
+    .map((entry, i) => ({ ...entry, color: segmentColor(i) }))
+  const memory = live.reduce((sum, e) => sum + e.stats.memory, 0)
+  const cpu = live.reduce((sum, e) => sum + e.stats.cpu, 0)
   const hostMemory = (system.data?.memory ?? 0) * 1024 * 1024
   const hostCpu = (system.data?.cpus ?? 0) * 100
   const loading = system.isPending || (running.length > 0 && !stats)
   return (
-    <Card className="flex flex-col gap-3 p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <span className="text-[0.9375rem] font-semibold tracking-tight">{t('servers.usage')}</span>
+    <Card className="flex flex-col gap-4 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <span className="flex items-center gap-2 text-[0.9375rem] font-semibold tracking-tight [&_svg]:size-4 [&_svg]:text-accent">
+          <RiPulseFill />
+          {t('servers.usage')}
+        </span>
         <span className="text-xs text-muted-foreground">{t('servers.usageHint', { count: running.length, total: servers.length })}</span>
       </div>
-      <div className="grid gap-x-8 gap-y-2.5 md:grid-cols-2">
-        <Meter label={t('servers.specMemory')} loading={loading} share={hostMemory ? memory / hostMemory : null} value={hostMemory ? `${formatBytes(memory, 2)} / ${formatBytes(hostMemory, 2)}` : formatBytes(memory, 2)} />
-        <Meter label={t('servers.specCpu')} loading={loading} share={hostCpu ? cpu / hostCpu : null} value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`} />
-      </div>
+      {loading ? (
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-8" />
+          <Skeleton className="h-8" />
+        </div>
+      ) : (
+        <>
+          <StackedBar
+            label={t('servers.specMemory')}
+            total={hostMemory}
+            value={hostMemory ? `${formatBytes(memory, 2)} / ${formatBytes(hostMemory, 2)}` : formatBytes(memory, 2)}
+            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.memory, color: e.color }))}
+          />
+          <StackedBar
+            label={t('servers.specCpu')}
+            total={hostCpu}
+            value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`}
+            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.cpu, color: e.color }))}
+          />
+          {live.length ? (
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
+              {live.map((e) => (
+                <TLink key={e.server.id} to={`/servers/${e.server.id}`} className="flex min-w-0 items-center gap-1.5 hover:text-accent">
+                  <span className="size-2 shrink-0 rounded-full" style={{ background: e.color }} />
+                  <span className="truncate">{e.server.name}</span>
+                  <span className="shrink-0 font-mono text-subtle-foreground">
+                    {formatBytes(e.stats.memory, 1)} · {e.stats.cpu.toFixed(0)}%
+                  </span>
+                </TLink>
+              ))}
+            </div>
+          ) : null}
+        </>
+      )}
     </Card>
   )
 }
