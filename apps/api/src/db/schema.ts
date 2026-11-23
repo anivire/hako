@@ -16,6 +16,8 @@ export const sessions = sqliteTable('sessions', {
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   expiresAt: text('expires_at').notNull(),
   createdAt: text('created_at').notNull(),
+  userAgent: text('user_agent'),
+  ip: text('ip'),
 }, (t) => [index('sessions_user_idx').on(t.userId)])
 
 export const invites = sqliteTable('invites', {

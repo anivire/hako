@@ -1,12 +1,12 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, ne } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
-import { type InviteInfo, type Permission, localeSchema, loginSchema, registerSchema } from '@hako/shared'
+import { type InviteInfo, type Permission, type SessionInfo, changePasswordSchema, localeSchema, loginSchema, registerSchema } from '@hako/shared'
 import { db, now } from '../db/client'
-import { serverMembers, servers, users } from '../db/schema'
+import { serverMembers, servers, sessions, users } from '../db/schema'
 import { findUsableInvite } from '../services/invites'
 import { markInviteUsed, upsertMember } from '../services/members'
-import { type AppEnv, checkLoginRate, createSession, destroySession, requireAuth, resetLoginRate, sessionUser, toUser } from '../lib/auth'
+import { type AppEnv, checkLoginRate, createSession, currentSessionId, destroySession, requireAuth, resetLoginRate, sessionUser, toUser } from '../lib/auth'
 import { hashPassword, verifyPassword } from '../lib/crypto'
 import { parseBody } from '../lib/validate'
 
@@ -63,6 +63,33 @@ export const authRoutes = new Hono<AppEnv>()
     })
     createSession(c, user.id)
     return c.json(toUser(user))
+  })
+  .get('/sessions', requireAuth, (c) => {
+    const current = currentSessionId(c)
+    const rows = db.select().from(sessions).where(eq(sessions.userId, c.get('user').id)).orderBy(sessions.createdAt).all()
+    return c.json(rows.map((s) => ({ id: s.id, userAgent: s.userAgent, ip: s.ip, createdAt: s.createdAt, current: s.id === current }) satisfies SessionInfo).sort((a, b) => Number(b.current) - Number(a.current)))
+  })
+  .delete('/sessions/:id', requireAuth, (c) => {
+    const id = c.req.param('id')
+    if (id === currentSessionId(c)) {
+      destroySession(c)
+      return c.json({ signedOut: true })
+    }
+    db.delete(sessions).where(and(eq(sessions.id, id), eq(sessions.userId, c.get('user').id))).run()
+    return c.json({ signedOut: false })
+  })
+  .delete('/sessions', requireAuth, (c) => {
+    db.delete(sessions).where(and(eq(sessions.userId, c.get('user').id), ne(sessions.id, currentSessionId(c) ?? ''))).run()
+    return c.json({ ok: true })
+  })
+  .post('/password', requireAuth, async (c) => {
+    const input = await parseBody(c, changePasswordSchema)
+    const user = c.get('user')
+    if (!(await verifyPassword(input.currentPassword, user.passwordHash))) throw new HTTPException(400, { message: 'INVALID_PASSWORD' })
+    db.update(users).set({ passwordHash: await hashPassword(input.newPassword) }).where(eq(users.id, user.id)).run()
+    db.delete(sessions).where(eq(sessions.userId, user.id)).run()
+    createSession(c, user.id)
+    return c.json({ ok: true })
   })
   .patch('/locale', requireAuth, async (c) => {
     const { locale } = await parseBody(c, localeSchema)

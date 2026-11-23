@@ -11,7 +11,7 @@ import { GameIcon, ServerAvatar, variantOption } from '../components/game-icon'
 import { StatusBadge, serverAddress } from '../components/server-bits'
 import { api } from '../lib/api'
 import { useText } from '../lib/i18n'
-import { keys, useGames } from '../lib/queries'
+import { keys, useGames, useUser } from '../lib/queries'
 import { readStorage, writeStorage } from '../lib/storage'
 import { formatBytes } from '../lib/format'
 import { ServerSummary } from './server'
@@ -76,6 +76,30 @@ function Meter({ label, value, share, loading }: { label: string; value: string;
       </span>
       {loading ? <Skeleton className="h-3 w-24" /> : <span className="text-right font-mono font-medium tabular-nums">{value}</span>}
     </div>
+  )
+}
+
+function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string, QuickStats> | undefined }) {
+  const { t } = useTranslation()
+  const system = useQuery({ queryKey: ['system'], queryFn: api.system, staleTime: 30_000 })
+  const running = servers.filter((s) => s.status === 'running')
+  const live = running.flatMap((s) => (stats?.[s.id] ? [stats[s.id]!] : []))
+  const memory = live.reduce((sum, s) => sum + s.memory, 0)
+  const cpu = live.reduce((sum, s) => sum + s.cpu, 0)
+  const hostMemory = (system.data?.memory ?? 0) * 1024 * 1024
+  const hostCpu = (system.data?.cpus ?? 0) * 100
+  const loading = system.isPending || (running.length > 0 && !stats)
+  return (
+    <Card className="flex flex-col gap-3 p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <span className="text-[0.9375rem] font-semibold tracking-tight">{t('servers.usage')}</span>
+        <span className="text-xs text-muted-foreground">{t('servers.usageHint', { count: running.length, total: servers.length })}</span>
+      </div>
+      <div className="grid gap-x-8 gap-y-2.5 md:grid-cols-2">
+        <Meter label={t('servers.specMemory')} loading={loading} share={hostMemory ? memory / hostMemory : null} value={hostMemory ? `${formatBytes(memory, 2)} / ${formatBytes(hostMemory, 2)}` : formatBytes(memory, 2)} />
+        <Meter label={t('servers.specCpu')} loading={loading} share={hostCpu ? cpu / hostCpu : null} value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`} />
+      </div>
+    </Card>
   )
 }
 
@@ -171,6 +195,7 @@ function matchesStatus(status: ServerStatus, filter: StatusFilter) {
 export function ServersPage() {
   const { t } = useTranslation()
   const text = useText()
+  const user = useUser()
   const [params, setParams] = useSearchParams()
   const [view, setView] = useState<View>(() => (readStorage(VIEW_KEY) === 'list' ? 'list' : 'grid'))
   const changeView = (next: View) => {
@@ -180,6 +205,7 @@ export function ServersPage() {
   const servers = useQuery({ queryKey: keys.servers, queryFn: api.servers, refetchInterval: 10_000 })
   const stats = useQuery({ queryKey: ['server-stats'], queryFn: api.serverStats, refetchInterval: 5000, enabled: Boolean(servers.data?.some((s) => s.status === 'running')) })
   const games = useGames()
+  const users = useQuery({ queryKey: keys.users, queryFn: api.users, enabled: user.role === 'admin' })
   const query = params.get('q') ?? ''
   const gameFilter = params.get('game') ?? ''
   const status = (STATUS_FILTERS as readonly string[]).includes(params.get('status') ?? '') ? (params.get('status') as StatusFilter) : 'all'
@@ -205,6 +231,11 @@ export function ServersPage() {
     const variant = game ? variantOption(game, s.variables) : undefined
     return [s.name, serverAddress(s), text(game?.name), variant ? text(variant.label) || variant.value : ''].join(' ').toLowerCase().includes(needle)
   })
+  const owners = [...new Set(shown.map((s) => s.ownerId))].sort((a, b) => Number(b === user.id) - Number(a === user.id))
+  const grouped = user.role === 'admin' && new Set(list.map((s) => s.ownerId)).size > 1
+  const groups = grouped
+    ? owners.map((id) => ({ id, title: id === user.id ? t('servers.mine') : (users.data?.find((u) => u.id === id)?.username ?? t('servers.unknownOwner')), servers: shown.filter((s) => s.ownerId === id) }))
+    : [{ id: 0, title: null, servers: shown }]
   return (
     <Page>
       <PageHeader title={t('servers.title')} actions={list.length ? <NewServerButton /> : null} />
@@ -218,6 +249,7 @@ export function ServersPage() {
         <EmptyState title={t('servers.empty')} description={t('servers.emptyHint')} action={<NewServerButton />} />
       ) : (
         <div className="flex flex-1 flex-col gap-4">
+          <UsageCard servers={list} stats={stats.data} />
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative min-w-56 flex-1">
               <RiSearchFill className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle-foreground" />
@@ -241,19 +273,31 @@ export function ServersPage() {
               ]}
             />
           </div>
-          {!shown.length ? null : view === 'list' ? (
-            <Card className="flex flex-col p-1.5">
-              {shown.map((s) => (
-                <ServerRow key={s.id} server={s} game={gameOf(s.game)} />
-              ))}
-            </Card>
-          ) : (
-            <div className={GRID}>
-              {shown.map((s) => (
-                <ServerCard key={s.id} server={s} game={gameOf(s.game)} stats={stats.data?.[s.id]} />
-              ))}
-            </div>
-          )}
+          {shown.length
+            ? groups.map((group) => (
+                <section key={group.id} className="flex flex-col gap-2">
+                  {group.title ? (
+                    <h2 className="flex items-center gap-2 pt-2 text-sm font-semibold tracking-tight">
+                      {group.title}
+                      <span className="font-normal text-subtle-foreground">{group.servers.length}</span>
+                    </h2>
+                  ) : null}
+                  {view === 'list' ? (
+                    <Card className="flex flex-col p-1.5">
+                      {group.servers.map((s) => (
+                        <ServerRow key={s.id} server={s} game={gameOf(s.game)} />
+                      ))}
+                    </Card>
+                  ) : (
+                    <div className={GRID}>
+                      {group.servers.map((s) => (
+                        <ServerCard key={s.id} server={s} game={gameOf(s.game)} stats={stats.data?.[s.id]} />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              ))
+            : null}
           {shown.length ? null : (
             <EmptyState title={t('servers.nothingFound')} />
           )}

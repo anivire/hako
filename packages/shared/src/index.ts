@@ -454,6 +454,14 @@ export interface InviteInfo {
   server: { id: string; name: string } | null
 }
 
+export interface SessionInfo {
+  id: string
+  userAgent: string | null
+  ip: string | null
+  createdAt: string
+  current: boolean
+}
+
 export interface AdminUser extends User {
   servers: number
   memberships: number
@@ -470,6 +478,7 @@ export interface ProviderInfo {
 
 export const usernameSchema = z.string().regex(/^[a-zA-Z0-9_.-]{3,32}$/)
 export const passwordSchema = z.string().min(8).max(200)
+export const changePasswordSchema = z.object({ currentPassword: z.string().min(1).max(200), newPassword: passwordSchema })
 export const loginSchema = z.object({ username: z.string().min(1).max(64), password: z.string().min(1).max(200) })
 export const registerSchema = z.object({ code: z.string().min(1).max(64), username: usernameSchema, password: passwordSchema })
 export const inviteCreateSchema = z.object({

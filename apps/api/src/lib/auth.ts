@@ -39,8 +39,13 @@ export function clientIp(c: Context): string | null {
 export function createSession(c: Context, userId: number) {
   const token = randomToken()
   const expires = new Date(Date.now() + env.sessionDays * 86_400_000)
-  db.insert(sessions).values({ id: sha256(token), userId, expiresAt: expires.toISOString(), createdAt: now() }).run()
+  db.insert(sessions).values({ id: sha256(token), userId, expiresAt: expires.toISOString(), createdAt: now(), userAgent: c.req.header('user-agent')?.slice(0, 300) ?? null, ip: clientIp(c) }).run()
   setCookie(c, SESSION_COOKIE, token, { httpOnly: true, sameSite: 'Lax', secure: secureCookies, path: '/', expires })
+}
+
+export function currentSessionId(c: Context): string | null {
+  const token = getCookie(c, SESSION_COOKIE)
+  return token ? sha256(token) : null
 }
 
 export function destroySession(c: Context) {

@@ -1,5 +1,6 @@
 import type {
   AdminUser,
+  SessionInfo,
   InviteInfo,
   Member,
   Permission,
@@ -69,6 +70,10 @@ export const api = {
   invite: (code: string) => get<InviteInfo>(`/auth/invite/${encodeURIComponent(code)}`),
   register: (code: string, username: string, password: string) => request<User>('POST', '/auth/register', { code, username, password }),
   setLocale: (locale: Locale) => request<User>('PATCH', '/auth/locale', { locale }),
+  sessions: () => get<SessionInfo[]>('/auth/sessions'),
+  revokeSession: (id: string) => request<{ signedOut: boolean }>('DELETE', `/auth/sessions/${encodeURIComponent(id)}`),
+  revokeOtherSessions: () => request<{ ok: true }>('DELETE', '/auth/sessions'),
+  changePassword: (currentPassword: string, newPassword: string) => request<{ ok: true }>('POST', '/auth/password', { currentPassword, newPassword }),
 
   users: () => get<AdminUser[]>('/admin/users'),
   setUserRole: (id: number, role: 'admin' | 'user') => request<AdminUser[]>('PATCH', `/admin/users/${id}`, { role }),

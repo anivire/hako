@@ -59,6 +59,7 @@ export function errorMessage(error: unknown, t: TFunction): string {
   const [code, detail] = error.message.split(':')
   const map: Record<string, string> = {
     INVALID_CREDENTIALS: 'auth.invalid',
+    INVALID_PASSWORD: 'account.wrongPassword',
     INVITE_INVALID: 'auth.inviteInvalid',
     USERNAME_TAKEN: 'auth.usernameTaken',
     TOO_MANY_ATTEMPTS: 'auth.tooMany',
