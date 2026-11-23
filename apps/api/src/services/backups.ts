@@ -8,7 +8,7 @@ import { serverGame } from '../games/registry'
 import { badRequest, notFound } from '../lib/http'
 import { type ServerRow, instance, serverDir, statusOf } from '../runtime/instances'
 
-const NAME = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(-\d+)?\.tar\.gz$/
+const NAME = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(-auto)?(-\d+)?\.tar\.gz$/
 const busy = new Set<string>()
 
 export function backupBusy(id: string) {
@@ -33,7 +33,7 @@ export async function listBackups(id: string): Promise<Backup[]> {
   const out = await Promise.all(
     names.filter((n) => NAME.test(n)).map(async (name) => {
       const stat = await fs.stat(path.join(backupFolder(id), name)).catch(() => null)
-      return stat ? { name, size: stat.size, createdAt: stat.mtime.toISOString() } : null
+      return stat ? { name, size: stat.size, createdAt: stat.mtime.toISOString(), auto: name.includes('-auto') } : null
     }),
   )
   return out.filter((b): b is Backup => b !== null).sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.name.length - a.name.length || b.name.localeCompare(a.name))
@@ -56,7 +56,7 @@ function claim(id: string) {
   busy.add(id)
 }
 
-export async function createBackup(server: ServerRow): Promise<Backup> {
+export async function createBackup(server: ServerRow, auto = false): Promise<Backup> {
   const game = serverGame(server)
   if (!game) badRequest('GAME_UNKNOWN')
   claim(server.id)
@@ -66,8 +66,9 @@ export async function createBackup(server: ServerRow): Promise<Backup> {
     const folder = backupFolder(server.id)
     await fs.mkdir(folder, { recursive: true })
     const stamp = new Date().toISOString().replace(/\.\d+Z$/, '').replace(/:/g, '-')
-    let name = `${stamp}.tar.gz`
-    for (let i = 1; await fs.stat(path.join(folder, name)).then(() => true, () => false); i++) name = `${stamp}-${i}.tar.gz`
+    const tag = auto ? '-auto' : ''
+    let name = `${stamp}${tag}.tar.gz`
+    for (let i = 1; await fs.stat(path.join(folder, name)).then(() => true, () => false); i++) name = `${stamp}${tag}-${i}.tar.gz`
     const skip = excluded(game)
     if (online && game.backup.before.length) {
       for (const command of game.backup.before) target.command(command)
@@ -87,7 +88,7 @@ export async function createBackup(server: ServerRow): Promise<Backup> {
     await prune(server.id, server.backupLimit)
     const stat = await fs.stat(path.join(folder, name))
     target.notice(`backup ${name} created (${Math.round(stat.size / 1024 / 1024)} MB)`)
-    return { name, size: stat.size, createdAt: stat.mtime.toISOString() }
+    return { name, size: stat.size, createdAt: stat.mtime.toISOString(), auto }
   } catch (e) {
     target.notice(`backup failed: ${e instanceof Error ? e.message : e}`)
     throw e

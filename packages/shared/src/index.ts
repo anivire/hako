@@ -277,6 +277,7 @@ export interface Backup {
   name: string
   size: number
   createdAt: string
+  auto: boolean
 }
 
 export interface BackupsOverview {

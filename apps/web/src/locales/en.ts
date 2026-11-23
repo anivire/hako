@@ -316,6 +316,7 @@ export const en: Messages = {
     commandPlaceholder: 'Console command',
     sayPlaceholder: 'Message to players',
     noChat: 'This game has no command for messages',
+    daily: 'Every day at {{time}}',
     presets: { 0: 'Every day at 5:00', 1: 'Every 6 hours', 2: 'Every hour', 3: 'Mondays at 5:00' },
     actions: { command: 'Command', say: 'Message', wait: 'Pause', backup: 'Backup', restart: 'Restart', stop: 'Stop', start: 'Start' },
     hints: {
@@ -329,6 +330,9 @@ export const en: Messages = {
     },
   },
   backups: {
+    auto: 'scheduled',
+    manual: 'manual',
+    keepHint: 'How many recent backups to keep, older ones are deleted',
     title: 'Backups',
     hint: 'An archive of the server folder without the installed game files. While the server runs, the world is saved before the backup',
     keep: 'Keep',

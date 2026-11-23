@@ -65,7 +65,7 @@ async function runAction(serverId: string, action: ScheduleAction) {
       await sleep(action.seconds * 1000)
       return
     case 'backup':
-      await createBackup(loadServer(serverId))
+      await createBackup(loadServer(serverId), true)
       return
     case 'restart':
       if (online) await target.power('restart', loadServer(serverId))

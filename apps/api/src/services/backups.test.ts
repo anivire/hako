@@ -22,10 +22,11 @@ test('backup skips volume folders, restore brings files back and keeps them', as
   fs.writeFileSync(path.join(dir, 'worlds_local', 'world.db'), 'two')
   fs.writeFileSync(path.join(dir, 'extra.txt'), 'x')
   await createBackup(server)
-  await createBackup(server)
+  assert.equal((await createBackup(server, true)).auto, true)
   assert.equal((await listBackups(server.id)).length, 2)
   assert.ok(!(await listBackups(server.id)).some((b) => b.name === first.name))
   const latest = (await listBackups(server.id))[0]!
+  assert.equal(latest.auto, true)
   fs.writeFileSync(path.join(dir, 'worlds_local', 'world.db'), 'three')
   await restoreBackup(server, latest.name)
   assert.equal(fs.readFileSync(path.join(dir, 'worlds_local', 'world.db'), 'utf8'), 'two')

@@ -1,11 +1,11 @@
 import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { RiAddFill, RiCloseFill, RiDraggable, RiDeleteBin6Fill, RiEditFill, RiErrorWarningFill, RiPlayFill } from '@remixicon/react'
+import { RiAddFill, RiArchiveStackFill, RiArrowRightSLine, RiChat3Fill, RiCloseFill, RiDraggable, RiDeleteBin6Fill, RiEditFill, RiErrorWarningFill, RiPlayFill, RiRestartFill, RiStopFill, RiTerminalBoxFill, RiTimerFill, type RemixiconComponentType } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type GameTemplate, type Schedule, type ScheduleAction, type ScheduleInput, type SchedulesOverview, type Server, nextCronRun } from '@hako/shared'
-import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, Code, Dialog, DialogContent, EmptyState, Field, Input, Select, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
-import { useState } from 'react'
+import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, Dialog, DialogContent, EmptyState, Field, Input, Select, Skeleton, Switch, Tooltip, cn, toast } from '@hako/ui'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 import { can } from '../../lib/access'
@@ -170,10 +170,49 @@ function ScheduleDialog({ server, game, initial, onClose }: { server: Server; ga
   )
 }
 
+const ICONS: Record<ActionType, RemixiconComponentType> = { say: RiChat3Fill, wait: RiTimerFill, command: RiTerminalBoxFill, backup: RiArchiveStackFill, restart: RiRestartFill, stop: RiStopFill, start: RiPlayFill }
+
+function useCronText() {
+  const { t } = useTranslation()
+  return (cron: string) => {
+    if (PRESETS.includes(cron)) return t(`schedules.presets.${PRESETS.indexOf(cron)}`)
+    const daily = /^(\d{1,2}) (\d{1,2}) \* \* \*$/.exec(cron.trim())
+    return daily ? t('schedules.daily', { time: `${daily[2]}:${daily[1]!.padStart(2, '0')}` }) : null
+  }
+}
+
+function relative(iso: string, lang: string) {
+  const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' })
+  const minutes = Math.max(1, Math.round((new Date(iso).getTime() - Date.now()) / 60_000))
+  if (minutes < 60) return rtf.format(minutes, 'minute')
+  if (minutes < 48 * 60) return rtf.format(Math.round(minutes / 60), 'hour')
+  return rtf.format(Math.round(minutes / 1440), 'day')
+}
+
+function StepChip({ action }: { action: ScheduleAction }) {
+  const { t, i18n } = useTranslation()
+  const label = useActionLabel()
+  const Icon = ICONS[action.type]
+  const text =
+    action.type === 'say'
+      ? action.message
+      : action.type === 'command'
+        ? action.command
+        : action.type === 'wait'
+          ? new Intl.NumberFormat(i18n.language, { style: 'unit', unit: action.seconds % 60 ? 'second' : 'minute', unitDisplay: 'short' }).format(action.seconds % 60 ? action.seconds : action.seconds / 60)
+          : t(`schedules.actions.${action.type}`)
+  return (
+    <span title={label(action)} className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-xs">
+      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+      <span className={cn('truncate', action.type === 'command' && 'font-mono')}>{text}</span>
+    </span>
+  )
+}
+
 function ScheduleRow({ server, schedule, onEdit }: { server: Server; schedule: Schedule; onEdit: () => void }) {
   const { t, i18n } = useTranslation()
   const client = useQueryClient()
-  const label = useActionLabel()
+  const cronText = useCronText()
   const manage = can(server, 'manage')
   const onData = (data: SchedulesOverview) => client.setQueryData(keys.schedules(server.id), data)
   const onError = (e: Error) => toast.error(errorMessage(e, t))
@@ -182,48 +221,56 @@ function ScheduleRow({ server, schedule, onEdit }: { server: Server; schedule: S
   const run = useMutation({ mutationFn: () => api.runSchedule(server.id, id), onSuccess: onData, onError })
   const remove = useMutation({ mutationFn: () => api.deleteSchedule(server.id, id), onSuccess: onData, onError })
   const date = (iso: string) => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso))
+  const when = cronText(schedule.cron)
   return (
-    <div className="flex items-start gap-3 px-5 py-3">
-      <Switch checked={schedule.enabled} disabled={!manage || toggle.isPending} onCheckedChange={(on) => toggle.mutate(on)} className="mt-0.5" aria-label={schedule.name} />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="truncate text-sm font-medium">{schedule.name}</span>
-          <Code>{schedule.cron}</Code>
-          {running ? <Badge variant="accent">{t('schedules.running')}</Badge> : null}
-          {lastError ? (
-            <Tooltip content={lastError}>
-              <Badge variant="danger">
-                <RiErrorWarningFill />
-                {t('schedules.failed')}
-              </Badge>
+    <div className="flex flex-col gap-2 rounded-xl bg-foreground/[0.04] p-3 sm:px-4">
+      <div className="flex items-center gap-3">
+        <Switch checked={schedule.enabled} disabled={!manage || toggle.isPending} onCheckedChange={(on) => toggle.mutate(on)} aria-label={schedule.name} />
+        <span className={cn('min-w-0 flex-1 truncate text-sm font-semibold', !schedule.enabled && 'text-muted-foreground')}>{schedule.name}</span>
+        {running ? <Badge variant="accent">{t('schedules.running')}</Badge> : null}
+        {lastError ? (
+          <Tooltip content={lastError}>
+            <Badge variant="danger">
+              <RiErrorWarningFill />
+              {t('schedules.failed')}
+            </Badge>
+          </Tooltip>
+        ) : null}
+        <Tooltip content={[nextRunAt ? t('schedules.nextRun', { date: date(nextRunAt) }) : t('schedules.off'), lastRunAt ? t('schedules.lastRun', { date: date(lastRunAt) }) : null].filter(Boolean).join(' · ')}>
+          <Badge variant={nextRunAt ? 'accent' : 'neutral'}>{nextRunAt ? relative(nextRunAt, i18n.language) : t('schedules.off')}</Badge>
+        </Tooltip>
+        {manage ? (
+          <div className="flex shrink-0">
+            <Tooltip content={t('schedules.runNow')}>
+              <Button variant="ghost" size="icon-sm" aria-label={t('schedules.runNow')} disabled={running} loading={run.isPending} onClick={() => run.mutate()}>
+                <RiPlayFill />
+              </Button>
             </Tooltip>
-          ) : null}
-        </div>
-        <div className="mt-0.5 truncate text-xs text-muted-foreground">{schedule.actions.map(label).join(' → ')}</div>
-        <div className="mt-0.5 text-xs text-subtle-foreground">
-          {nextRunAt ? t('schedules.nextRun', { date: date(nextRunAt) }) : t('schedules.off')}
-          {lastRunAt ? ` · ${t('schedules.lastRun', { date: date(lastRunAt) })}` : ''}
-        </div>
+            <Tooltip content={t('schedules.edit')}>
+              <Button variant="ghost" size="icon-sm" aria-label={t('schedules.edit')} onClick={onEdit}>
+                <RiEditFill />
+              </Button>
+            </Tooltip>
+            <Tooltip content={t('schedules.delete')}>
+              <Button variant="ghost" size="icon-sm" aria-label={t('schedules.delete')} loading={remove.isPending} onClick={() => void ask({ title: t('schedules.confirmDelete', { name: schedule.name }), confirm: t('schedules.delete'), danger: true }).then((ok) => ok && remove.mutate())}>
+                <RiDeleteBin6Fill />
+              </Button>
+            </Tooltip>
+          </div>
+        ) : null}
       </div>
-      {manage ? (
-        <div className="flex shrink-0">
-          <Tooltip content={t('schedules.runNow')}>
-            <Button variant="ghost" size="icon-sm" aria-label={t('schedules.runNow')} disabled={running} loading={run.isPending} onClick={() => run.mutate()}>
-              <RiPlayFill />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('schedules.edit')}>
-            <Button variant="ghost" size="icon-sm" aria-label={t('schedules.edit')} onClick={onEdit}>
-              <RiEditFill />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('schedules.delete')}>
-            <Button variant="ghost" size="icon-sm" aria-label={t('schedules.delete')} loading={remove.isPending} onClick={() => void ask({ title: t('schedules.confirmDelete', { name: schedule.name }), confirm: t('schedules.delete'), danger: true }).then((ok) => ok && remove.mutate())}>
-              <RiDeleteBin6Fill />
-            </Button>
-          </Tooltip>
-        </div>
-      ) : null}
+      <div className="flex flex-wrap items-baseline gap-x-2 text-xs sm:pl-12">
+        {when ? <span className="text-muted-foreground">{when}</span> : null}
+        <span className="font-mono text-subtle-foreground">{schedule.cron}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5 sm:pl-12">
+        {schedule.actions.map((a, i) => (
+          <Fragment key={i}>
+            {i ? <RiArrowRightSLine className="size-3.5 text-subtle-foreground" /> : null}
+            <StepChip action={a} />
+          </Fragment>
+        ))}
+      </div>
     </div>
   )
 }
@@ -246,15 +293,13 @@ export function ServerSchedules({ server, game }: { server: Server; game: GameTe
           </Button>
         ) : null}
       </CardHeader>
-      <div className="flex flex-col pb-2">
+      <div className="flex flex-col gap-2 px-4 pb-4 pt-2 sm:px-5 sm:pb-5">
         {overview.isPending ? (
-          <div className="px-5 py-3">
-            <Skeleton className="h-12" />
-          </div>
+          <Skeleton className="h-24 rounded-xl" />
         ) : overview.data?.schedules.length ? (
           overview.data.schedules.map((s) => <ScheduleRow key={s.id} server={server} schedule={s} onEdit={() => setEditing(s)} />)
         ) : (
-          <div className="px-5 pb-3">
+          <div>
             <EmptyState title={t('schedules.empty')} description={t('schedules.emptyHint')} />
           </div>
         )}
