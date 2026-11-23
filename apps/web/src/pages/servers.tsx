@@ -126,6 +126,13 @@ function StackedBar({ label, value, total, parts }: { label: string; value: stri
   )
 }
 
+function liveServers(servers: Server[], stats: Record<string, QuickStats> | undefined) {
+  return servers
+    .flatMap((s) => (s.status === 'running' && stats?.[s.id] ? [{ server: s, stats: stats[s.id]! }] : []))
+    .sort((a, b) => b.stats.memory - a.stats.memory)
+    .map((entry, i) => ({ ...entry, color: segmentColor(i) }))
+}
+
 function UsageChip({ icon, label, title, accent, children }: { icon: ReactNode; label: string; title?: string; accent?: boolean; children: ReactNode }) {
   return (
     <span title={title} className={cn('inline-flex h-8 items-center gap-2 rounded-lg bg-field px-2.5 text-xs [&>svg]:size-4 [&>svg]:shrink-0', accent ? '[&>svg]:text-accent' : '[&>svg]:text-muted-foreground')}>
@@ -140,10 +147,7 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
   const { t } = useTranslation()
   const system = useQuery({ queryKey: ['system'], queryFn: api.system, staleTime: 30_000 })
   const running = servers.filter((s) => s.status === 'running')
-  const live = running
-    .flatMap((s) => (stats?.[s.id] ? [{ server: s, stats: stats[s.id]! }] : []))
-    .sort((a, b) => b.stats.memory - a.stats.memory)
-    .map((entry, i) => ({ ...entry, color: segmentColor(i) }))
+  const live = liveServers(servers, stats)
   const memory = live.reduce((sum, e) => sum + e.stats.memory, 0)
   const cpu = live.reduce((sum, e) => sum + e.stats.cpu, 0)
   const hostMemory = (system.data?.memory ?? 0) * 1024 * 1024
@@ -210,18 +214,6 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
               { id: 'other', amount: otherDisk, color: OTHER_DISK, tip: diskTip(OTHER_DISK, t('servers.diskOther'), otherDisk) },
             ]}
           />
-          {live.length ? (
-            <div className="flex flex-wrap gap-2">
-              {live.map((e) => (
-                <TLink key={e.server.id} to={`/servers/${e.server.id}`} className="inline-flex h-8 min-w-0 items-center gap-2 rounded-lg bg-field px-2.5 text-xs transition-colors hover:bg-muted">
-                  <span className="h-4 w-1 shrink-0 rounded-full" style={{ background: e.color }} />
-                  <span className="truncate font-medium">{e.server.name}</span>
-                  <span className="shrink-0 font-mono text-muted-foreground tabular-nums">{formatBytes(e.stats.memory, 1)}</span>
-                  <span className="shrink-0 font-mono text-muted-foreground tabular-nums">{e.stats.cpu.toFixed(0)}%</span>
-                </TLink>
-              ))}
-            </div>
-          ) : null}
           <div className="flex flex-wrap gap-2">
             {tracked.length ? (
               <UsageChip icon={<RiGroupFill />} label={t('servers.players')}>
@@ -255,7 +247,7 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
   )
 }
 
-function ServerCard({ server, game, stats }: { server: Server; game: GameTemplate | undefined; stats?: QuickStats }) {
+function ServerCard({ server, game, stats, color }: { server: Server; game: GameTemplate | undefined; stats?: QuickStats; color?: string }) {
   const { t } = useTranslation()
   const disk = useDisk(server.id)
   const memoryLimit = stats?.memoryLimit || server.memory * 1024 * 1024
@@ -268,6 +260,7 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
           <ServerAvatar game={game} values={server.variables} icon={server.icon} size={64} ring="var(--color-surface)" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 break-words text-[0.9375rem] font-semibold tracking-tight">
+              {color ? <span className="size-2 shrink-0 rounded-full" style={{ background: color }} /> : null}
               {server.name}
               <UpdateMark server={server} />
             </div>
@@ -303,7 +296,7 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
   )
 }
 
-function ServerRow({ server, game }: { server: Server; game: GameTemplate | undefined }) {
+function ServerRow({ server, game, color }: { server: Server; game: GameTemplate | undefined; color?: string }) {
   const text = useText()
   const { t } = useTranslation()
   const disk = useDisk(server.id)
@@ -312,6 +305,7 @@ function ServerRow({ server, game }: { server: Server; game: GameTemplate | unde
       <ServerAvatar game={game} values={server.variables} icon={server.icon} size={36} ring="var(--color-surface)" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 truncate text-sm font-semibold tracking-tight">
+          {color ? <span className="size-2 shrink-0 rounded-full" style={{ background: color }} /> : null}
           {server.name}
           <UpdateMark server={server} />
         </div>
@@ -371,6 +365,7 @@ export function ServersPage() {
       },
       { replace: true },
     )
+  const colors = new Map(liveServers(servers.data ?? [], stats.data).map((e) => [e.server.id, e.color]))
   const gameOf = (id: string) => games.data?.find((g) => g.id === id)
   const list = servers.data ?? []
   const usedGames = [...new Set(list.map((s) => s.game))]
@@ -437,13 +432,13 @@ export function ServersPage() {
                   {view === 'list' ? (
                     <Card className="flex flex-col p-1.5">
                       {group.servers.map((s) => (
-                        <ServerRow key={s.id} server={s} game={gameOf(s.game)} />
+                        <ServerRow key={s.id} server={s} game={gameOf(s.game)} color={colors.get(s.id)} />
                       ))}
                     </Card>
                   ) : (
                     <div className={GRID}>
                       {group.servers.map((s) => (
-                        <ServerCard key={s.id} server={s} game={gameOf(s.game)} stats={stats.data?.[s.id]} />
+                        <ServerCard key={s.id} server={s} game={gameOf(s.game)} stats={stats.data?.[s.id]} color={colors.get(s.id)} />
                       ))}
                     </div>
                   )}
