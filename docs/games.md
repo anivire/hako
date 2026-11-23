@@ -40,7 +40,7 @@ Most games already have a community Docker image that installs and runs the serv
 | `env` | no | Environment variables for the container. Values may contain `{{KEY}}`. |
 | `dataPath` | no | Folder inside the container where the server keeps its files, `/data` by default. It is the folder the file manager shows. |
 | `ports` | yes | `name`, `container` port and `protocol` (`tcp` or `udp`). The host port is picked when the server is created. |
-| `memory` | no | `default` and `min` in MB. The container gets a hard limit with no swap. |
+| `memory` | no | `default`, `min` and `recommended` in MB, plus an optional `note`. Below `recommended` (or `default` when it is not set) the memory picker warns, with `note` as the text if given. Variant `template` overrides can change any of these fields. The container gets a hard limit with no swap. |
 | `variables` | no | Settings the user fills in. See below. |
 | `console.ready` | no | Regular expression. The status stays "starting" until a console line matches; without it the server counts as running right away. |
 | `console.exec` | no | Command run inside the container to send console input, such as `["inject"]`, for images that do not read stdin. |

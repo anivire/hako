@@ -2,7 +2,7 @@ import { RiArrowDownSLine, RiArrowLeftSLine, RiArrowRightSLine, RiCheckFill, RiC
 import { cpuSteps } from '../components/server/settings'
 import { MemoryPicker, sizeLabel } from '../components/memory-picker'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { GameTemplate, GameVariable, Server } from '@hako/shared'
+import { type GameTemplate, type GameVariable, type Server, resolveTemplate } from '@hako/shared'
 import { Button, Card, EmptyState, Field, Input, Skeleton, StepSlider, Tooltip, cn } from '@hako/ui'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -210,7 +210,8 @@ function Wizard({ games }: { games: GameTemplate[] }) {
   })
   const suggestion = pick && visibleVariables(game, variables).some((v) => v.key === pick.key) ? pick : null
   const finalName = name.trim() || suggestion?.label.slice(0, 64) || text(game.name).slice(0, 64)
-  const mem = memory ?? game.memory.default
+  const resolved = resolveTemplate(game, withDefaults(game, variables)).memory
+  const mem = memory ?? resolved.default
   const create = useMutation({
     mutationFn: async () => {
       const server = await api.createServer({
@@ -325,7 +326,7 @@ function Wizard({ games }: { games: GameTemplate[] }) {
               </div>
             </Field>
             <Field label={t('servers.memoryPick')} hint={t('servers.memoryMin', { size: sizeLabel(game.memory.min) })}>
-              <MemoryPicker value={mem} min={game.memory.min} max={system.data?.memory} onChange={setMemory} />
+              <MemoryPicker value={mem} min={resolved.min} max={system.data?.memory} recommended={resolved.recommended ?? resolved.default} note={text(resolved.note)} onChange={setMemory} />
             </Field>
             <Field label={t('settings.cpu')} hint={cpu ? t('settings.cpuHint', { count: cpu }) : t('settings.cpuNone')}>
               <StepSlider

@@ -86,7 +86,11 @@ export interface WorldsOverview {
   offline: boolean
 }
 
+const memoryFields = { default: z.number().int().min(128), min: z.number().int().min(64), recommended: z.number().int().min(64).optional(), note: textSchema.optional() }
+const memorySchema = z.object({ ...memoryFields, min: memoryFields.min.default(256) })
+
 export const templateOverrideSchema = z.object({
+  memory: z.object(memoryFields).partial().optional(),
   image: z.string().min(1).optional(),
   command: z.array(z.string()).optional(),
   console: consoleSchema.optional(),
@@ -145,7 +149,7 @@ export const gameTemplateSchema = z.object({
   env: z.record(z.string(), z.string()).default({}),
   dataPath: z.string().startsWith('/').default('/data'),
   ports: z.array(z.object({ name: z.string().regex(/^[a-z0-9-]+$/), container: z.number().int().min(1).max(65535), protocol: z.enum(['tcp', 'udp']).default('tcp') })).min(1),
-  memory: z.object({ default: z.number().int().min(128), min: z.number().int().min(64).default(256) }).default({ default: 2048, min: 256 }),
+  memory: memorySchema.default({ default: 2048, min: 256 }),
   variables: z.array(variableSchema).default([]),
   console: consoleSchema.default({}),
   volumes: volumesSchema.default([]),
@@ -170,7 +174,7 @@ export function resolveTemplate(game: GameTemplate, values: Record<string, strin
   for (const v of game.variables) {
     if (!variableVisible(v, all)) continue
     const override = v.options?.find((o) => o.value === all[v.key])?.template
-    if (override) out = { ...out, ...Object.fromEntries(Object.entries(override).filter(([, value]) => value !== undefined)) }
+    if (override) out = { ...out, ...Object.fromEntries(Object.entries(override).filter(([, value]) => value !== undefined)), memory: { ...out.memory, ...override.memory } }
   }
   return out
 }

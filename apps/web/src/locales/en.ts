@@ -221,6 +221,7 @@ export const en: Messages = {
     specPort: 'Port',
     memoryPick: 'Memory',
     memoryMin: 'At least {{size}}',
+    memoryLow: 'Below the recommended {{size}}: the server may lag or fail to start',
     viewGrid: 'Grid',
     viewList: 'List',
     search: 'Search by name, address or game',

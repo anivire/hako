@@ -945,6 +945,13 @@
           },
           "template": {
             "image": "jacobsmile/tmodloader1.4:{{TML_VERSION}}",
+          "memory": {
+            "recommended": 2048,
+            "note": {
+              "ru": "Большим модам вроде Calamity нужно не меньше 2 ГБ, иначе сервер падает с нехваткой памяти при загрузке",
+              "en": "Large mods such as Calamity need at least 2 GB, otherwise the server runs out of memory while loading"
+            }
+          },
             "command": [],
             "console": {
               "ready": "Server started",

@@ -1,3 +1,4 @@
+import { RiErrorWarningFill } from '@remixicon/react'
 import { StepSlider } from '@hako/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +9,7 @@ export function sizeLabel(mb: number) {
   return mb >= 1024 ? `${Number((mb / 1024).toFixed(1))} GB` : `${mb} MB`
 }
 
-export function MemoryPicker({ value, min, max, onChange, id }: { value: number; min: number; max?: number | null; onChange: (mb: number) => void; id?: string }) {
+export function MemoryPicker({ value, min, max, recommended, note, onChange, id }: { value: number; min: number; max?: number | null; recommended?: number; note?: string; onChange: (mb: number) => void; id?: string }) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState<string | null>(null)
   const top = max && max >= min ? max : Infinity
@@ -20,6 +21,7 @@ export function MemoryPicker({ value, min, max, onChange, id }: { value: number;
     if (Number.isFinite(mb) && mb > 0) onChange(Math.min(top, Math.max(min, mb)))
   }
   return (
+    <div className="flex flex-col gap-3">
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
       <StepSlider value={String(nearest)} onChange={(next) => onChange(Number(next))} label={t('servers.memoryPick')} options={steps.map((m) => ({ value: String(m), label: sizeLabel(m) }))} className="min-w-64 flex-1" />
       <label className="flex h-9 w-36 shrink-0 items-center gap-2 rounded-lg bg-field px-3 focus-within:bg-field-hover">
@@ -44,6 +46,13 @@ export function MemoryPicker({ value, min, max, onChange, id }: { value: number;
         />
         <span className="text-xs text-muted-foreground">{t('servers.mb')}</span>
       </label>
+    </div>
+    {recommended && value < recommended ? (
+      <div role="status" className="flex items-start gap-2 rounded-lg bg-warning-soft px-3 py-2 text-xs">
+        <RiErrorWarningFill className="mt-px size-3.5 shrink-0 text-warning" />
+        <span>{note || t('servers.memoryLow', { size: sizeLabel(recommended) })}</span>
+      </div>
+    ) : null}
     </div>
   )
 }

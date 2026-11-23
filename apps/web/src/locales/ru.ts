@@ -219,6 +219,7 @@ export const ru = {
     specPort: 'Порт',
     memoryPick: 'Память',
     memoryMin: 'Не меньше {{size}}',
+    memoryLow: 'Меньше рекомендуемых {{size}}: сервер может тормозить или не запуститься',
     viewGrid: 'Сетка',
     viewList: 'Список',
     search: 'Поиск по названию, адресу или игре',
