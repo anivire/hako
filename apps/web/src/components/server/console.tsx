@@ -408,17 +408,18 @@ export function ServerConsole({ server, socket, compact, chat }: { server: Serve
           </Button>
         </form>
         {fullscreen ? null : (
+          <Tooltip content={t('console.resizeHint')}>
           <div
             role="separator"
             aria-orientation="horizontal"
             aria-label={t('console.resize')}
-            title={t('console.resizeHint')}
             onPointerDown={startResize}
             onDoubleClick={() => saveHeight(0)}
             className="group flex h-3 shrink-0 cursor-row-resize touch-none items-center justify-center"
           >
             <span className="h-1 w-10 rounded-full bg-foreground/15 transition-colors group-hover:bg-foreground/30" />
           </div>
+          </Tooltip>
         )}
         </div>
       </Card>

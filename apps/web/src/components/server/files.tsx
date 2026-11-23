@@ -129,9 +129,9 @@ export function UploadManager({ server }: { server: Server }) {
           {list.map((u) => (
             <li key={u.id} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
               <div className="min-w-0 flex-1">
-                <div className="truncate font-mono text-xs" title={u.path}>
-                  {u.path}
-                </div>
+                <Tooltip content={u.path}>
+                  <div className="truncate font-mono text-xs">{u.path}</div>
+                </Tooltip>
                 {u.status === 'uploading' || u.status === 'queued' ? (
                   <Progress value={u.file.size ? u.loaded / u.file.size : 0} className="mt-1 h-1" />
                 ) : (

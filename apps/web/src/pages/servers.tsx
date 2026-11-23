@@ -63,10 +63,11 @@ function Chip({ icon, children, mono }: { icon?: ReactNode; children: ReactNode;
 }
 
 function Meter({ label, value, share, loading }: { label: string; value: string; share: number | null; loading: boolean }) {
+  if (loading) return <Skeleton className="h-4 rounded-md" />
   return (
     <div className="grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-3 text-xs">
       <span className="text-muted-foreground">{label}</span>
-      <span className={cn('h-1.5 overflow-hidden rounded-full bg-foreground/[0.06]', loading && 'animate-pulse bg-foreground/[0.1]')}>
+      <span className="h-1.5 overflow-hidden rounded-full bg-foreground/[0.06]">
         {share === null ? null : (
           <span
             className={cn('block h-full rounded-full transition-[width] duration-700', share > 0.9 ? 'bg-danger' : share > 0.7 ? 'bg-warning' : 'bg-accent')}
@@ -74,7 +75,7 @@ function Meter({ label, value, share, loading }: { label: string; value: string;
           />
         )}
       </span>
-      {loading ? <Skeleton className="h-3 w-24" /> : <span className="text-right font-mono font-medium tabular-nums">{value}</span>}
+      <span className="text-right font-mono font-medium tabular-nums">{value}</span>
     </div>
   )
 }
@@ -134,13 +135,14 @@ function liveServers(servers: Server[], stats: Record<string, QuickStats> | unde
 }
 
 function UsageChip({ icon, label, title, accent, children }: { icon: ReactNode; label: string; title?: string; accent?: boolean; children: ReactNode }) {
-  return (
-    <span title={title} className={cn('inline-flex h-8 items-center gap-2 rounded-lg bg-field px-2.5 text-xs [&>svg]:size-4 [&>svg]:shrink-0', accent ? '[&>svg]:text-accent' : '[&>svg]:text-muted-foreground')}>
+  const chip = (
+    <span className={cn('inline-flex h-8 items-center gap-2 rounded-lg bg-field px-2.5 text-xs [&>svg]:size-4 [&>svg]:shrink-0', accent ? '[&>svg]:text-accent' : '[&>svg]:text-muted-foreground')}>
       {icon}
       <span className="text-muted-foreground">{label}</span>
       <span className="flex items-center gap-2 font-mono font-medium tabular-nums">{children}</span>
     </span>
   )
+  return title ? <Tooltip content={title}>{chip}</Tooltip> : chip
 }
 
 function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string, QuickStats> | undefined }) {
@@ -285,10 +287,12 @@ function ServerCard({ server, game, stats, color }: { server: Server; game: Game
               <RiHardDrive3Fill />
               <span className="truncate">{t('servers.onDisk', { size: disk })}</span>
             </span>
-            <span className="flex shrink-0 items-center gap-1.5 [&_svg]:size-3.5" title={serverAddress(server)}>
-              <RiLinkM />
-              <span className="max-w-40 truncate">{server.address ?? (server.ports[0] ? `:${server.ports[0].host}` : '—')}</span>
-            </span>
+            <Tooltip content={serverAddress(server)}>
+              <span className="flex shrink-0 items-center gap-1.5 [&_svg]:size-3.5">
+                <RiLinkM />
+                <span className="max-w-40 truncate">{server.address ?? (server.ports[0] ? `:${server.ports[0].host}` : '—')}</span>
+              </span>
+            </Tooltip>
           </div>
         </div>
       </Card>
@@ -320,12 +324,12 @@ function ServerRow({ server, game, color }: { server: Server; game: GameTemplate
       </span>
       <span className="hidden w-44 shrink-0 truncate font-mono text-xs text-muted-foreground md:block">{serverAddress(server)}</span>
       <span className="hidden w-16 shrink-0 text-right font-mono text-xs text-muted-foreground sm:block">{memoryLabel(server.memory)}</span>
-      <span className="hidden w-12 shrink-0 text-right font-mono text-xs text-muted-foreground sm:block" title={t('servers.specCpu')}>
-        {server.cpu ? String(server.cpu) : '∞'}
-      </span>
-      <span className="hidden w-20 shrink-0 text-right font-mono text-xs text-muted-foreground sm:block" title={t('console.storage')}>
-        {disk}
-      </span>
+      <Tooltip content={t('servers.specCpu')}>
+        <span className="hidden w-12 shrink-0 text-right font-mono text-xs text-muted-foreground sm:block">{server.cpu ? String(server.cpu) : '∞'}</span>
+      </Tooltip>
+      <Tooltip content={t('console.storage')}>
+        <span className="hidden w-20 shrink-0 text-right font-mono text-xs text-muted-foreground sm:block">{disk}</span>
+      </Tooltip>
       <span className="flex w-32 shrink-0 justify-end">
         <StatusBadge status={server.status} />
       </span>

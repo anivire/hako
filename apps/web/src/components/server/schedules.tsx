@@ -202,10 +202,12 @@ function StepChip({ action }: { action: ScheduleAction }) {
           ? new Intl.NumberFormat(i18n.language, { style: 'unit', unit: action.seconds % 60 ? 'second' : 'minute', unitDisplay: 'short' }).format(action.seconds % 60 ? action.seconds : action.seconds / 60)
           : t(`schedules.actions.${action.type}`)
   return (
-    <span title={label(action)} className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-field px-2.5 py-1 text-xs">
-      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
-      <span className={cn('truncate', action.type === 'command' && 'font-mono')}>{text}</span>
-    </span>
+    <Tooltip content={label(action)}>
+      <span className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-field px-2.5 py-1 text-xs">
+        <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+        <span className={cn('truncate', action.type === 'command' && 'font-mono')}>{text}</span>
+      </span>
+    </Tooltip>
   )
 }
 

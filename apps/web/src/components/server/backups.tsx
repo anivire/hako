@@ -2,11 +2,22 @@ import { RiArchiveStackFill, RiDeleteBin6Fill, RiDownload2Fill, RiHistoryFill } 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Backup, Server } from '@hako/shared'
 import { Button, Card, CardDescription, CardHeader, CardTitle, EmptyState, Input, Skeleton, Tooltip, toast } from '@hako/ui'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 import { ask } from '../../lib/confirm'
 import { formatBytes } from '../../lib/format'
 import { errorMessage, keys } from '../../lib/queries'
+
+function RestoreHint({ show, children }: { show: boolean; children: ReactNode }) {
+  const { t } = useTranslation()
+  if (!show) return children
+  return (
+    <Tooltip content={t('backups.stopFirst')}>
+      <span className="flex flex-1">{children}</span>
+    </Tooltip>
+  )
+}
 
 function BackupTile({ server, backup, busy }: { server: Server; backup: Backup; busy: boolean }) {
   const { t, i18n } = useTranslation()
@@ -40,17 +51,18 @@ function BackupTile({ server, backup, busy }: { server: Server; backup: Backup; 
         </Tooltip>
       </div>
       <div className="flex gap-2">
+        <RestoreHint show={server.status !== 'offline'}>
         <Button
           size="sm"
           className="flex-1"
           disabled={busy || server.status !== 'offline'}
           loading={restore.isPending}
-          title={server.status !== 'offline' ? t('backups.stopFirst') : undefined}
           onClick={() => void ask({ title: t('backups.confirmRestore', { date }), description: t('backups.confirmRestoreHint'), confirm: t('backups.restore'), danger: true }).then((ok) => ok && restore.mutate())}
         >
           <RiHistoryFill />
           {t('backups.restore')}
         </Button>
+        </RestoreHint>
         <Tooltip content={t('backups.download')}>
           <Button size="icon-sm" asChild>
             <a href={api.backupDownloadUrl(server.id, backup.name)} download aria-label={t('backups.download')}>

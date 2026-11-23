@@ -1,5 +1,5 @@
 import { type GameTemplate, variableVisible } from '@hako/shared'
-import { cn } from '@hako/ui'
+import { Tooltip, cn } from '@hako/ui'
 import { useText } from '../lib/i18n'
 
 const COLOR = /(?:fill|stroke|stop-color)\s*[=:]\s*["']?(?:url\(|#(?!(?:fff|ffffff|000|000000)\b)[0-9a-f]{3,8})/i
@@ -39,15 +39,16 @@ export function ServerAvatar({ game, values, icon, size = 40, ring = 'var(--colo
     <span className={cn('relative inline-flex shrink-0', className)} style={{ width: size, height: size }}>
       {icon ? <img src={icon} alt="" className="size-full rounded-[22%] bg-field object-cover" /> : <GameIcon src={game?.icon} fallback={text(game?.name)} className="size-full rounded-[22%]" />}
       {variant?.icon ? (
-        <span
-          title={text(variant.label) || variant.value}
-          className="absolute grid place-items-center rounded-full text-foreground"
-          style={{ width: badge + 6, height: badge + 6, right: -badge * 0.22 - 3, bottom: -badge * 0.22 - 3, background: `var(--avatar-ring, ${ring})` }}
-        >
-          <span className="grid" style={{ width: badge * 0.64, height: badge * 0.64 }}>
-            <GameIcon src={variant.icon} className="size-full rounded-[2px]" />
+        <Tooltip content={text(variant.label) || variant.value}>
+          <span
+            className="absolute grid place-items-center rounded-full text-foreground"
+            style={{ width: badge + 6, height: badge + 6, right: -badge * 0.22 - 3, bottom: -badge * 0.22 - 3, background: `var(--avatar-ring, ${ring})` }}
+          >
+            <span className="grid" style={{ width: badge * 0.64, height: badge * 0.64 }}>
+              <GameIcon src={variant.icon} className="size-full rounded-[2px]" />
+            </span>
           </span>
-        </span>
+        </Tooltip>
       ) : null}
     </span>
   )

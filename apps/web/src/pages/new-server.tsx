@@ -3,7 +3,7 @@ import { cpuSteps } from '../components/server/settings'
 import { MemoryPicker, sizeLabel } from '../components/memory-picker'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { GameTemplate, GameVariable, Server } from '@hako/shared'
-import { Button, Card, EmptyState, Field, Input, Skeleton, StepSlider, cn } from '@hako/ui'
+import { Button, Card, EmptyState, Field, Input, Skeleton, StepSlider, Tooltip, cn } from '@hako/ui'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTransitionNavigate } from '../components/transition-link'
@@ -93,9 +93,11 @@ function GameStep({ games, value, onChange }: { games: GameTemplate[]; value: st
               {variants.length ? (
                 <span className="flex items-center gap-1 rounded-full bg-foreground/[0.05] py-1 pl-1.5 pr-2">
                   {variants.slice(0, 7).map((o) => (
-                    <span key={o.value} title={text(o.label) || o.value} className="grid size-5 place-items-center text-muted-foreground">
-                      <GameIcon src={o.icon} className="size-4 rounded-[3px]" />
-                    </span>
+                    <Tooltip key={o.value} content={text(o.label) || o.value}>
+                      <span className="grid size-5 place-items-center text-muted-foreground">
+                        <GameIcon src={o.icon} className="size-4 rounded-[3px]" />
+                      </span>
+                    </Tooltip>
                   ))}
                   {variants.length > 7 ? <span className="text-xs text-muted-foreground">+{variants.length - 7}</span> : null}
                 </span>

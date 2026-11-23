@@ -47,7 +47,6 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={active}
             disabled={option.disabled}
-            title={option.disabled ? undefined : option.title}
             onClick={() => onChange(option.value)}
             className={cn(
               'relative inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-medium transition-colors [&_svg]:shrink-0',
@@ -65,7 +64,7 @@ export function Segmented<T extends string>({
             ) : null}
           </button>
         )
-        if (!option.disabled || !option.title) return button
+        if (!option.title) return button
         return (
           <Tooltip key={option.value} content={option.title}>
             <span className="inline-flex">{button}</span>

@@ -322,10 +322,12 @@ function AddonsTabLabel({ kind, total, updates }: { kind: 'mods' | 'plugins'; to
       {t(`server.tabs.${kind}`)}
       {total !== undefined ? <span className="font-mono text-[0.6875rem] text-subtle-foreground">{total}</span> : null}
       {updates ? (
-        <span title={t('server.addonUpdates', { count: updates })} className="inline-flex h-[1.125rem] items-center gap-0.5 rounded-full bg-accent-soft px-1.5 font-mono text-[0.6875rem] font-semibold text-accent [&_svg]:!size-[0.6875rem]">
-          <RiArrowUpLine />
-          {updates}
-        </span>
+        <Tooltip content={t('server.addonUpdates', { count: updates })}>
+          <span className="inline-flex h-[1.125rem] items-center gap-0.5 rounded-full bg-accent-soft px-1.5 font-mono text-[0.6875rem] font-semibold text-accent [&_svg]:!size-[0.6875rem]">
+            <RiArrowUpLine />
+            {updates}
+          </span>
+        </Tooltip>
       ) : null}
     </>
   )

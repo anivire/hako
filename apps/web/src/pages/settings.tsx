@@ -1,7 +1,7 @@
 import { RiComputerFill, RiLockFill, RiLogoutBoxRFill, RiPaletteFill, RiSmartphoneFill, RiUser3Fill } from '@remixicon/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { SessionInfo } from '@hako/shared'
-import { Badge, Button, Card, Field, Input, Segmented, Skeleton, toast } from '@hako/ui'
+import { Badge, Button, Card, Field, Input, Segmented, Skeleton, Tooltip, toast } from '@hako/ui'
 import { type FormEvent, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router'
@@ -65,10 +65,12 @@ function SessionRow({ session, onRevoke, pending }: { session: SessionInfo; onRe
         </div>
         <div className="mt-0.5 truncate text-xs text-muted-foreground">{meta.join(' · ')}</div>
       </div>
-      <Button variant="ghost" size={session.current ? 'sm' : 'icon-sm'} loading={pending} onClick={onRevoke} aria-label={label} title={label} className="shrink-0 hover:bg-danger-soft hover:text-danger">
-        <RiLogoutBoxRFill />
-        {session.current ? label : null}
-      </Button>
+      <Tooltip content={label}>
+        <Button variant="ghost" size={session.current ? 'sm' : 'icon-sm'} loading={pending} onClick={onRevoke} aria-label={label} className="shrink-0 hover:bg-danger-soft hover:text-danger">
+          <RiLogoutBoxRFill />
+          {session.current ? label : null}
+        </Button>
+      </Tooltip>
     </div>
   )
 }
