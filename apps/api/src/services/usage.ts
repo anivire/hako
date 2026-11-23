@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { env } from '../env'
 import { serverDir } from '../runtime/instances'
 
 const TTL = 30_000
@@ -19,6 +20,15 @@ async function size(target: string): Promise<number> {
     else if (entry.isFile()) total += (await fs.stat(full).catch(() => null))?.size ?? 0
   }
   return total
+}
+
+export async function hostDisk(): Promise<{ total: number; free: number } | null> {
+  try {
+    const s = await fs.statfs(env.serversDir)
+    return { total: s.blocks * s.bsize, free: s.bavail * s.bsize }
+  } catch {
+    return null
+  }
 }
 
 export function diskUsage(id: string): Promise<number> {

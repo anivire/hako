@@ -14,6 +14,7 @@ import { dockerAvailable, dockerResources } from './runtime/instances'
 import { adminRoutes } from './routes/admin'
 import { authRoutes } from './routes/auth'
 import { gameRoutes, serverRoutes, shareRoutes } from './routes/servers'
+import { hostDisk } from './services/usage'
 
 export const app = new Hono<AppEnv>()
 
@@ -25,7 +26,7 @@ app.use(async (c, next) => {
 })
 
 app.get('/api/health', (c) => c.json({ ok: true }))
-app.get('/api/system', requireAuth, async (c) => c.json({ docker: await dockerAvailable(), ...(await dockerResources()), sftpPort: env.sftpPort || null }))
+app.get('/api/system', requireAuth, async (c) => c.json({ docker: await dockerAvailable(), ...(await dockerResources()), sftpPort: env.sftpPort || null, disk: await hostDisk() }))
 app.get('/api/users', requireAuth, (c) => {
   const q = (c.req.query('q') ?? '').trim().slice(0, 32)
   const me = c.get('user').id

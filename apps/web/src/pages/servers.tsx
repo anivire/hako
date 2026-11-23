@@ -1,5 +1,5 @@
 import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiPulseFill, RiSearchFill } from '@remixicon/react'
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import type { GameTemplate, QuickStats, Server, ServerStatus } from '@hako/shared'
 import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, Tooltip, cn } from '@hako/ui'
 import { type ReactNode, useState } from 'react'
@@ -111,6 +111,9 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
   const cpu = live.reduce((sum, e) => sum + e.stats.cpu, 0)
   const hostMemory = (system.data?.memory ?? 0) * 1024 * 1024
   const hostCpu = (system.data?.cpus ?? 0) * 100
+  const usage = useQueries({ queries: servers.map((s) => ({ queryKey: ['usage', s.id], queryFn: () => api.usage(s.id), staleTime: 60_000 })) })
+  const disk = usage.reduce((sum, u) => sum + (u.data?.bytes ?? 0), 0)
+  const hostDisk = system.data?.disk
   const loading = system.isPending || (running.length > 0 && !stats)
   return (
     <Card className="flex flex-col gap-4 p-5">
@@ -123,6 +126,7 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
       </div>
       {loading ? (
         <div className="flex flex-col gap-4">
+          <Skeleton className="h-8" />
           <Skeleton className="h-8" />
           <Skeleton className="h-8" />
         </div>
@@ -139,6 +143,15 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
             total={hostCpu}
             value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`}
             parts={live.map((e) => ({ id: e.server.id, amount: e.stats.cpu, color: e.color }))}
+          />
+          <StackedBar
+            label={t('servers.specDisk')}
+            total={hostDisk?.total ?? 0}
+            value={hostDisk ? t('servers.diskUsage', { used: formatBytes(disk, 2), total: formatBytes(hostDisk.total, 2), free: formatBytes(hostDisk.free, 1) }) : formatBytes(disk, 2)}
+            parts={[
+              { id: 'servers', amount: disk, color: 'var(--color-accent)' },
+              { id: 'other', amount: hostDisk ? Math.max(0, hostDisk.total - hostDisk.free - disk) : 0, color: 'color-mix(in oklab, var(--color-foreground) 22%, transparent)' },
+            ]}
           />
           {live.length ? (
             <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs">

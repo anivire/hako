@@ -94,7 +94,7 @@ export const api = {
   deleteServerInvite: (id: string, inviteId: number) => request<Invite[]>('DELETE', `${at(id)}/invites/${inviteId}`),
 
   serverStats: () => get<Record<string, QuickStats>>('/servers/stats'),
-  system: () => get<{ docker: boolean; cpus: number | null; memory: number | null; sftpPort: number | null }>('/system'),
+  system: () => get<{ docker: boolean; cpus: number | null; memory: number | null; sftpPort: number | null; disk: { total: number; free: number } | null }>('/system'),
   games: () => get<GameTemplate[]>('/games'),
   portCheck: (game: string, ports: Record<string, string>) => get<PortCheck[]>(`/games/${encodeURIComponent(game)}/ports?${new URLSearchParams(ports)}`),
   variableOptions: (game: string, key: string, q: string, vars: Record<string, string>) =>
