@@ -170,14 +170,13 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
             ]}
           />
           {live.length ? (
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
+            <div className="flex flex-wrap gap-2">
               {live.map((e) => (
-                <TLink key={e.server.id} to={`/servers/${e.server.id}`} className="flex min-w-0 items-center gap-1.5 hover:text-accent">
-                  <span className="size-2 shrink-0 rounded-full" style={{ background: e.color }} />
-                  <span className="truncate">{e.server.name}</span>
-                  <span className="shrink-0 font-mono text-subtle-foreground">
-                    {formatBytes(e.stats.memory, 1)} · {e.stats.cpu.toFixed(0)}%
-                  </span>
+                <TLink key={e.server.id} to={`/servers/${e.server.id}`} className="inline-flex h-8 min-w-0 items-center gap-2 rounded-lg bg-field px-2.5 text-xs transition-colors hover:bg-muted">
+                  <span className="h-4 w-1 shrink-0 rounded-full" style={{ background: e.color }} />
+                  <span className="truncate font-medium">{e.server.name}</span>
+                  <span className="shrink-0 font-mono text-muted-foreground tabular-nums">{formatBytes(e.stats.memory, 1)}</span>
+                  <span className="shrink-0 font-mono text-muted-foreground tabular-nums">{e.stats.cpu.toFixed(0)}%</span>
                 </TLink>
               ))}
             </div>
