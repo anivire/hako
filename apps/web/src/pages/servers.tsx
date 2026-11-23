@@ -2,7 +2,7 @@ import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, Ri
 import { useQueries, useQuery } from '@tanstack/react-query'
 import type { GameTemplate, QuickStats, Server, ServerStatus } from '@hako/shared'
 import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, Tooltip, cn } from '@hako/ui'
-import { type ReactNode, useState } from 'react'
+import { Fragment, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { TLink } from '../components/transition-link'
@@ -79,11 +79,34 @@ function Meter({ label, value, share, loading }: { label: string; value: string;
   )
 }
 
+const OTHER_DISK = 'color-mix(in oklab, var(--color-foreground) 22%, transparent)'
+
 function segmentColor(index: number) {
   return `oklch(from var(--color-accent) l max(c, 0.1) calc(h + ${index * 67}))`
 }
 
-function StackedBar({ label, value, total, parts }: { label: string; value: string; total: number; parts: { id: string; amount: number; color: string }[] }) {
+type Segment = { id: string; amount: number; color: string; tip: ReactNode }
+
+function SegmentTip({ color, title, rows }: { color: string; title: ReactNode; rows: [string, ReactNode][] }) {
+  return (
+    <div className="flex min-w-44 flex-col gap-1.5">
+      <div className="flex items-center gap-2 font-medium">
+        <span className="size-2 shrink-0 rounded-full" style={{ background: color }} />
+        <span className="truncate">{title}</span>
+      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5">
+        {rows.map(([label, value]) => (
+          <Fragment key={label}>
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className="text-right font-mono tabular-nums">{value}</dd>
+          </Fragment>
+        ))}
+      </dl>
+    </div>
+  )
+}
+
+function StackedBar({ label, value, total, parts }: { label: string; value: string; total: number; parts: Segment[] }) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between gap-3 text-xs">
@@ -92,7 +115,11 @@ function StackedBar({ label, value, total, parts }: { label: string; value: stri
       </div>
       <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-foreground/[0.06]">
         {total
-          ? parts.map((part) => <span key={part.id} className="h-full transition-[width] duration-700" style={{ width: `${Math.min(100, (part.amount / total) * 100)}%`, background: part.color }} />)
+          ? parts.map((part) => (
+              <Tooltip key={part.id} content={part.tip}>
+                <span className="h-full transition-[width,filter] duration-700 hover:brightness-125" style={{ width: `${Math.min(100, (part.amount / total) * 100)}%`, background: part.color }} />
+              </Tooltip>
+            ))
           : null}
       </div>
     </div>
@@ -131,6 +158,20 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
   const txRate = live.reduce((sum, e) => sum + e.stats.txRate, 0)
   const allocated = servers.reduce((sum, s) => sum + s.memory, 0) * 1024 * 1024
   const updates = servers.filter((s) => s.updates.image || s.updates.addons).length
+  const serverTip = (e: (typeof live)[number]) => (
+    <SegmentTip
+      color={e.color}
+      title={e.server.name}
+      rows={[
+        [t('servers.specMemory'), `${formatBytes(e.stats.memory, 2)} / ${formatBytes(e.stats.memoryLimit || e.server.memory * 1024 * 1024, 2)}`],
+        [t('servers.specCpu'), e.server.cpu ? `${e.stats.cpu.toFixed(1)}% / ${e.server.cpu * 100}%` : `${e.stats.cpu.toFixed(1)}%`],
+        ...(e.stats.players === null ? [] : [[t('servers.players'), String(e.stats.players)] as [string, ReactNode]]),
+        [t('servers.network'), `↓${formatBytes(e.stats.rxRate, 1)}/s ↑${formatBytes(e.stats.txRate, 1)}/s`],
+      ]}
+    />
+  )
+  const otherDisk = hostDisk ? Math.max(0, hostDisk.total - hostDisk.free - disk) : 0
+  const diskTip = (color: string, title: string, amount: number) => <SegmentTip color={color} title={title} rows={[[t('servers.specDisk'), hostDisk ? `${formatBytes(amount, 2)} · ${((amount / hostDisk.total) * 100).toFixed(1)}%` : formatBytes(amount, 2)]]} />
   return (
     <Card className="flex flex-col gap-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -152,21 +193,21 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
             label={t('servers.specMemory')}
             total={hostMemory}
             value={hostMemory ? `${formatBytes(memory, 2)} / ${formatBytes(hostMemory, 2)}` : formatBytes(memory, 2)}
-            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.memory, color: e.color }))}
+            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.memory, color: e.color, tip: serverTip(e) }))}
           />
           <StackedBar
             label={t('servers.specCpu')}
             total={hostCpu}
             value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`}
-            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.cpu, color: e.color }))}
+            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.cpu, color: e.color, tip: serverTip(e) }))}
           />
           <StackedBar
             label={t('servers.specDisk')}
             total={hostDisk?.total ?? 0}
             value={hostDisk ? t('servers.diskUsage', { used: formatBytes(disk, 2), total: formatBytes(hostDisk.total, 2), free: formatBytes(hostDisk.free, 1) }) : formatBytes(disk, 2)}
             parts={[
-              { id: 'servers', amount: disk, color: 'var(--color-accent)' },
-              { id: 'other', amount: hostDisk ? Math.max(0, hostDisk.total - hostDisk.free - disk) : 0, color: 'color-mix(in oklab, var(--color-foreground) 22%, transparent)' },
+              { id: 'servers', amount: disk, color: 'var(--color-accent)', tip: diskTip('var(--color-accent)', t('servers.diskServers'), disk) },
+              { id: 'other', amount: otherDisk, color: OTHER_DISK, tip: diskTip(OTHER_DISK, t('servers.diskOther'), otherDisk) },
             ]}
           />
           {live.length ? (

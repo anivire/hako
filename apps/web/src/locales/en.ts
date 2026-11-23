@@ -207,6 +207,8 @@ export const en: Messages = {
     updatesValue_few: '{{count}} servers',
     updatesValue_many: '{{count}} servers',
     updatesValue_other: '{{count}} servers',
+    diskServers: 'Server files',
+    diskOther: 'Everything else on the volume',
     diskUsage: '{{used}} / {{total}} · {{free}} free',
     usageHint: '{{count}} of {{total}} running',
     mine: 'My servers',

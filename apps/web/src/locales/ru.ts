@@ -205,6 +205,8 @@ export const ru = {
     updatesValue_few: '{{count}} сервера',
     updatesValue_many: '{{count}} серверов',
     updatesValue_other: '{{count}} сервера',
+    diskServers: 'Файлы серверов',
+    diskOther: 'Остальное на диске',
     diskUsage: '{{used}} / {{total}} · свободно {{free}}',
     usageHint: '{{count}} из {{total}} запущено',
     mine: 'Мои серверы',
