@@ -196,7 +196,6 @@ export const en: Messages = {
     curseforgeKeyInvalid: 'CurseForge rejected the API key',
   },
   servers: {
-    cores: 'limit {{count}} CPU',
     coresUnlimited: 'no limit',
     onDisk: '{{size}} on disk',
     mb: 'MB',

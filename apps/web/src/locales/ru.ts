@@ -194,7 +194,6 @@ export const ru = {
     curseforgeKeyInvalid: 'CurseForge не принял ключ API',
   },
   servers: {
-    cores: 'лимит {{count}} CPU',
     coresUnlimited: 'без лимита',
     onDisk: '{{size}} на диске',
     mb: 'МБ',

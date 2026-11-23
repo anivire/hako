@@ -84,7 +84,7 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
   const disk = useDisk(server.id)
   const memoryLimit = stats?.memoryLimit || server.memory * 1024 * 1024
   const loading = server.status === 'running' && !stats
-  const cores = server.cpu ? t('servers.cores', { count: server.cpu }) : t('servers.coresUnlimited')
+  const cores = server.cpu ? `${server.cpu * 100}%` : t('servers.coresUnlimited')
   return (
     <TLink to={`/servers/${server.id}`} className="group">
       <Card className="flex h-full min-h-40 flex-col gap-4 p-5 transition-colors [--avatar-ring:var(--color-surface)] group-hover:bg-muted group-hover:[--avatar-ring:var(--color-muted)]">
@@ -110,7 +110,7 @@ function ServerCard({ server, game, stats }: { server: Server; game: GameTemplat
             loading={loading}
             value={stats ? `${formatBytes(stats.memory, 2)} / ${formatBytes(memoryLimit, 2)}` : memoryLabel(server.memory)}
           />
-          <Meter label={t('servers.specCpu')} share={stats ? stats.cpu / 100 / stats.cpuLimit : null} loading={loading} value={stats ? `${(stats.cpu / stats.cpuLimit).toFixed(2)}%` : cores} />
+          <Meter label={t('servers.specCpu')} share={stats ? stats.cpu / 100 / stats.cpuLimit : null} loading={loading} value={stats ? (server.cpu ? `${stats.cpu.toFixed(2)}% / ${cores}` : `${(stats.cpu / stats.cpuLimit).toFixed(2)}%`) : cores} />
           <div className="flex items-center justify-between gap-3 pt-0.5 font-mono text-xs text-subtle-foreground">
             <span className="flex min-w-0 items-center gap-1.5 [&_svg]:size-3.5 [&_svg]:shrink-0">
               <RiHardDrive3Fill />
