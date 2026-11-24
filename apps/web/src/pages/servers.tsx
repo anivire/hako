@@ -1,6 +1,6 @@
 import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiPulseFill, RiGroupFill, RiArrowDownLine, RiArrowUpLine, RiArrowUpDownLine, RiPieChart2Fill, RiSearchFill } from '@remixicon/react'
 import { useQueries, useQuery } from '@tanstack/react-query'
-import type { GameTemplate, QuickStats, Server, ServerStatus } from '@hako/shared'
+import type { GameTemplate, QuickStats, Server } from '@hako/shared'
 import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, Tooltip, cn } from '@hako/ui'
 import { Fragment, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,8 +17,8 @@ import { formatBytes } from '../lib/format'
 import { ServerSummary } from './server'
 
 const GRID = 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'
-const STATUS_FILTERS = ['all', 'running', 'offline'] as const
-type StatusFilter = (typeof STATUS_FILTERS)[number]
+const SORTS = ['running', 'offline'] as const
+type Sort = (typeof SORTS)[number]
 type View = 'grid' | 'list'
 const VIEW_KEY = 'hako:servers-view'
 
@@ -86,16 +86,16 @@ function segmentColor(index: number) {
   return `oklch(from var(--color-accent) l max(c, 0.1) calc(h + ${index * 67}))`
 }
 
-type Segment = { id: string; amount: number; color: string; tip: ReactNode }
+type Segment = { id: string; amount: number; color: string }
 
 function SegmentTip({ color, title, rows }: { color: string; title: ReactNode; rows: [string, ReactNode][] }) {
   return (
-    <div className="flex min-w-44 flex-col gap-1.5">
+    <div className="flex min-w-56 flex-col gap-2.5 p-1.5">
       <div className="flex items-center gap-2 font-medium">
         <span className="size-2 shrink-0 rounded-full" style={{ background: color }} />
         <span className="truncate">{title}</span>
       </div>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-8 gap-y-1.5">
         {rows.map(([label, value]) => (
           <Fragment key={label}>
             <dt className="text-muted-foreground">{label}</dt>
@@ -107,23 +107,38 @@ function SegmentTip({ color, title, rows }: { color: string; title: ReactNode; r
   )
 }
 
-function StackedBar({ label, value, total, parts }: { label: string; value: string; total: number; parts: Segment[] }) {
+function Ring({ label, value, total, parts }: { label: string; value: string; total: number; parts: Segment[] }) {
+  let at = 0
+  const stops = total
+    ? parts.map((part) => {
+        const from = at
+        at = Math.min(100, at + (part.amount / total) * 100)
+        return `${part.color} ${from}% ${at}%`
+      })
+    : []
+  const track = 'color-mix(in oklab, var(--color-foreground) 6%, transparent)'
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-3 text-xs">
+    <Tooltip content={<span className="font-mono tabular-nums">{value}</span>}>
+      <div className="flex flex-col items-center gap-2 text-xs">
+        <div className="relative size-28">
+          <div className="absolute inset-0 rounded-full transition-[background] duration-700 [mask:radial-gradient(farthest-side,transparent_calc(100%-17px),#000_calc(100%-16px))]" style={{ background: `conic-gradient(${[...stops, `${track} ${at}% 100%`].join(', ')})` }} />
+          <span className="absolute inset-0 grid place-items-center font-mono text-lg font-semibold tabular-nums">{total ? `${at < 10 ? at.toFixed(1) : Math.round(at)}%` : '—'}</span>
+        </div>
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-mono font-medium tabular-nums">{value}</span>
       </div>
-      <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-foreground/[0.06]">
-        {total
-          ? parts.map((part) => (
-              <Tooltip key={part.id} content={part.tip}>
-                <span className="h-full transition-[width,filter] duration-700 hover:brightness-125" style={{ width: `${Math.min(100, (part.amount / total) * 100)}%`, background: part.color }} />
-              </Tooltip>
-            ))
-          : null}
-      </div>
-    </div>
+    </Tooltip>
+  )
+}
+
+const STRIPE_A = 'color-mix(in oklab, var(--color-danger) 30%, transparent)'
+const STRIPE_B = 'color-mix(in oklab, var(--color-danger) 14%, transparent)'
+
+function UsageCell({ value, share, color }: { value: string; share: number; color: string }) {
+  return (
+    <span className="relative flex h-6 items-center overflow-hidden rounded-md bg-foreground/[0.04] px-2">
+      <span className={cn('absolute inset-y-0 left-0 rounded-md transition-[width] duration-700', share > 0.9 && 'motion-safe:animate-stripes')} style={{ width: `${Math.max(1, Math.min(100, share * 100))}%`, ...(share > 0.9 ? { backgroundImage: `linear-gradient(-45deg, ${STRIPE_A} 25%, ${STRIPE_B} 25% 50%, ${STRIPE_A} 50% 75%, ${STRIPE_B} 75%)`, backgroundSize: '16px 16px' } : { backgroundColor: `color-mix(in oklab, ${color} 28%, transparent)` }) }} />
+      <span className="relative truncate font-mono font-medium tabular-nums">{value}</span>
+    </span>
   )
 }
 
@@ -150,6 +165,8 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
   const system = useQuery({ queryKey: ['system'], queryFn: api.system, staleTime: 30_000 })
   const running = servers.filter((s) => s.status === 'running')
   const live = liveServers(servers, stats)
+  const [expanded, setExpanded] = useState(false)
+  const hiddenCount = expanded ? 0 : Math.max(0, live.length - 5)
   const memory = live.reduce((sum, e) => sum + e.stats.memory, 0)
   const cpu = live.reduce((sum, e) => sum + e.stats.cpu, 0)
   const hostMemory = (system.data?.memory ?? 0) * 1024 * 1024
@@ -177,15 +194,45 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
     />
   )
   const otherDisk = hostDisk ? Math.max(0, hostDisk.total - hostDisk.free - disk) : 0
-  const diskTip = (color: string, title: string, amount: number) => <SegmentTip color={color} title={title} rows={[[t('servers.specDisk'), hostDisk ? `${formatBytes(amount, 2)} · ${((amount / hostDisk.total) * 100).toFixed(1)}%` : formatBytes(amount, 2)]]} />
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span className="flex items-center gap-2 text-[0.9375rem] font-semibold tracking-tight [&_svg]:size-4 [&_svg]:text-accent">
-          <RiPulseFill />
-          {t('servers.usage')}
-        </span>
-        <span className="text-xs text-muted-foreground">{t('servers.usageHint', { count: running.length, total: servers.length })}</span>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="flex items-center gap-2 text-[0.9375rem] font-semibold tracking-tight [&_svg]:size-4 [&_svg]:text-accent">
+            <RiPulseFill />
+            {t('servers.usage')}
+          </span>
+          <span className="text-xs text-muted-foreground">{t('servers.usageHint', { count: running.length, total: servers.length })}</span>
+        </div>
+        {loading ? null : (
+        <div className="flex flex-wrap items-center gap-2">
+          {tracked.length ? (
+            <UsageChip icon={<RiGroupFill />} label={t('servers.players')}>
+              {players}
+            </UsageChip>
+          ) : null}
+          {live.length ? (
+            <UsageChip icon={<RiArrowUpDownLine />} label={t('servers.network')}>
+              <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
+                <RiArrowDownLine className="text-success" />
+                {formatBytes(rxRate, 1)}/s
+              </span>
+              <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
+                <RiArrowUpLine className="text-info" />
+                {formatBytes(txRate, 1)}/s
+              </span>
+            </UsageChip>
+          ) : null}
+          <UsageChip icon={<RiPieChart2Fill />} label={t('servers.allocated')} title={t('servers.allocatedHint')}>
+            {hostMemory ? `${formatBytes(allocated, 1)} / ${formatBytes(hostMemory, 1)}` : formatBytes(allocated, 1)}
+          </UsageChip>
+          {updates ? (
+            <UsageChip icon={<RiDownloadCloud2Fill />} label={t('servers.updates')} accent>
+              {t('servers.updatesValue', { count: updates })}
+            </UsageChip>
+          ) : null}
+        </div>
+        )}
       </div>
       {loading ? (
         <div className="flex flex-col gap-4">
@@ -195,53 +242,62 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
         </div>
       ) : (
         <>
-          <StackedBar
-            label={t('servers.specMemory')}
-            total={hostMemory}
-            value={hostMemory ? `${formatBytes(memory, 2)} / ${formatBytes(hostMemory, 2)}` : formatBytes(memory, 2)}
-            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.memory, color: e.color, tip: serverTip(e) }))}
-          />
-          <StackedBar
-            label={t('servers.specCpu')}
-            total={hostCpu}
-            value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`}
-            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.cpu, color: e.color, tip: serverTip(e) }))}
-          />
-          <StackedBar
-            label={t('servers.specDisk')}
-            total={hostDisk?.total ?? 0}
-            value={hostDisk ? t('servers.diskUsage', { used: formatBytes(disk, 2), total: formatBytes(hostDisk.total, 2), free: formatBytes(hostDisk.free, 1) }) : formatBytes(disk, 2)}
-            parts={[
-              { id: 'servers', amount: disk, color: 'var(--color-accent)', tip: diskTip('var(--color-accent)', t('servers.diskServers'), disk) },
-              { id: 'other', amount: otherDisk, color: OTHER_DISK, tip: diskTip(OTHER_DISK, t('servers.diskOther'), otherDisk) },
-            ]}
-          />
-          <div className="flex flex-wrap gap-2">
-            {tracked.length ? (
-              <UsageChip icon={<RiGroupFill />} label={t('servers.players')}>
-                {players}
-              </UsageChip>
-            ) : null}
-            {live.length ? (
-              <UsageChip icon={<RiArrowUpDownLine />} label={t('servers.network')}>
-                <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
-                  <RiArrowDownLine className="text-success" />
-                  {formatBytes(rxRate, 1)}/s
-                </span>
-                <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
-                  <RiArrowUpLine className="text-info" />
-                  {formatBytes(txRate, 1)}/s
-                </span>
-              </UsageChip>
-            ) : null}
-            <UsageChip icon={<RiPieChart2Fill />} label={t('servers.allocated')} title={t('servers.allocatedHint')}>
-              {hostMemory ? `${formatBytes(allocated, 1)} / ${formatBytes(hostMemory, 1)}` : formatBytes(allocated, 1)}
-            </UsageChip>
-            {updates ? (
-              <UsageChip icon={<RiDownloadCloud2Fill />} label={t('servers.updates')} accent>
-                {t('servers.updatesValue', { count: updates })}
-              </UsageChip>
-            ) : null}
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-5">
+            <div className="flex gap-6">
+              <Ring
+                label={t('servers.specMemory')}
+                total={hostMemory}
+                value={hostMemory ? `${formatBytes(memory, 2)} / ${formatBytes(hostMemory, 2)}` : formatBytes(memory, 2)}
+                parts={live.map((e) => ({ id: e.server.id, amount: e.stats.memory, color: e.color }))}
+              />
+              <Ring
+                label={t('servers.specCpu')}
+                total={hostCpu}
+                value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`}
+                parts={live.map((e) => ({ id: e.server.id, amount: e.stats.cpu, color: e.color }))}
+              />
+              <Ring
+                label={t('servers.specDisk')}
+                total={hostDisk?.total ?? 0}
+                value={hostDisk ? t('servers.diskUsage', { used: formatBytes(disk, 2), total: formatBytes(hostDisk.total, 2), free: formatBytes(hostDisk.free, 1) }) : formatBytes(disk, 2)}
+                parts={[
+                  { id: 'servers', amount: disk, color: 'var(--color-accent)' },
+                  { id: 'other', amount: otherDisk, color: OTHER_DISK },
+                ]}
+              />
+            </div>
+            <div className="flex min-w-60 flex-1 flex-col gap-3">
+              {live.length ? (
+                <div className="grid grid-cols-[minmax(0,auto)_minmax(8rem,2fr)_minmax(6rem,1fr)] items-center gap-x-5 gap-y-2.5 text-xs">
+                  <span />
+                  <span className="text-muted-foreground">{t('servers.specMemory')}</span>
+                  <span className="text-muted-foreground">{t('servers.specCpu')}</span>
+                  {live.slice(0, live.length - hiddenCount).map((e) => {
+                    const memoryLimit = e.stats.memoryLimit || e.server.memory * 1024 * 1024
+                    const cpuLimit = e.server.cpu ? e.server.cpu * 100 : hostCpu
+                    return (
+                      <Fragment key={e.server.id}>
+                        <span className="flex min-w-0 items-center">
+                          <Tooltip content={serverTip(e)}>
+                            <span className="flex min-w-0 cursor-help items-center gap-2">
+                              <span className="size-2 shrink-0 rounded-full" style={{ background: e.color }} />
+                              <span className="truncate font-medium">{e.server.name}</span>
+                            </span>
+                          </Tooltip>
+                        </span>
+                        <UsageCell value={`${formatBytes(e.stats.memory, 1)} / ${formatBytes(memoryLimit, 1)}`} share={e.stats.memory / memoryLimit} color={e.color} />
+                        <UsageCell value={e.server.cpu ? `${e.stats.cpu.toFixed(1)}% / ${e.server.cpu * 100}%` : `${e.stats.cpu.toFixed(1)}%`} share={cpuLimit ? e.stats.cpu / cpuLimit : 0} color={e.color} />
+                      </Fragment>
+                    )
+                  })}
+                  {live.length > 5 ? (
+                    <button type="button" onClick={() => setExpanded(!expanded)} className="col-span-full justify-self-start rounded-md py-0.5 text-muted-foreground transition-colors hover:text-foreground">
+                      {expanded ? t('servers.showLess') : t('servers.showMore', { count: hiddenCount })}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
         </>
       )}
@@ -337,11 +393,6 @@ function ServerRow({ server, game, color }: { server: Server; game: GameTemplate
   )
 }
 
-function matchesStatus(status: ServerStatus, filter: StatusFilter) {
-  if (filter === 'all') return true
-  return filter === 'offline' ? status === 'offline' : status !== 'offline'
-}
-
 export function ServersPage() {
   const { t } = useTranslation()
   const text = useText()
@@ -358,7 +409,7 @@ export function ServersPage() {
   const users = useQuery({ queryKey: keys.users, queryFn: api.users, enabled: user.role === 'admin' })
   const query = params.get('q') ?? ''
   const gameFilter = params.get('game') ?? ''
-  const status = (STATUS_FILTERS as readonly string[]).includes(params.get('status') ?? '') ? (params.get('status') as StatusFilter) : 'all'
+  const sort = (SORTS as readonly string[]).includes(params.get('sort') ?? '') ? (params.get('sort') as Sort) : 'running'
   const setParam = (key: string, value: string) =>
     setParams(
       (p) => {
@@ -376,12 +427,12 @@ export function ServersPage() {
   const needle = query.trim().toLowerCase()
   const shown = list.filter((s) => {
     if (gameFilter && s.game !== gameFilter) return false
-    if (!matchesStatus(s.status, status)) return false
     if (!needle) return true
     const game = gameOf(s.game)
     const variant = game ? variantOption(game, s.variables) : undefined
     return [s.name, serverAddress(s), text(game?.name), variant ? text(variant.label) || variant.value : ''].join(' ').toLowerCase().includes(needle)
   })
+  shown.sort((a, b) => Number((a.status === 'offline') === (sort === 'running')) - Number((b.status === 'offline') === (sort === 'running')))
   const owners = [...new Set(shown.map((s) => s.ownerId))].sort((a, b) => Number(b === user.id) - Number(a === user.id))
   const grouped = user.role === 'admin' && new Set(list.map((s) => s.ownerId)).size > 1
   const groups = grouped
@@ -414,7 +465,7 @@ export function ServersPage() {
                 className="w-full sm:w-56"
               />
             ) : null}
-            <Segmented value={status} onChange={(value) => setParam('status', value)} options={STATUS_FILTERS.map((value) => ({ value, label: t(`servers.filters.${value}`) }))} />
+            <Select value={sort} onValueChange={(value) => setParam('sort', value === 'running' ? '' : value)} options={SORTS.map((value) => ({ value, label: t(`servers.sort.${value}`) }))} className="w-full sm:w-56" />
             <Segmented
               value={view}
               onChange={changeView}

@@ -209,6 +209,8 @@ export const ru = {
     diskOther: 'Остальное на диске',
     diskUsage: '{{used}} / {{total}} · свободно {{free}}',
     usageHint: '{{count}} из {{total}} запущено',
+    showMore: 'ещё {{count}}',
+    showLess: 'Свернуть',
     mine: 'Мои серверы',
     unknownOwner: 'Без владельца',
     onDisk: '{{size}} на диске',
@@ -225,10 +227,9 @@ export const ru = {
     search: 'Поиск по названию, адресу или игре',
     allGames: 'Все игры',
     nothingFound: 'Под фильтры ничего не подходит',
-    filters: {
-      all: 'Все',
-      running: 'Работают',
-      offline: 'Выключены',
+    sort: {
+      running: 'Сначала работающие',
+      offline: 'Сначала выключенные',
     },
     title: 'Серверы',
     new: 'Новый сервер',

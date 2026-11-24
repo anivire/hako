@@ -211,6 +211,8 @@ export const en: Messages = {
     diskOther: 'Everything else on the volume',
     diskUsage: '{{used}} / {{total}} · {{free}} free',
     usageHint: '{{count}} of {{total}} running',
+    showMore: '{{count}} more',
+    showLess: 'Show less',
     mine: 'My servers',
     unknownOwner: 'No owner',
     onDisk: '{{size}} on disk',
@@ -227,10 +229,9 @@ export const en: Messages = {
     search: 'Search by name, address or game',
     allGames: 'All games',
     nothingFound: 'No servers match the filters',
-    filters: {
-      all: 'All',
-      running: 'Running',
-      offline: 'Offline',
+    sort: {
+      running: 'Running first',
+      offline: 'Stopped first',
     },
     title: 'Servers',
     new: 'New server',
