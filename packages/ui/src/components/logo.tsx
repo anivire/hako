@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { cn } from '../lib/cn'
+import { cn } from '@anivire/kata-ui'
 
 export type MascotMood = 'idle' | 'happy' | 'sleepy' | 'thinking' | 'error'
 
@@ -11,7 +11,7 @@ const FLAP_RIGHT = 'M52 24L58.5 13.5Q59.2 11.6 57.1 11.7L37.5 14.5L35.5 24Z'
 const SEAM = 'M9 30H55'
 
 function twinkle(animated: boolean, delay = 0): CSSProperties | undefined {
-  return animated ? { animation: `hako-twinkle 1.8s ease-in-out ${delay}s infinite` } : undefined
+  return animated ? { animation: `kata-twinkle 1.8s ease-in-out ${delay}s infinite` } : undefined
 }
 
 function Flaps({ droop }: { droop: boolean }) {
@@ -35,7 +35,7 @@ function Body() {
 function PillEyes({ dx = 0, dy = 0, height = 12, blink = false }: { dx?: number; dy?: number; height?: number; blink?: boolean }) {
   const y = 41 - height / 2 + dy
   return (
-    <g fill={INK} style={blink ? { transformOrigin: '32px 41px', animation: 'hako-blink 5s infinite' } : undefined}>
+    <g fill={INK} style={blink ? { transformOrigin: '32px 41px', animation: 'kata-blink 5s infinite' } : undefined}>
       <rect x={20.5 + dx} y={y} width={7} height={height} rx={3.5} />
       <rect x={36.5 + dx} y={y} width={7} height={height} rx={3.5} />
     </g>
@@ -113,7 +113,7 @@ export function Mascot({ mood = 'idle', size = 32, className, animated = true }:
       height={`${size / 16}rem`}
       viewBox="0 0 64 64"
       className={cn('shrink-0 overflow-visible', className)}
-      style={animated && mood !== 'sleepy' ? { animation: 'hako-bob 3.2s ease-in-out infinite' } : undefined}
+      style={animated && mood !== 'sleepy' ? { animation: 'kata-bob 3.2s ease-in-out infinite' } : undefined}
       aria-hidden
     >
       <Flaps droop={droop} />

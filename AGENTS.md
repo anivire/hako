@@ -10,7 +10,7 @@ Nx workspace with npm workspaces, Node.js 22.12+.
 |---|---|
 | `apps/api` | Hono server, Drizzle ORM on SQLite (`better-sqlite3`), Docker through `dockerode`. `src/routes` (HTTP and WebSocket handlers), `src/games` (template registry and built-in templates), `src/runtime` (containers, console, stats), `src/addons` (mod and plugin sources), `src/options` (option sources for template variables: Minecraft versions, Modrinth and CurseForge modpacks), `src/services` (files), `src/lib` (auth, http, validation), `src/db/schema.ts`, migrations in `drizzle/` |
 | `apps/web` | React 19 SPA: React Router, TanStack Query, Tailwind CSS v4, i18next. `src/pages` (one file per route, wired in `src/router.tsx`, loaded lazily with `page()` unless the page is the first screen), `src/components` (`server/` holds the server page tabs), `src/lib` (API client, queries, i18n, helpers), `src/locales` |
-| `packages/ui` | Shared primitives (`@hako/ui`): buttons, overlays (Radix), Segmented, StepSlider, theme, `styles.css` with design tokens and utilities |
+| `packages/ui` | `@hako/ui`, a thin brand layer over the UI kit `@anivire/kata-ui`: re-exports the kit and adds the logo and mascot, the `hako` theme preset and colours, and `EmptyState` with the mascot. Import UI from `@hako/ui`, not from the kit directly |
 | `packages/shared` | Types, zod schemas and constants shared by API and web (`@hako/shared`), including `gameTemplateSchema` |
 
 The web dev server proxies `/api` (including WebSockets) to the API on port `3000`. Production is one Docker image where the API also serves the built web app.
@@ -36,7 +36,7 @@ Before finishing a change, run the typecheck for every package you touched, `npm
 - Do not add code comments. Explain decisions in the conversation or the commit message.
 - Tailwind utility classes inline, `cn()` from `@hako/ui` for conditional classes, small components in the same file as their only user.
 - Effects are only for syncing with things outside React (WebSockets, DOM, timers, storage). Derive values during render, handle actions in event handlers, fetch through TanStack Query.
-- Prefer the primitives in `packages/ui` over new ones.
+- Prefer the primitives from `@hako/ui` over new ones. A new generic component, or a fix or a new variant of an existing one, goes into the UI kit [kata-ui](https://github.com/anivire/kata-ui) (`@anivire/kata-ui`), not into this repo: build it there with a showcase example, publish a new version, then bump `@anivire/kata-ui` in `packages/ui/package.json` and run `npm install`. Generic means it knows nothing about hako's data and would make sense in another app. Only hako-specific UI (logo, mascot, theme preset, wrappers that plug the mascot into kit components) lives in `packages/ui`; components tied to the app's data stay in `apps/web/src/components`.
 
 ## Games are data
 
@@ -88,7 +88,7 @@ The core rule: **never branch on a game id in code.** Anything game-specific bel
 
 ## Frontend conventions
 
-- **Appearance** (colour scheme, theme preset, page width) lives in `src/lib/appearance.tsx`, persisted to `localStorage` under `hako:appearance` and applied before first paint by the script in `index.html`. The default theme is `hako` (mint, hue 172) and the default page width is 100%. Pickers are in `components/theme-picker.tsx` and `components/appearance-panel.tsx` (rail popover); the full page is `/settings`.
+- **Appearance** (colour scheme, theme preset, page width) lives in `src/lib/appearance.tsx`, persisted to `localStorage` under `hako:appearance` and applied before first paint by the script in `index.html`. The default theme is `hako` (warm cardboard, hue 62) and the default page width is 100%. Pickers are in `components/theme-picker.tsx` and `components/appearance-panel.tsx` (rail popover); the full page is `/settings`.
 - Pages fill the free space: `Page` is a flex column, grids use `grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))]`, and anything that should take the remaining height (the console) is a `relative flex-1` box with an `absolute inset-0` scroller inside, so its content never stretches the page.
 - Layout follows yoru: a left rail on desktop (`AppShell` in `components/app-shell.tsx`, navigation in `NAV`, language and account menus at the bottom) and a top bar with a menu on phones. Every page is wrapped in `Page` and starts with `PageHeader`.
 
