@@ -211,8 +211,6 @@ export const en: Messages = {
     diskOther: 'Everything else on the volume',
     diskUsage: '{{used}} / {{total}} · {{free}} free',
     usageHint: '{{count}} of {{total}} running',
-    showMore: '{{count}} more',
-    showLess: 'Show less',
     nothingRunning: 'No servers are running',
     nothingRunningHint: 'Start a server and its memory and CPU will show up here',
     mine: 'My servers',

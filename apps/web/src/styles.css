@@ -41,12 +41,3 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-@theme {
-  --animate-stripes: stripes 1s linear infinite;
-  @keyframes stripes {
-    to {
-      background-position: 16px 0;
-    }
-  }
-}

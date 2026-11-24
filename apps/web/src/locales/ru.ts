@@ -209,8 +209,6 @@ export const ru = {
     diskOther: 'Остальное на диске',
     diskUsage: '{{used}} / {{total}} · свободно {{free}}',
     usageHint: '{{count}} из {{total}} запущено',
-    showMore: 'ещё {{count}}',
-    showLess: 'Свернуть',
     nothingRunning: 'Ни один сервер не запущен',
     nothingRunningHint: 'Запустите сервер, и здесь появятся его память и CPU',
     mine: 'Мои серверы',
