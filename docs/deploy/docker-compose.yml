@@ -1,0 +1,25 @@
+services:
+  hako:
+    image: ghcr.io/anivire/hako:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "2022:2022"
+    volumes:
+      - hako-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Must be the same path on the host and inside the container
+      - /srv/hako/servers:/srv/hako/servers
+      - /srv/hako/games:/data/games
+    environment:
+      # The address you open hako at, e.g. https://hako.example.com
+      APP_URL: http://localhost:3000
+      # First admin. Leave empty to get a sign-up link in the log instead
+      ADMIN_USERNAME: ""
+      ADMIN_PASSWORD: ""
+      SERVERS_DIR: /srv/hako/servers
+      # Optional, for CurseForge modpacks. Can also be set later in Admin → Providers
+      CURSEFORGE_API_KEY: ""
+
+volumes:
+  hako-data:

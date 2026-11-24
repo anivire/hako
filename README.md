@@ -4,7 +4,7 @@
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square)](LICENSE)
 [![Version](https://img.shields.io/github/package-json/v/anivire/hako?style=flat-square&color=a6784a&label=version)](https://github.com/anivire/hako/commits/master)
-[![Docker](https://img.shields.io/badge/runs_on-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](#getting-started)
+[![Container](https://img.shields.io/badge/ghcr.io-anivire%2Fhako-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/anivire/hako/pkgs/container/hako)
 [![Interface](https://img.shields.io/badge/interface-English_%C2%B7_Russian-d2a676?style=flat-square)](#features)
 
 [Features](#features) · [Getting started](#getting-started) · [Games](#games) · [Your own games](docs/games.md) · [Configuration](#configuration)
@@ -68,17 +68,18 @@ To add another game, drop a JSON template into the games folder. [docs/games.md]
 
 ## Getting started
 
-hako needs Docker on the host and access to its socket.
+### Docker (recommended)
+
+hako needs Docker on the host and access to its socket. A multi-arch image (`amd64`, `arm64`) is published to GHCR for every release.
 
 ```bash
-git clone https://github.com/anivire/hako.git
-cd hako
 sudo mkdir -p /srv/hako/servers /srv/hako/games
-cp .env.example .env    # set APP_URL, and ADMIN_USERNAME and ADMIN_PASSWORD if you want
-docker compose up -d --build
+curl -fsSL https://raw.githubusercontent.com/anivire/hako/master/docs/deploy/docker-compose.yml -o docker-compose.yml
+docker compose up -d
+docker compose logs hako
 ```
 
-Open `APP_URL` and sign in. Without `ADMIN_USERNAME` and `ADMIN_PASSWORD` the log prints a one-time link to create the admin account. Invite people under **Admin → Invites**, or invite them to a single server on its **Access** tab.
+Set `APP_URL` in `docker-compose.yml`, open it and sign in. Without `ADMIN_USERNAME` and `ADMIN_PASSWORD` the log prints a one-time link to create the admin account. Invite people under **Admin → Invites**, or invite them to a single server on its **Access** tab.
 
 Server files are stored in `/srv/hako/servers`. This folder must be mounted at the same path inside the hako container (as in `docker-compose.yml`), because Docker resolves the game containers' folders on the host.
 
@@ -89,12 +90,37 @@ Before you share hako, put it behind a reverse proxy (Caddy, Traefik, nginx) for
 
 ### Updating
 
+New versions and their notes are on the [releases page](https://github.com/anivire/hako/releases). To update:
+
 ```bash
-git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 Game servers keep running during the update, and database migrations run on start.
+
+The image tag in `docker-compose.yml` decides what you get:
+
+| Tag | What you get |
+|---|---|
+| `latest` | The newest release. Recommended |
+| `0.1` | Only fixes for 0.1, no new features |
+| `0.1.0` | Exactly this release, it never changes |
+
+<details>
+<summary>Building from source</summary>
+
+```bash
+git clone https://github.com/anivire/hako.git
+cd hako
+sudo mkdir -p /srv/hako/servers /srv/hako/games
+cp .env.example .env    # set APP_URL, and ADMIN_USERNAME and ADMIN_PASSWORD if you want
+docker compose up -d --build
+```
+
+The `docker-compose.yml` in the repository builds the image itself and reads settings from `.env`; the first build takes a few minutes. To update, run `git pull` and the same `docker compose up -d --build`.
+
+</details>
 
 ### CurseForge
 
