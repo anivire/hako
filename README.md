@@ -3,7 +3,7 @@
 <img src="docs/hero.webp" alt="hako">
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/github/package-json/v/anivire/hako?style=flat-square&color=a6784a&label=version)](https://github.com/anivire/hako/commits/main)
+[![Version](https://img.shields.io/github/package-json/v/anivire/hako?style=flat-square&color=a6784a&label=version)](https://github.com/anivire/hako/commits/master)
 [![Docker](https://img.shields.io/badge/runs_on-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](#getting-started)
 [![Interface](https://img.shields.io/badge/interface-English_%C2%B7_Russian-d2a676?style=flat-square)](#features)
 
@@ -43,6 +43,12 @@ hako (箱, "box") runs each game server in its own Docker container and gives yo
 **Make it yours**
 - Light and dark themes, colour presets, and navigation on any side of the screen with the servers you pick, in your order.
 - Interface in Russian and English.
+
+## Screenshots
+
+![Servers page](docs/servers.webp)
+
+![Server page](docs/server.webp)
 
 ## Games
 
