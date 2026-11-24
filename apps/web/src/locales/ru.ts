@@ -211,6 +211,8 @@ export const ru = {
     usageHint: '{{count}} из {{total}} запущено',
     showMore: 'ещё {{count}}',
     showLess: 'Свернуть',
+    nothingRunning: 'Ни один сервер не запущен',
+    nothingRunningHint: 'Запустите сервер, и здесь появятся его память и CPU',
     mine: 'Мои серверы',
     unknownOwner: 'Без владельца',
     onDisk: '{{size}} на диске',

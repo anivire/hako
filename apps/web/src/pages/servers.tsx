@@ -1,7 +1,7 @@
 import { RiAddFill, RiDownloadCloud2Fill, RiHardDrive3Fill, RiLayoutGridFill, RiLinkM, RiListUnordered, RiPulseFill, RiGroupFill, RiArrowDownLine, RiArrowUpLine, RiArrowUpDownLine, RiPieChart2Fill, RiSearchFill } from '@remixicon/react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import type { GameTemplate, QuickStats, Server } from '@hako/shared'
-import { Button, Card, EmptyState, Input, Segmented, Select, Skeleton, Tooltip, cn } from '@hako/ui'
+import { Button, Card, EmptyState, Input, Mascot, Segmented, Select, Skeleton, Tooltip, cn } from '@hako/ui'
 import { Fragment, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
@@ -194,114 +194,133 @@ function UsageCard({ servers, stats }: { servers: Server[]; stats: Record<string
     />
   )
   const otherDisk = hostDisk ? Math.max(0, hostDisk.total - hostDisk.free - disk) : 0
-  return (
-    <Card className="flex flex-col gap-4 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="flex items-center gap-2 text-[0.9375rem] font-semibold tracking-tight [&_svg]:size-4 [&_svg]:text-accent">
-            <RiPulseFill />
-            {t('servers.usage')}
+  const title = (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span className="flex items-center gap-2 text-[0.9375rem] font-semibold tracking-tight [&_svg]:size-4 [&_svg]:text-accent">
+        <RiPulseFill />
+        {t('servers.usage')}
+      </span>
+      <span className="text-xs text-muted-foreground">{t('servers.usageHint', { count: running.length, total: servers.length })}</span>
+    </div>
+  )
+  const chips = (
+    <div className="flex flex-wrap items-center gap-2">
+      {tracked.length ? (
+        <UsageChip icon={<RiGroupFill />} label={t('servers.players')}>
+          {players}
+        </UsageChip>
+      ) : null}
+      {live.length ? (
+        <UsageChip icon={<RiArrowUpDownLine />} label={t('servers.network')}>
+          <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
+            <RiArrowDownLine className="text-success" />
+            {formatBytes(rxRate, 1)}/s
           </span>
-          <span className="text-xs text-muted-foreground">{t('servers.usageHint', { count: running.length, total: servers.length })}</span>
+          <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
+            <RiArrowUpLine className="text-info" />
+            {formatBytes(txRate, 1)}/s
+          </span>
+        </UsageChip>
+      ) : null}
+      <UsageChip icon={<RiPieChart2Fill />} label={t('servers.allocated')} title={t('servers.allocatedHint')}>
+        {hostMemory ? `${formatBytes(allocated, 1)} / ${formatBytes(hostMemory, 1)}` : formatBytes(allocated, 1)}
+      </UsageChip>
+      {!live.length && hostDisk ? (
+        <UsageChip icon={<RiHardDrive3Fill />} label={t('servers.specDisk')}>
+          {t('servers.diskUsage', { used: formatBytes(disk, 1), total: formatBytes(hostDisk.total, 1), free: formatBytes(hostDisk.free, 1) })}
+        </UsageChip>
+      ) : null}
+      {updates ? (
+        <UsageChip icon={<RiDownloadCloud2Fill />} label={t('servers.updates')} accent>
+          {t('servers.updatesValue', { count: updates })}
+        </UsageChip>
+      ) : null}
+    </div>
+  )
+  if (loading || !live.length)
+    return (
+      <Card className="flex flex-col gap-4 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          {title}
+          {loading ? null : chips}
         </div>
-        {loading ? null : (
-        <div className="flex flex-wrap items-center gap-2">
-          {tracked.length ? (
-            <UsageChip icon={<RiGroupFill />} label={t('servers.players')}>
-              {players}
-            </UsageChip>
-          ) : null}
-          {live.length ? (
-            <UsageChip icon={<RiArrowUpDownLine />} label={t('servers.network')}>
-              <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
-                <RiArrowDownLine className="text-success" />
-                {formatBytes(rxRate, 1)}/s
-              </span>
-              <span className="inline-flex items-center gap-0.5 [&_svg]:size-3.5">
-                <RiArrowUpLine className="text-info" />
-                {formatBytes(txRate, 1)}/s
-              </span>
-            </UsageChip>
-          ) : null}
-          <UsageChip icon={<RiPieChart2Fill />} label={t('servers.allocated')} title={t('servers.allocatedHint')}>
-            {hostMemory ? `${formatBytes(allocated, 1)} / ${formatBytes(hostMemory, 1)}` : formatBytes(allocated, 1)}
-          </UsageChip>
-          {updates ? (
-            <UsageChip icon={<RiDownloadCloud2Fill />} label={t('servers.updates')} accent>
-              {t('servers.updatesValue', { count: updates })}
-            </UsageChip>
-          ) : null}
-        </div>
-        )}
-      </div>
-      {loading ? (
-        <div className="flex flex-col gap-4">
-          <Skeleton className="h-8" />
-          <Skeleton className="h-8" />
-          <Skeleton className="h-8" />
-        </div>
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-5">
-            <div className="flex gap-6">
-              <Ring
-                label={t('servers.specMemory')}
-                total={hostMemory}
-                value={hostMemory ? `${formatBytes(memory, 2)} / ${formatBytes(hostMemory, 2)}` : formatBytes(memory, 2)}
-                parts={live.map((e) => ({ id: e.server.id, amount: e.stats.memory, color: e.color }))}
-              />
-              <Ring
-                label={t('servers.specCpu')}
-                total={hostCpu}
-                value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`}
-                parts={live.map((e) => ({ id: e.server.id, amount: e.stats.cpu, color: e.color }))}
-              />
-              <Ring
-                label={t('servers.specDisk')}
-                total={hostDisk?.total ?? 0}
-                value={hostDisk ? t('servers.diskUsage', { used: formatBytes(disk, 2), total: formatBytes(hostDisk.total, 2), free: formatBytes(hostDisk.free, 1) }) : formatBytes(disk, 2)}
-                parts={[
-                  { id: 'servers', amount: disk, color: 'var(--color-accent)' },
-                  { id: 'other', amount: otherDisk, color: OTHER_DISK },
-                ]}
-              />
-            </div>
-            <div className="flex min-w-60 flex-1 flex-col gap-3">
-              {live.length ? (
-                <div className="grid grid-cols-[minmax(0,auto)_minmax(8rem,2fr)_minmax(6rem,1fr)] items-center gap-x-5 gap-y-2.5 text-xs">
-                  <span />
-                  <span className="text-muted-foreground">{t('servers.specMemory')}</span>
-                  <span className="text-muted-foreground">{t('servers.specCpu')}</span>
-                  {live.slice(0, live.length - hiddenCount).map((e) => {
-                    const memoryLimit = e.stats.memoryLimit || e.server.memory * 1024 * 1024
-                    const cpuLimit = e.server.cpu ? e.server.cpu * 100 : hostCpu
-                    return (
-                      <Fragment key={e.server.id}>
-                        <span className="flex min-w-0 items-center">
-                          <Tooltip content={serverTip(e)}>
-                            <span className="flex min-w-0 cursor-help items-center gap-2">
-                              <span className="size-2 shrink-0 rounded-full" style={{ background: e.color }} />
-                              <span className="truncate font-medium">{e.server.name}</span>
-                            </span>
-                          </Tooltip>
-                        </span>
-                        <UsageCell value={`${formatBytes(e.stats.memory, 1)} / ${formatBytes(memoryLimit, 1)}`} share={e.stats.memory / memoryLimit} color={e.color} />
-                        <UsageCell value={e.server.cpu ? `${e.stats.cpu.toFixed(1)}% / ${e.server.cpu * 100}%` : `${e.stats.cpu.toFixed(1)}%`} share={cpuLimit ? e.stats.cpu / cpuLimit : 0} color={e.color} />
-                      </Fragment>
-                    )
-                  })}
-                  {live.length > 5 ? (
-                    <button type="button" onClick={() => setExpanded(!expanded)} className="col-span-full justify-self-start rounded-md py-0.5 text-muted-foreground transition-colors hover:text-foreground">
-                      {expanded ? t('servers.showLess') : t('servers.showMore', { count: hiddenCount })}
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
+        {loading ? (
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-8" />
+            <Skeleton className="h-8" />
+            <Skeleton className="h-8" />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-4 py-6">
+            <Mascot mood="sleepy" size={56} className="shrink-0 opacity-80" />
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium">{t('servers.nothingRunning')}</span>
+              <span className="text-xs text-muted-foreground">{t('servers.nothingRunningHint')}</span>
             </div>
           </div>
-        </>
-      )}
-    </Card>
+        )}
+      </Card>
+    )
+  return (
+    <div className="flex flex-col gap-3 lg:flex-row">
+      <Card className="flex shrink-0 flex-col gap-5 p-5">
+        {title}
+        <div className="flex flex-1 items-center gap-6">
+          <Ring
+            label={t('servers.specMemory')}
+            total={hostMemory}
+            value={hostMemory ? `${formatBytes(memory, 2)} / ${formatBytes(hostMemory, 2)}` : formatBytes(memory, 2)}
+            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.memory, color: e.color }))}
+          />
+          <Ring
+            label={t('servers.specCpu')}
+            total={hostCpu}
+            value={hostCpu ? `${cpu.toFixed(2)}% / ${hostCpu}%` : `${cpu.toFixed(2)}%`}
+            parts={live.map((e) => ({ id: e.server.id, amount: e.stats.cpu, color: e.color }))}
+          />
+          <Ring
+            label={t('servers.specDisk')}
+            total={hostDisk?.total ?? 0}
+            value={hostDisk ? t('servers.diskUsage', { used: formatBytes(disk, 2), total: formatBytes(hostDisk.total, 2), free: formatBytes(hostDisk.free, 1) }) : formatBytes(disk, 2)}
+            parts={[
+              { id: 'servers', amount: disk, color: 'var(--color-accent)' },
+              { id: 'other', amount: otherDisk, color: OTHER_DISK },
+            ]}
+          />
+        </div>
+      </Card>
+      <Card className="flex min-w-0 flex-1 flex-col gap-4 p-5">
+        {chips}
+        <div className="grid grid-cols-[minmax(0,auto)_minmax(8rem,2fr)_minmax(6rem,1fr)] items-center gap-x-5 gap-y-2.5 text-xs">
+          <span />
+          <span className="text-muted-foreground">{t('servers.specMemory')}</span>
+          <span className="text-muted-foreground">{t('servers.specCpu')}</span>
+          {live.slice(0, live.length - hiddenCount).map((e) => {
+            const memoryLimit = e.stats.memoryLimit || e.server.memory * 1024 * 1024
+            const cpuLimit = e.server.cpu ? e.server.cpu * 100 : hostCpu
+            return (
+              <Fragment key={e.server.id}>
+                <span className="flex min-w-0 items-center">
+                  <Tooltip content={serverTip(e)}>
+                    <span className="flex min-w-0 cursor-help items-center gap-2">
+                      <span className="size-2 shrink-0 rounded-full" style={{ background: e.color }} />
+                      <span className="truncate font-medium">{e.server.name}</span>
+                    </span>
+                  </Tooltip>
+                </span>
+                <UsageCell value={`${formatBytes(e.stats.memory, 1)} / ${formatBytes(memoryLimit, 1)}`} share={e.stats.memory / memoryLimit} color={e.color} />
+                <UsageCell value={e.server.cpu ? `${e.stats.cpu.toFixed(1)}% / ${e.server.cpu * 100}%` : `${e.stats.cpu.toFixed(1)}%`} share={cpuLimit ? e.stats.cpu / cpuLimit : 0} color={e.color} />
+              </Fragment>
+            )
+          })}
+          {live.length > 5 ? (
+            <button type="button" onClick={() => setExpanded(!expanded)} className="col-span-full justify-self-start rounded-md py-0.5 text-muted-foreground transition-colors hover:text-foreground">
+              {expanded ? t('servers.showLess') : t('servers.showMore', { count: hiddenCount })}
+            </button>
+          ) : null}
+        </div>
+      </Card>
+    </div>
   )
 }
 
